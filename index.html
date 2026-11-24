@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#000000">
   <title>股市策略實驗室</title>
 
-  <!-- 載入 Tailwind CSS 與字體 -->
+  <!-- 載入 Tailwind CSS 與等寬/繁中字體 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -227,8 +227,8 @@
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
-        <!-- 行情連線狀態燈號 -->
-        <button id="statusBadgeBtn" onclick="forceRefreshCurrentContext()" title="點擊強制重新抓取行情"
+        <!-- 行情連線狀態燈號（顯示資料來源：LIVE · FINMIND / YAHOO / STOOQ / CACHED / OFFLINE SIM） -->
+        <button id="statusBadgeBtn" onclick="forceRefreshCurrentContext()" title="點擊強制重新連網抓取最新行情"
           class="flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold mono border border-[#262E3D] bg-[#11151C] rounded-[2px] active:bg-[#1E2634]">
           <span id="statusDot" class="w-2 h-2 rounded-full bg-[#FF9900]"></span>
           <span id="statusText" class="text-[#FF9900]">INIT</span>
@@ -260,7 +260,6 @@
         <div class="term-card p-3 space-y-2.5">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[12px] font-bold tracking-wider text-[#FF9900] whitespace-nowrap">多帳戶管理</span>
-            <!-- 精簡緊湊橫排圖標按鈕 -->
             <div class="flex items-center gap-1.5 shrink-0">
               <button onclick="openAccountModal('create')" title="新增帳戶" aria-label="新增帳戶"
                 class="btn-term w-7 h-7 flex items-center justify-center text-[15px] font-bold bg-[#FF9900] text-black whitespace-nowrap shrink-0">+</button>
@@ -274,7 +273,8 @@
           </div>
 
           <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div id="accountDisplayName" class="w-full sm:w-64 px-2.5 py-2 text-[15px] font-semibold bg-[#0A0C0F] border border-[#262E3D] rounded-[3px] text-[#F3F4F6] truncate select-none"></div>
+            <div onclick="openAccountSwitchModal()" title="點擊切換其他帳戶"
+              id="accountDisplayName" class="cursor-pointer w-full sm:w-64 px-2.5 py-2 text-[15px] font-semibold bg-[#0A0C0F] border border-[#262E3D] hover:border-[#FF9900] rounded-[3px] text-[#F3F4F6] truncate select-none"></div>
             <div id="accountStrategyTag" class="hidden text-[12px] text-[#8B95A5] bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-1.5 rounded-[2px] flex-1 truncate"></div>
           </div>
         </div>
@@ -333,12 +333,12 @@
         <div class="term-card p-3 space-y-3">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[12px] font-bold tracking-wider text-[#FF9900] whitespace-nowrap">擬真下單面板</span>
-            <span id="orderQuoteName" class="text-[11px] text-[#8B95A5] truncate max-w-[190px]">尚未查詢標的</span>
+            <span id="orderQuoteName" class="text-[11px] text-[#8B95A5] truncate max-w-[210px]">尚未查詢標的</span>
           </div>
 
           <!-- 標的代號與報價查詢 -->
           <div class="flex gap-2">
-            <input id="orderSymbol" type="text" placeholder="" autocomplete="off"
+            <input id="orderSymbol" type="text" placeholder="輸入代號如 2330 或 NVDA" autocomplete="off"
               class="flex-1 px-2.5 py-2 mono uppercase" onkeydown="if(event.key==='Enter') fetchOrderQuote()">
             <button id="btnQueryQuote" onclick="fetchOrderQuote()"
               class="btn-term px-3.5 py-2 text-[13px] font-bold bg-[#FF9900] text-black shrink-0">
@@ -376,7 +376,7 @@
             </label>
           </div>
 
-          <!-- 價格與數量輸入 (單行短標籤，確保左右輸入框完全水平對齊) -->
+          <!-- 價格與數量輸入 -->
           <div class="grid grid-cols-2 gap-2 items-end">
             <div>
               <label class="block text-[11px] text-[#8B95A5] mb-1 whitespace-nowrap">委託/成交單價</label>
@@ -390,7 +390,7 @@
             </div>
           </div>
 
-          <!-- 交易理由與筆記 (非必填、移除範例文字) -->
+          <!-- 交易理由與筆記 -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-[11px] text-[#8B95A5] mb-1">交易理由</label>
@@ -461,9 +461,10 @@
         <div class="term-card p-3 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-[12px] font-bold tracking-wider text-[#FF9900]">盤面分析</span>
+            <span id="chartSourceTag" class="text-[10px] mono text-[#8B95A5]">--</span>
           </div>
           <div class="flex gap-2">
-            <input id="chartSymbolInput" type="text" placeholder="" autocomplete="off"
+            <input id="chartSymbolInput" type="text" placeholder="輸入台股/美股代號如 2330 或 NVDA" autocomplete="off"
               class="flex-1 px-2.5 py-2 mono uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
             <button onclick="loadChartSymbolFromInput()"
               class="btn-term px-3.5 py-2 text-[13px] font-bold bg-[#FF9900] text-black shrink-0">
@@ -564,7 +565,212 @@
   </nav>
 
   <!-- ========================================================================
-       MODAL 5：切換帳戶視窗 (點擊左上角 BBG 開啟)
+       MODAL 1：新增 / 編輯帳戶視窗 (accountModal)
+       ======================================================================== -->
+  <div id="accountModal" class="modal-backdrop hidden">
+    <div class="modal-panel" style="max-width: 440px;">
+      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
+        <span id="accountModalTitle" class="text-[13px] font-bold text-[#FF9900]">建立新帳戶</span>
+        <button onclick="closeModal('accountModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+      </div>
+      <div class="p-4 space-y-3 overflow-y-auto">
+        <div>
+          <label class="block text-[11px] text-[#8B95A5] mb-1">帳戶名稱</label>
+          <input id="accNameInput" type="text" placeholder="例如：波段突破策略戶" class="w-full px-2.5 py-2">
+        </div>
+        <div id="accCapitalGroup">
+          <label class="block text-[11px] text-[#8B95A5] mb-1">初始本金（最低 1,000）</label>
+          <input id="accCapitalInput" type="number" min="1000" step="1000" value="1000000" class="w-full px-2.5 py-2 mono">
+        </div>
+        <div>
+          <label class="block text-[11px] text-[#8B95A5] mb-1">策略說明與紀律備註（選填）</label>
+          <textarea id="accStrategyInput" rows="3" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-2.5 py-2"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="closeModal('accountModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">取消</button>
+          <button onclick="saveAccountModal()" class="btn-term py-2 bg-[#FF9900] text-black font-bold">儲存帳戶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2：帳戶充值視窗 (depositModal)
+       ======================================================================== -->
+  <div id="depositModal" class="modal-backdrop hidden">
+    <div class="modal-panel" style="max-width: 440px;">
+      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
+        <span class="text-[13px] font-bold text-[#FF9900]">帳戶資金充值</span>
+        <button onclick="closeModal('depositModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+      </div>
+      <div class="p-4 space-y-3 overflow-y-auto">
+        <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px] text-[12px] space-y-1">
+          <div class="flex justify-between">
+            <span class="text-[#8B95A5]">目標帳戶</span>
+            <span id="depAccountName" class="font-bold text-[#F3F4F6]">--</span>
+          </div>
+          <div class="flex justify-between mono">
+            <span class="text-[#8B95A5]">目前本金 / 累計充值</span>
+            <span id="depCurrentStats" class="text-[#FF9900]">0 / 0</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] text-[#8B95A5] mb-1">充值金額（同步計入初始本金，不灌水報酬率）</label>
+          <input id="depositAmountInput" type="number" min="1" step="1000" placeholder="輸入充值金額" class="w-full px-2.5 py-2 mono">
+        </div>
+
+        <div class="grid grid-cols-4 gap-1.5">
+          <button onclick="setDepositQuickAmount(50000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+5萬</button>
+          <button onclick="setDepositQuickAmount(100000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+10萬</button>
+          <button onclick="setDepositQuickAmount(500000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+50萬</button>
+          <button onclick="setDepositQuickAmount(1000000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+100萬</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="closeModal('depositModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">取消</button>
+          <button onclick="confirmDeposit()" class="btn-term py-2 bg-[#FF9900] text-black font-bold">確認充值</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 3：終端機系統設定視窗 (settingsModal)
+       ======================================================================== -->
+  <div id="settingsModal" class="modal-backdrop hidden">
+    <div class="modal-panel">
+      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
+        <span class="text-[13px] font-bold text-[#FF9900]">終端機參數與系統設定</span>
+        <button onclick="closeModal('settingsModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+      </div>
+      <div class="p-4 space-y-4 overflow-y-auto max-h-[75vh]">
+        <!-- 漲跌配色模式 -->
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold text-[#FF9900]">盤面漲跌配色模式</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="setColorTW" onclick="setColorMode('TW')" class="btn-term py-2 border">台股模式（紅漲綠跌）</button>
+            <button id="setColorUS" onclick="setColorMode('US')" class="btn-term py-2 border">美股模式（綠漲紅跌）</button>
+          </div>
+        </div>
+
+        <!-- 交易手續費與證交稅率 -->
+        <div class="space-y-2 border-t border-[#262E3D] pt-3">
+          <label class="block text-[11px] font-bold text-[#FF9900]">交易成本與稅率設定</label>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">手續費率</label>
+              <input id="setFeeRate" type="number" step="0.000001" class="w-full px-2 py-1.5 mono">
+            </div>
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">券商折數</label>
+              <input id="setDiscount" type="number" step="0.01" class="w-full px-2 py-1.5 mono">
+            </div>
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">最低手續費</label>
+              <input id="setMinFee" type="number" step="1" class="w-full px-2 py-1.5 mono">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">一般股票證交稅率</label>
+              <input id="setStockTax" type="number" step="0.0001" class="w-full px-2 py-1.5 mono">
+            </div>
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">ETF 證交稅率</label>
+              <input id="setEtfTax" type="number" step="0.0001" class="w-full px-2 py-1.5 mono">
+            </div>
+          </div>
+        </div>
+
+        <!-- 均線週期與行情快取 -->
+        <div class="space-y-2 border-t border-[#262E3D] pt-3">
+          <label class="block text-[11px] font-bold text-[#FF9900]">技術指標與行情快取</label>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">均線 1 (日)</label>
+              <input id="setMa0" type="number" min="2" max="240" class="w-full px-2 py-1.5 mono">
+            </div>
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">均線 2 (日)</label>
+              <input id="setMa1" type="number" min="2" max="240" class="w-full px-2 py-1.5 mono">
+            </div>
+            <div>
+              <label class="block text-[10px] text-[#8B95A5] mb-1">均線 3 (日)</label>
+              <input id="setMa2" type="number" min="2" max="240" class="w-full px-2 py-1.5 mono">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] text-[#8B95A5] mb-1">行情快取有效時間</label>
+            <select id="setCacheTtl" class="w-full px-2.5 py-1.5 mono">
+              <option value="60000">1 分鐘 (高頻即時)</option>
+              <option value="300000">5 分鐘 (預設平衡)</option>
+              <option value="900000">15 分鐘 (省流量)</option>
+              <option value="0">永久快取 (僅手動強制更新)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 自選股快捷管理 -->
+        <div class="space-y-2 border-t border-[#262E3D] pt-3">
+          <label class="block text-[11px] font-bold text-[#FF9900]">自選股快捷列表</label>
+          <div id="settingsWatchlist" class="flex flex-wrap gap-1.5"></div>
+          <div class="flex gap-2">
+            <input id="newWatchSymbol" type="text" placeholder="新增代號如 2317 或 TSLA" class="flex-1 px-2.5 py-1.5 mono uppercase"
+              onkeydown="if(event.key==='Enter') addWatchlistSymbol()">
+            <button onclick="addWatchlistSymbol()" class="btn-term px-3 py-1.5 text-[12px] font-bold bg-[#171D26] border border-[#364154] text-[#FF9900]">新增</button>
+          </div>
+        </div>
+
+        <!-- JSON 備份與還原 -->
+        <div class="space-y-2 border-t border-[#262E3D] pt-3">
+          <label class="block text-[11px] font-bold text-[#FF9900]">系統資料備份與還原 (JSON)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportJsonBackup()" class="btn-term py-2 text-[12px] font-semibold border border-[#364154] bg-[#171D26] text-[#F3F4F6]">
+              匯出 JSON 備份
+            </button>
+            <label class="btn-term py-2 text-[12px] font-semibold border border-[#364154] bg-[#171D26] text-[#38BDF8] text-center cursor-pointer">
+              選擇 JSON 檔還原
+              <input type="file" accept=".json,application/json" class="hidden" onchange="handleImportJsonFile(event)">
+            </label>
+          </div>
+          <div class="flex gap-2">
+            <input id="importJsonText" type="text" placeholder="或直接在此貼上 JSON 備份字串..." class="flex-1 px-2.5 py-1.5 mono text-[12px]">
+            <button onclick="importJsonFromTextarea()" class="btn-term px-3 py-1.5 text-[12px] font-bold bg-[#171D26] border border-[#364154] text-[#F3F4F6] shrink-0">還原</button>
+          </div>
+        </div>
+
+        <!-- 儲存按鈕 -->
+        <div class="pt-1">
+          <button onclick="saveSettingsFromModal()" class="btn-term w-full py-2.5 bg-[#FF9900] text-black font-bold text-[14px]">
+            儲存並套用設定
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 4：報告 / JSON 匯出檢視視窗 (exportModal)
+       ======================================================================== -->
+  <div id="exportModal" class="modal-backdrop hidden">
+    <div class="modal-panel">
+      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
+        <span id="exportModalTitle" class="text-[13px] font-bold text-[#FF9900]">檢討報告匯出</span>
+        <button onclick="closeModal('exportModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <textarea id="exportTextarea" rows="12" readonly class="w-full p-2.5 mono text-[12px] leading-relaxed"></textarea>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="closeModal('exportModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">關閉</button>
+          <button onclick="copyExportTextarea()" class="btn-term py-2 bg-[#FF9900] text-black font-bold">一鍵複製全部文字</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 5：切換帳戶視窗 (點擊左上角 BBG 或帳戶列開啟)
        ======================================================================== -->
   <div id="accountSwitchModal" class="modal-backdrop hidden">
     <div class="modal-panel" style="max-width: 440px;">
@@ -609,6 +815,7 @@
        1. 全域常數與預設狀態結構
        ======================================================================== */
     const STORAGE_KEY = 'bloomberg_sim_lab_v1';
+    const TW_INFO_CACHE_KEY = 'bloomberg_tw_stock_info_v1';
 
     const INDICATOR_GUIDES = {
       CANDLE_MA: {
@@ -634,9 +841,9 @@
     };
 
     const BUILTIN_STOCK_META = {
-      '2330.TW': { name: '台積電 (SIM)', base: 980, vol: 32000000, drift: 0.0011, sigma: 0.017, seed: 2330 },
-      '0050.TW': { name: '元大台灣50 (SIM)', base: 185, vol: 14000000, drift: 0.0007, sigma: 0.011, seed: 50 },
-      'NVDA':    { name: 'NVIDIA Corp (SIM)', base: 132, vol: 240000000, drift: 0.0018, sigma: 0.031, seed: 8888 }
+      '2330.TW': { name: '台積電 (離線模擬)', base: 980, vol: 32000000, drift: 0.0011, sigma: 0.017, seed: 2330 },
+      '0050.TW': { name: '元大台灣50 (離線模擬)', base: 185, vol: 14000000, drift: 0.0007, sigma: 0.011, seed: 50 },
+      'NVDA':    { name: 'NVIDIA Corp (離線模擬)', base: 132, vol: 240000000, drift: 0.0018, sigma: 0.031, seed: 8888 }
     };
 
     function createDefaultState() {
@@ -834,18 +1041,23 @@
       }
     }
 
-    function updateStatusBadge(mode, labelOverride) {
+    /**
+     * 更新頂部終端機連線狀態指示燈與資料來源標籤
+     * 支援來源：LIVE · FINMIND / LIVE · TWSE / LIVE · YAHOO / LIVE · STOOQ / CACHED / OFFLINE SIM
+     */
+    function updateStatusBadge(mode, sourceDetail = '') {
       const dot = document.getElementById('statusDot');
       const txt = document.getElementById('statusText');
       dot.className = 'w-2 h-2 rounded-full';
+
       if (mode === 'LIVE') {
         dot.classList.add('bg-[#00C853]', 'dot-live');
         txt.className = 'text-[#00C853]';
-        txt.textContent = labelOverride || 'LIVE';
+        txt.textContent = sourceDetail ? `LIVE · ${sourceDetail}` : 'LIVE';
       } else if (mode === 'CACHED') {
         dot.classList.add('bg-[#FF9900]');
         txt.className = 'text-[#FF9900]';
-        txt.textContent = labelOverride || 'CACHED';
+        txt.textContent = sourceDetail ? `CACHED · ${sourceDetail}` : 'CACHED';
       } else if (mode === 'LOADING') {
         dot.classList.add('bg-[#38BDF8]', 'dot-live');
         txt.className = 'text-[#38BDF8]';
@@ -853,20 +1065,29 @@
       } else {
         dot.classList.add('bg-[#FF3B30]');
         txt.className = 'text-[#FF3B30]';
-        txt.textContent = labelOverride || 'OFFLINE SIM';
+        txt.textContent = 'OFFLINE SIM';
       }
     }
 
     /* ========================================================================
-       4. 行情資料抓取、正規化、多代理備援與離線模擬引擎
+       4. 多層次免代理 + 多代理備援行情引擎 (FinMind + TWSE/TPEx + Yahoo + Stooq)
        ======================================================================== */
     function normalizeSymbol(rawInput) {
       const clean = String(rawInput || '').trim().toUpperCase();
       if (!clean) return '';
-      if (/^\d{4,6}$/.test(clean)) {
+      // 台股純數字或 ETF 代號（如 2330, 0050, 00830, 00878, 00631L）自動補上 .TW
+      if (/^\d{4,6}[A-Z]?$/.test(clean)) {
         return clean + '.TW';
       }
       return clean;
+    }
+
+    function isTaiwanSymbol(sym) {
+      return /\.(TW|TWO)$/i.test(sym) || /^\d{4,6}[A-Z]?$/i.test(sym);
+    }
+
+    function extractTaiwanCode(sym) {
+      return String(sym || '').replace(/\.(TW|TWO)$/i, '').toUpperCase();
     }
 
     function isLikelyEtf(symbol) {
@@ -892,6 +1113,9 @@
       return Math.abs(h);
     }
 
+    /**
+     * 第三層降級：僅在完全無網路且無快取時啟用的確定性模擬數據
+     */
     function generateOfflineDataset(symbol) {
       const meta = BUILTIN_STOCK_META[symbol] || {
         name: `${symbol} (離線模擬)`,
@@ -952,11 +1176,12 @@
         prevClose: prev.close,
         bars,
         fetchedAt: Date.now(),
-        source: 'OFFLINE'
+        source: 'OFFLINE',
+        sourceLabel: 'OFFLINE SIM'
       };
     }
 
-    async function fetchWithTimeout(url, timeoutMs = 5500) {
+    async function fetchJsonWithTimeout(url, timeoutMs = 6000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -968,66 +1193,394 @@
       }
     }
 
-    async function fetchYahooChart(symbol) {
-      const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
-      const proxyUrls = [
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
-      ];
+    async function fetchTextWithTimeout(url, timeoutMs = 6000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.text();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
 
-      let lastErr = null;
-      for (const pUrl of proxyUrls) {
-        try {
-          const data = await fetchWithTimeout(pUrl, 5500);
-          const result = data && data.chart && data.chart.result && data.chart.result[0];
-          if (!result || !result.timestamp || !result.indicators || !result.indicators.quote || !result.indicators.quote[0]) {
-            throw new Error('無有效 K 線資料');
-          }
+    /* ------------------------------------------------------------------------
+       4A. 台股免代理直連引擎：FinMind Open Data + TWSE / TPEx OpenAPI
+       ------------------------------------------------------------------------ */
+    function getTwStockInfoCache() {
+      try {
+        const raw = localStorage.getItem(TW_INFO_CACHE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (_) {
+        return {};
+      }
+    }
 
-          const ts = result.timestamp;
-          const q = result.indicators.quote[0];
-          const barsMap = new Map();
+    function saveTwStockInfoCache(map) {
+      try {
+        localStorage.setItem(TW_INFO_CACHE_KEY, JSON.stringify(map));
+      } catch (_) {}
+    }
 
-          for (let i = 0; i < ts.length; i++) {
-            const o = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i], v = q.volume[i];
-            if (o == null || h == null || l == null || c == null || isNaN(c)) continue;
-            const d = new Date(ts[i] * 1000);
-            const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-            barsMap.set(dateStr, {
-              time: dateStr,
-              open: Number(o.toFixed(2)),
-              high: Number(h.toFixed(2)),
-              low: Number(l.toFixed(2)),
-              close: Number(c.toFixed(2)),
-              volume: Math.max(0, Math.round(v || 0))
-            });
-          }
-
-          const bars = Array.from(barsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
-          if (bars.length < 5) throw new Error('K 線筆數不足');
-
-          const meta = result.meta || {};
-          const lastBar = bars[bars.length - 1];
-          const prevBar = bars[bars.length - 2] || lastBar;
-          const livePrice = Number((meta.regularMarketPrice || lastBar.close).toFixed(2));
-          const prevClose = Number((meta.chartPreviousClose || prevBar.close).toFixed(2));
-
-          return {
-            symbol,
-            name: meta.shortName || meta.longName || symbol,
-            price: livePrice,
-            prevClose,
-            bars,
-            fetchedAt: Date.now(),
-            source: 'LIVE'
+    /**
+     * 透過 FinMind TaiwanStockInfo 取得真實中文股票名稱與上市/上櫃市場別（並快取於 localStorage）
+     */
+    async function fetchTaiwanStockMetaDirect(stockCode) {
+      const cache = getTwStockInfoCache();
+      if (cache[stockCode] && cache[stockCode].name) {
+        return cache[stockCode];
+      }
+      try {
+        const url = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&data_id=${encodeURIComponent(stockCode)}`;
+        const json = await fetchJsonWithTimeout(url, 4500);
+        if (json && Array.isArray(json.data) && json.data.length > 0) {
+          const item = json.data.find(d => d.stock_id === stockCode) || json.data[0];
+          const info = {
+            name: item.stock_name || stockCode,
+            market: item.type === 'tpex' ? 'TWO' : 'TW'
           };
+          cache[stockCode] = info;
+          saveTwStockInfoCache(cache);
+          return info;
+        }
+      } catch (_) {}
+      return { name: stockCode, market: 'TW' };
+    }
+
+    /**
+     * 將民國年日期 (如 "1151124" 或 "115/11/24") 轉為 YYYY-MM-DD
+     */
+    function parseRocDateToIso(rocStr) {
+      const digits = String(rocStr || '').replace(/\D/g, '');
+      if (digits.length === 7) {
+        const y = parseInt(digits.slice(0, 3), 10) + 1911;
+        const m = digits.slice(3, 5);
+        const d = digits.slice(5, 7);
+        if (y > 2000 && Number(m) >= 1 && Number(m) <= 12 && Number(d) >= 1 && Number(d) <= 31) {
+          return `${y}-${m}-${d}`;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * 輔助抓取 TWSE 證交所 / TPEx 櫃買中心 OpenAPI 最新交易日收盤與即時報價（免代理 CORS 直連）
+     */
+    async function fetchTwseOrTpexLatestQuote(stockCode) {
+      // 1. 嘗試 TWSE 上市每日收盤行情 OpenAPI
+      try {
+        const twseList = await fetchJsonWithTimeout('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL', 5000);
+        if (Array.isArray(twseList)) {
+          const found = twseList.find(row => String(row.Code || '').trim() === stockCode);
+          if (found) {
+            const close = parseFloat(String(found.ClosingPrice || '').replace(/,/g, ''));
+            const open = parseFloat(String(found.OpeningPrice || '').replace(/,/g, '')) || close;
+            const high = parseFloat(String(found.HighestPrice || '').replace(/,/g, '')) || close;
+            const low = parseFloat(String(found.LowestPrice || '').replace(/,/g, '')) || close;
+            const volume = parseInt(String(found.TradeVolume || '0').replace(/,/g, ''), 10) || 0;
+            const isoDate = parseRocDateToIso(found.Date);
+            if (Number.isFinite(close) && close > 0) {
+              return {
+                name: String(found.Name || '').trim() || stockCode,
+                market: 'TW',
+                date: isoDate,
+                open, high, low, close, volume,
+                apiSource: 'TWSE'
+              };
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 2. 嘗試 TPEx 上櫃每日收盤行情 OpenAPI
+      try {
+        const tpexList = await fetchJsonWithTimeout('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes', 5000);
+        if (Array.isArray(tpexList)) {
+          const found = tpexList.find(row => String(row.SecuritiesCompanyCode || '').trim() === stockCode);
+          if (found) {
+            const close = parseFloat(String(found.Close || '').replace(/,/g, ''));
+            const open = parseFloat(String(found.Open || '').replace(/,/g, '')) || close;
+            const high = parseFloat(String(found.High || '').replace(/,/g, '')) || close;
+            const low = parseFloat(String(found.Low || '').replace(/,/g, '')) || close;
+            const volume = parseInt(String(found.TradingShares || '0').replace(/,/g, ''), 10) || 0;
+            const isoDate = parseRocDateToIso(found.Date);
+            if (Number.isFinite(close) && close > 0) {
+              return {
+                name: String(found.CompanyName || '').trim() || stockCode,
+                market: 'TWO',
+                date: isoDate,
+                open, high, low, close, volume,
+                apiSource: 'TPEX'
+              };
+            }
+          }
+        }
+      } catch (_) {}
+
+      return null;
+    }
+
+    /**
+     * 台股第一層主力：直接透過瀏覽器 CORS 連線 FinMind Open Data + TWSE/TPEx OpenAPI
+     */
+    async function fetchTaiwanStockDirect(normalizedSym) {
+      const stockCode = extractTaiwanCode(normalizedSym);
+      const startDt = new Date();
+      startDt.setDate(startDt.getDate() - 380);
+      const startDateStr = `${startDt.getFullYear()}-${String(startDt.getMonth() + 1).padStart(2, '0')}-${String(startDt.getDate()).padStart(2, '0')}`;
+
+      const priceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${encodeURIComponent(stockCode)}&start_date=${startDateStr}`;
+
+      // 並行發起 FinMind 歷史 K 線、FinMind 中文名稱、以及 TWSE/TPEx 最新報價
+      const [priceRes, metaRes, latestQuote] = await Promise.allSettled([
+        fetchJsonWithTimeout(priceUrl, 6500),
+        fetchTaiwanStockMetaDirect(stockCode),
+        fetchTwseOrTpexLatestQuote(stockCode)
+      ]);
+
+      const barsMap = new Map();
+      let sourceLabel = 'FINMIND';
+
+      if (priceRes.status === 'fulfilled' && priceRes.value && Array.isArray(priceRes.value.data)) {
+        for (const row of priceRes.value.data) {
+          const c = Number(row.close);
+          const o = Number(row.open) || c;
+          const h = Number(row.max) || Math.max(o, c);
+          const l = Number(row.min) || Math.min(o, c);
+          const v = Math.max(0, Math.round(Number(row.Trading_Volume) || 0));
+          if (!row.date || !Number.isFinite(c) || c <= 0) continue;
+          barsMap.set(row.date, {
+            time: row.date,
+            open: Number(o.toFixed(2)),
+            high: Number(h.toFixed(2)),
+            low: Number(l.toFixed(2)),
+            close: Number(c.toFixed(2)),
+            volume: v
+          });
+        }
+      }
+
+      // 若 TWSE / TPEx OpenAPI 取得最新交易日資料，補齊或更新最新一根 K 線
+      const lq = latestQuote.status === 'fulfilled' ? latestQuote.value : null;
+      if (lq && lq.date) {
+        barsMap.set(lq.date, {
+          time: lq.date,
+          open: Number(lq.open.toFixed(2)),
+          high: Number(lq.high.toFixed(2)),
+          low: Number(lq.low.toFixed(2)),
+          close: Number(lq.close.toFixed(2)),
+          volume: lq.volume
+        });
+        if (barsMap.size <= 5) {
+          sourceLabel = lq.apiSource;
+        }
+      }
+
+      const bars = Array.from(barsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
+      if (bars.length < 5) {
+        throw new Error(`FinMind / TWSE 無足夠 ${stockCode} 歷史資料`);
+      }
+
+      const meta = metaRes.status === 'fulfilled' ? metaRes.value : { name: stockCode, market: 'TW' };
+      const finalName = (lq && lq.name && lq.name !== stockCode) ? lq.name : (meta.name || stockCode);
+      const marketSuffix = (lq && lq.market) ? lq.market : (meta.market || 'TW');
+      const finalSymbol = `${stockCode}.${marketSuffix}`;
+
+      const lastBar = bars[bars.length - 1];
+      const prevBar = bars[bars.length - 2] || lastBar;
+      const livePrice = (lq && Number.isFinite(lq.close) && lq.close > 0) ? Number(lq.close.toFixed(2)) : lastBar.close;
+
+      return {
+        symbol: finalSymbol,
+        name: finalName,
+        price: livePrice,
+        prevClose: prevBar.close,
+        bars,
+        fetchedAt: Date.now(),
+        source: 'LIVE',
+        sourceLabel
+      };
+    }
+
+    /* ------------------------------------------------------------------------
+       4B. 多代理高可用閘道池：Yahoo Finance (query1 / query2) + Stooq CSV
+       ------------------------------------------------------------------------ */
+    function buildCorsProxyCandidates(targetUrl) {
+      return [
+        {
+          type: 'ALLORIGINS_WRAP',
+          url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
+        },
+        {
+          type: 'DIRECT_JSON',
+          url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+        },
+        {
+          type: 'DIRECT_JSON',
+          url: `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
+        },
+        {
+          type: 'DIRECT_JSON',
+          url: `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+        }
+      ];
+    }
+
+    async function fetchViaCorsGatewaysJson(targetUrl) {
+      const candidates = buildCorsProxyCandidates(targetUrl);
+      let lastErr = null;
+
+      for (const cand of candidates) {
+        try {
+          const rawJson = await fetchJsonWithTimeout(cand.url, 5500);
+          if (cand.type === 'ALLORIGINS_WRAP') {
+            if (!rawJson || !rawJson.contents) throw new Error('AllOrigins contents 為空');
+            return JSON.parse(rawJson.contents);
+          }
+          return rawJson;
         } catch (err) {
           lastErr = err;
         }
       }
-      throw lastErr || new Error('全部代理抓取失敗');
+      throw lastErr || new Error('所有 CORS 代理閘道均無法取得回應');
     }
 
+    async function fetchViaCorsGatewaysText(targetUrl) {
+      const candidates = buildCorsProxyCandidates(targetUrl);
+      let lastErr = null;
+
+      for (const cand of candidates) {
+        try {
+          if (cand.type === 'ALLORIGINS_WRAP') {
+            const rawJson = await fetchJsonWithTimeout(cand.url, 5500);
+            if (!rawJson || !rawJson.contents) throw new Error('AllOrigins contents 為空');
+            return String(rawJson.contents);
+          }
+          return await fetchTextWithTimeout(cand.url, 5500);
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error('所有 CORS 代理閘道均無法取得文字回應');
+    }
+
+    function parseYahooChartPayload(data, symbol) {
+      const result = data && data.chart && data.chart.result && data.chart.result[0];
+      if (!result || !result.timestamp || !result.indicators || !result.indicators.quote || !result.indicators.quote[0]) {
+        throw new Error('Yahoo 回傳資料缺少 K 線欄位');
+      }
+
+      const ts = result.timestamp;
+      const q = result.indicators.quote[0];
+      const barsMap = new Map();
+
+      for (let i = 0; i < ts.length; i++) {
+        const o = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i], v = q.volume[i];
+        if (o == null || h == null || l == null || c == null || isNaN(c) || c <= 0) continue;
+        const d = new Date(ts[i] * 1000);
+        const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+        barsMap.set(dateStr, {
+          time: dateStr,
+          open: Number(o.toFixed(2)),
+          high: Number(h.toFixed(2)),
+          low: Number(l.toFixed(2)),
+          close: Number(c.toFixed(2)),
+          volume: Math.max(0, Math.round(v || 0))
+        });
+      }
+
+      const bars = Array.from(barsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
+      if (bars.length < 5) throw new Error('Yahoo K 線有效筆數不足');
+
+      const meta = result.meta || {};
+      const lastBar = bars[bars.length - 1];
+      const prevBar = bars[bars.length - 2] || lastBar;
+      const livePrice = Number((meta.regularMarketPrice || lastBar.close).toFixed(2));
+      const prevClose = Number((meta.chartPreviousClose || prevBar.close).toFixed(2));
+
+      return {
+        symbol,
+        name: meta.shortName || meta.longName || symbol,
+        price: livePrice,
+        prevClose,
+        bars,
+        fetchedAt: Date.now(),
+        source: 'LIVE',
+        sourceLabel: 'YAHOO'
+      };
+    }
+
+    async function fetchYahooChartMultiHost(symbol) {
+      const hosts = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
+      let lastErr = null;
+      for (const host of hosts) {
+        const targetUrl = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+        try {
+          const payload = await fetchViaCorsGatewaysJson(targetUrl);
+          return parseYahooChartPayload(payload, symbol);
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error('Yahoo Finance 抓取失敗');
+    }
+
+    /**
+     * 美股第二層備援：Stooq 歷史日線 CSV (https://stooq.com/q/d/l/?s=nvda.us&i=d)
+     */
+    async function fetchStooqDailyCsv(symbol) {
+      const cleanBase = symbol.replace(/[^A-Z0-9.-]/gi, '').toLowerCase();
+      const stooqSym = cleanBase.includes('.') ? cleanBase : `${cleanBase}.us`;
+      const stooqUrl = `https://stooq.com/q/d/l/?s=${encodeURIComponent(stooqSym)}&i=d`;
+
+      const csvText = await fetchViaCorsGatewaysText(stooqUrl);
+      const lines = csvText.trim().split(/\r?\n/);
+      if (lines.length < 10 || !lines[0].toLowerCase().includes('date')) {
+        throw new Error('Stooq CSV 格式無效或查無標的');
+      }
+
+      const bars = [];
+      // 取最近 260 個交易日（約一年）
+      const recentLines = lines.slice(-260);
+      for (const line of recentLines) {
+        const parts = line.split(',');
+        if (parts.length < 5) continue;
+        const [dateStr, oStr, hStr, lStr, cStr, vStr] = parts;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
+        const o = parseFloat(oStr), h = parseFloat(hStr), l = parseFloat(lStr), c = parseFloat(cStr);
+        const v = Math.max(0, Math.round(parseFloat(vStr) || 0));
+        if (!Number.isFinite(c) || c <= 0) continue;
+        bars.push({
+          time: dateStr,
+          open: Number((Number.isFinite(o) ? o : c).toFixed(2)),
+          high: Number((Number.isFinite(h) ? h : c).toFixed(2)),
+          low: Number((Number.isFinite(l) ? l : c).toFixed(2)),
+          close: Number(c.toFixed(2)),
+          volume: v
+        });
+      }
+
+      if (bars.length < 5) throw new Error('Stooq 有效 K 線不足');
+      bars.sort((a, b) => a.time.localeCompare(b.time));
+      const last = bars[bars.length - 1];
+      const prev = bars[bars.length - 2] || last;
+
+      return {
+        symbol,
+        name: `${symbol} (Stooq)`,
+        price: last.close,
+        prevClose: prev.close,
+        bars,
+        fetchedAt: Date.now(),
+        source: 'LIVE',
+        sourceLabel: 'STOOQ'
+      };
+    }
+
+    /**
+     * 統一行情入口調度器：依市場別執行多層次連網抓取與降級保護
+     */
     async function getMarketData(rawInput, forceRefresh = false) {
       const sym = normalizeSymbol(rawInput);
       if (!sym) throw new Error('請輸入有效的股票代號');
@@ -1035,46 +1588,80 @@
       const ttl = Number(appState.settings.cacheTtlMs);
       const cached = appState.marketCache[sym];
 
+      // 0. 檢查本地快取是否仍在有效期限內
       if (!forceRefresh && cached && cached.bars && cached.bars.length > 0) {
         const age = Date.now() - (cached.fetchedAt || 0);
         if (ttl === 0 || age < ttl) {
-          updateStatusBadge(cached.source === 'OFFLINE' ? 'OFFLINE' : 'CACHED');
+          if (cached.source === 'OFFLINE') {
+            updateStatusBadge('OFFLINE');
+          } else {
+            updateStatusBadge('CACHED', cached.sourceLabel || 'LOCAL');
+          }
           return cached;
         }
       }
 
       updateStatusBadge('LOADING');
-      try {
-        const liveData = await fetchYahooChart(sym);
-        appState.marketCache[sym] = liveData;
-        saveState();
-        updateStatusBadge('LIVE');
-        return liveData;
-      } catch (errTW) {
-        if (/^\d{4,6}$/.test(String(rawInput).trim()) && sym.endsWith('.TW')) {
-          const symTwo = sym.replace(/\.TW$/, '.TWO');
+
+      // 路徑 A：台股與台股 ETF（優先免代理直連 FinMind + TWSE/TPEx，其次 Yahoo .TW / .TWO）
+      if (isTaiwanSymbol(sym)) {
+        try {
+          const twData = await fetchTaiwanStockDirect(sym);
+          appState.marketCache[sym] = twData;
+          if (twData.symbol !== sym) {
+            appState.marketCache[twData.symbol] = twData;
+          }
+          saveState();
+          updateStatusBadge('LIVE', twData.sourceLabel || 'FINMIND');
+          return twData;
+        } catch (errDirect) {
+          // 第二層：多代理 Yahoo Finance (.TW 與 .TWO)
+          const code = extractTaiwanCode(sym);
+          const candidates = sym.endsWith('.TWO') ? [`${code}.TWO`, `${code}.TW`] : [`${code}.TW`, `${code}.TWO`];
+          for (const ySym of candidates) {
+            try {
+              const yData = await fetchYahooChartMultiHost(ySym);
+              appState.marketCache[sym] = yData;
+              appState.marketCache[ySym] = yData;
+              saveState();
+              updateStatusBadge('LIVE', 'YAHOO');
+              return yData;
+            } catch (_) {}
+          }
+        }
+      } else {
+        // 路徑 B：美股與全球標的（第一層 Yahoo 多代理池，第二層 Stooq CSV）
+        try {
+          const yData = await fetchYahooChartMultiHost(sym);
+          appState.marketCache[sym] = yData;
+          saveState();
+          updateStatusBadge('LIVE', 'YAHOO');
+          return yData;
+        } catch (errYahoo) {
           try {
-            const liveTwo = await fetchYahooChart(symTwo);
-            appState.marketCache[symTwo] = liveTwo;
+            const stooqData = await fetchStooqDailyCsv(sym);
+            appState.marketCache[sym] = stooqData;
             saveState();
-            updateStatusBadge('LIVE');
-            return liveTwo;
+            updateStatusBadge('LIVE', 'STOOQ');
+            return stooqData;
           } catch (_) {}
         }
-
-        if (cached && cached.bars && cached.bars.length > 0) {
-          updateStatusBadge('CACHED');
-          showToast(`無法連線即時行情，已載入 ${sym} 歷史快取`, 'warn');
-          return cached;
-        }
-
-        const offlineData = generateOfflineDataset(sym);
-        appState.marketCache[sym] = offlineData;
-        saveState();
-        updateStatusBadge('OFFLINE');
-        showToast(`網路受限或查無即時報價，${sym} 已啟用離線模擬行情`, 'warn');
-        return offlineData;
       }
+
+      // 降級保護 1：若有舊快取，優先使用舊快取而非假數據
+      if (cached && cached.bars && cached.bars.length > 0 && cached.source !== 'OFFLINE') {
+        updateStatusBadge('CACHED', cached.sourceLabel || 'LOCAL');
+        showToast(`即時連線逾時，已載入 ${sym} 歷史快取報價`, 'warn');
+        return cached;
+      }
+
+      // 降級保護 2：完全離線或無效代號時，退回確定性離線模擬
+      const offlineData = generateOfflineDataset(sym);
+      appState.marketCache[sym] = offlineData;
+      saveState();
+      updateStatusBadge('OFFLINE');
+      showToast(`網路受限或查無此標的，${sym} 已啟用離線模擬行情`, 'warn');
+      return offlineData;
     }
 
     /* ========================================================================
@@ -1354,13 +1941,16 @@
       btn.disabled = true;
       btn.textContent = '查詢中...';
       try {
-        const data = await getMarketData(raw, false);
+        const data = await getMarketData(raw, true);
         document.getElementById('orderSymbol').value = data.symbol;
         document.getElementById('orderPrice').value = data.price;
         document.getElementById('orderQuoteName').textContent = `${data.symbol} ${data.name}`;
         document.getElementById('orderIsEtf').checked = isLikelyEtf(data.symbol);
         updateOrderPreview();
         renderSimTab();
+        if (data.source === 'LIVE') {
+          showToast(`已取得 ${data.symbol} (${data.name}) 最新報價 ${fmtPrice(data.price)}`, 'success');
+        }
       } catch (e) {
         showToast('報價查詢失敗：' + e.message, 'error');
       } finally {
@@ -1432,7 +2022,6 @@
 
       const acc = getActiveAccount();
       const { sym, price, shares, isEtf, metrics } = check;
-      // 交易理由非必填：未選擇時紀錄為「未填寫」
       const rawReason = document.getElementById('orderReason').value;
       const reason = rawReason ? rawReason : '未填寫';
       const note = document.getElementById('orderNote').value.trim();
@@ -1542,8 +2131,12 @@
       }
       showToast(`正在更新 ${syms.length} 檔持股即時報價...`, 'info');
       for (const sym of syms) {
-        await getMarketData(sym, true);
+        const data = await getMarketData(sym, true);
+        if (data && data.name && acc.holdings[sym]) {
+          acc.holdings[sym].name = data.name;
+        }
       }
+      saveState();
       renderSimTab();
       showToast('持股現價更新完成', 'success');
     }
@@ -1947,6 +2540,12 @@
 
       try {
         currentChartData = await getMarketData(sym, forceRefresh);
+        if (currentChartData.symbol && currentChartData.symbol !== sym) {
+          appState.activeChartSymbol = currentChartData.symbol;
+          document.getElementById('chartSymbolInput').value = currentChartData.symbol;
+          saveState();
+          renderWatchlistChips();
+        }
         updateChartHeader();
         renderActiveChart();
       } catch (e) {
@@ -1990,6 +2589,9 @@
 
       document.getElementById('chartHeaderSymbol').textContent = d.symbol;
       document.getElementById('chartHeaderName').textContent = d.name;
+      document.getElementById('chartSourceTag').textContent =
+        d.source === 'LIVE' ? `即時源：${d.sourceLabel || 'LIVE'}` : '離線模擬數據';
+
       const pEl = document.getElementById('chartHeaderPrice');
       pEl.textContent = fmtPrice(d.price);
       pEl.className = `text-[18px] font-bold mono ${getPnlClass(diff)}`;
