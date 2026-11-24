@@ -39,8 +39,8 @@
       --up-bg: rgba(255, 59, 48, 0.14);
       --down-color: #00C853;
       --down-bg: rgba(0, 200, 83, 0.14);
-      /* 因應 iOS 頂部透明化 UI，確保狀態列與動態島下方有充足安全避讓空間 */
-      --safe-top: calc(max(env(safe-area-inset-top, 0px), 20px) + 12px);
+      /* 加大 iOS 26 頂部透明化 UI 安全下移避讓空間，確保狀態列、動態島與上方控制列完全不重疊 */
+      --safe-top: calc(max(env(safe-area-inset-top, 0px), 36px) + 20px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
@@ -160,6 +160,17 @@
       top: calc(var(--safe-top) + 52px);
     }
 
+    /* 可手勢滑動關閉的通知氣泡 */
+    .toast-item {
+      touch-action: none;
+      user-select: none;
+      will-change: transform, opacity;
+      cursor: grab;
+    }
+    .toast-item:active {
+      cursor: grabbing;
+    }
+
     /* 底部 iOS 原生毛玻璃純黑雙分頁導覽列 */
     .bottom-nav {
       position: fixed;
@@ -176,7 +187,7 @@
 
     /* 主內容區 */
     .main-container {
-      padding-bottom: calc(78px + var(--safe-bottom));
+      padding-bottom: calc(82px + var(--safe-bottom));
       min-height: 100vh;
       background-color: var(--bg-surface);
     }
@@ -192,44 +203,43 @@
       animation: pulseDot 2s infinite;
     }
 
-    /* 一般底部彈出 Modal 遮罩 */
+    /* 所有彈出 Modal 統一固定在頁面上方安全區下方，確保標題與「關閉 ✕」按鈕永遠在最上方 */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       z-index: 60;
-      background-color: rgba(0, 0, 0, 0.82);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background-color: rgba(0, 0, 0, 0.84);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       display: flex;
-      align-items: flex-end;
+      align-items: flex-start;
       justify-content: center;
+      padding-top: var(--safe-top);
+      padding-left: 12px;
+      padding-right: 12px;
+      padding-bottom: calc(16px + var(--safe-bottom));
+      overflow-y: auto;
     }
-    @media (min-width: 640px) {
-      .modal-backdrop {
-        align-items: center;
-        padding: 16px;
-      }
+    /* 切換帳戶視窗置中對齊，並避開上下安全區 */
+    #accountSwitchModal {
+      align-items: center;
+      padding-top: calc(var(--safe-top) + 12px);
+      padding-bottom: calc(24px + var(--safe-bottom));
     }
     .modal-panel {
       width: 100%;
       max-width: 520px;
-      max-height: 88vh;
+      max-height: calc(100dvh - var(--safe-top) - 24px);
       background-color: #0F131A;
-      border-top: 1px solid #2A3343;
-      border-radius: 16px 16px 0 0;
+      border: 1px solid #2A3343;
+      border-radius: 14px;
       display: flex;
       flex-direction: column;
-      padding-bottom: var(--safe-bottom);
-    }
-    @media (min-width: 640px) {
-      .modal-panel {
-        border: 1px solid #2A3343;
-        border-radius: 12px;
-        padding-bottom: 0;
-      }
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
     }
 
-    /* 設定頁面全螢幕佔滿樣式 */
+    /* 設定頁面全螢幕佔滿樣式（頂部列與關閉按鈕同樣對齊安全區最上方） */
     #settingsModal {
       align-items: stretch;
       padding: 0;
@@ -292,7 +302,7 @@
   </header>
 
   <!-- ========================================================================
-       主內容區 (MAIN - 充足呼吸感與主次分明的行動券商版面)
+       主內容區 (MAIN - 雙分頁獨立記憶捲動位置，互不干擾)
        ======================================================================== -->
   <main class="main-container">
     <div class="max-w-3xl mx-auto">
@@ -503,7 +513,7 @@
       </section>
 
       <!-- ====================================================================
-           分頁二：盤面分析 (純淨圖表檢視器，確保價格數字完整不裁切)
+           分頁二：盤面分析 (純淨圖表檢視器，獨立捲動高度不隨模擬股票連動)
            ==================================================================== -->
       <section id="tab-chart" class="hidden">
         <!-- 1. 搜尋列與自選股 Chips -->
@@ -532,17 +542,24 @@
             </div>
           </div>
 
-          <!-- 時間週期切換 (日K / 週K / 月K) 與資料來源 -->
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5">
-              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-3 py-1 text-[12px] font-semibold rounded-[6px]">日K</button>
-              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-3 py-1 text-[12px] font-semibold rounded-[6px]">週K</button>
-              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-3 py-1 text-[12px] font-semibold rounded-[6px]">月K</button>
+          <!-- 時間週期切換 (日K / 週K / 月K) 與資料來源（單行不換行） -->
+          <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">日K</button>
+              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">週K</button>
+              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">月K</button>
             </div>
-            <div class="flex items-center gap-2 text-[11px] num text-[#586274]">
-              <span id="chartSourceTag">--</span>
-              <span>·</span>
-              <span id="chartEngineTag">LWC</span>
+            <div class="flex items-center gap-1.5 text-[11px] num text-[#586274] shrink-0 whitespace-nowrap">
+              <button type="button" onclick="triggerChartDatePicker()" title="選擇指定日期跳轉至該日盤面"
+                class="tap-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#141923] text-[#F4F6F9] hover:text-[#FF9900] text-[11px] font-medium whitespace-nowrap shrink-0">
+                <span id="chartDateJumpLabel" class="whitespace-nowrap">選日期</span>
+                <span class="text-[#8A94A6] shrink-0">▾</span>
+              </button>
+              <input id="chartDateInput" type="date" onchange="jumpToChartDate(this.value)"
+                class="sr-only" aria-label="選擇盤面日期">
+              <span id="chartSourceTag" class="whitespace-nowrap">--</span>
+              <span class="shrink-0">·</span>
+              <span id="chartEngineTag" class="whitespace-nowrap">LWC</span>
             </div>
           </div>
 
@@ -615,13 +632,13 @@
   </nav>
 
   <!-- ========================================================================
-       MODAL 1：新增 / 編輯帳戶視窗 (accountModal)
+       MODAL 1：新增 / 編輯帳戶視窗 (accountModal - 固定頁面上方，關閉鈕位於頂部)
        ======================================================================== -->
   <div id="accountModal" class="modal-backdrop hidden">
     <div class="modal-panel">
-      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0 bg-[#12161F]">
         <span id="accountModalTitle" class="text-[14px] font-bold text-[#F4F6F9]">建立新帳戶</span>
-        <button onclick="closeModal('accountModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
+        <button onclick="closeModal('accountModal')" class="tap-btn px-2.5 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">關閉 ✕</button>
       </div>
       <div class="p-4 space-y-3.5 overflow-y-auto">
         <div>
@@ -645,13 +662,13 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 2：帳戶充值視窗 (depositModal)
+       MODAL 2：帳戶充值視窗 (depositModal - 固定頁面上方，關閉鈕位於頂部)
        ======================================================================== -->
   <div id="depositModal" class="modal-backdrop hidden">
     <div class="modal-panel">
-      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0 bg-[#12161F]">
         <span class="text-[14px] font-bold text-[#F4F6F9]">帳戶資金充值</span>
-        <button onclick="closeModal('depositModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
+        <button onclick="closeModal('depositModal')" class="tap-btn px-2.5 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">關閉 ✕</button>
       </div>
       <div class="p-4 space-y-3.5 overflow-y-auto">
         <div class="py-2 hairline-b text-[12px] space-y-1.5">
@@ -807,15 +824,15 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 4：報告 / JSON 匯出檢視視窗 (exportModal)
+       MODAL 4：報告 / JSON 匯出檢視視窗 (exportModal - 固定頁面上方，關閉鈕位於頂部)
        ======================================================================== -->
   <div id="exportModal" class="modal-backdrop hidden">
     <div class="modal-panel">
-      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0 bg-[#12161F]">
         <span id="exportModalTitle" class="text-[14px] font-bold text-[#F4F6F9]">檢討報告匯出</span>
-        <button onclick="closeModal('exportModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
+        <button onclick="closeModal('exportModal')" class="tap-btn px-2.5 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">關閉 ✕</button>
       </div>
-      <div class="p-4 space-y-3">
+      <div class="p-4 space-y-3 overflow-y-auto">
         <textarea id="exportTextarea" rows="12" readonly class="w-full p-3 num text-[12px] leading-relaxed"></textarea>
         <div class="grid grid-cols-2 gap-2.5">
           <button onclick="closeModal('exportModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">關閉</button>
@@ -826,27 +843,28 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 5：切換帳戶視窗
+       MODAL 5：切換帳戶視窗 (accountSwitchModal - 固定頁面上方，關閉鈕位於頂部)
        ======================================================================== -->
   <div id="accountSwitchModal" class="modal-backdrop hidden">
     <div class="modal-panel">
-      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0 bg-[#12161F]">
         <span class="text-[14px] font-bold text-[#F4F6F9]">切換帳戶</span>
-        <button onclick="closeModal('accountSwitchModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
+        <button onclick="closeModal('accountSwitchModal')" class="tap-btn px-2.5 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">關閉 ✕</button>
       </div>
-      <div id="accountSwitchList" class="divide-y divide-[#1C222D] overflow-y-auto max-h-[65vh]"></div>
+      <div id="accountSwitchList" class="divide-y divide-[#1C222D] overflow-y-auto"></div>
     </div>
   </div>
 
   <!-- ========================================================================
-       MODAL 6：自訂確認對話框 (取代 confirm())
+       MODAL 6：自訂確認對話框 (confirmModal - 固定頁面上方，關閉鈕位於頂部)
        ======================================================================== -->
   <div id="confirmModal" class="modal-backdrop hidden">
-    <div class="modal-panel" style="max-width: 400px;">
-      <div class="px-4 py-3.5 hairline-b">
+    <div class="modal-panel" style="max-width: 420px;">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0 bg-[#12161F]">
         <span id="confirmTitle" class="text-[14px] font-bold text-[#F4F6F9]">確認操作</span>
+        <button onclick="closeModal('confirmModal')" class="tap-btn px-2.5 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">關閉 ✕</button>
       </div>
-      <div class="p-4 space-y-4">
+      <div class="p-4 space-y-4 overflow-y-auto">
         <p id="confirmMessage" class="text-[13px] text-[#D1D5DB] leading-relaxed"></p>
         <div class="grid grid-cols-2 gap-2.5">
           <button onclick="closeModal('confirmModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
@@ -857,18 +875,18 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 7：買入 / 賣出委託確認視窗 (orderConfirmModal - 確認後才扣款)
+       MODAL 7：買入 / 賣出委託確認視窗 (orderConfirmModal - 固定頁面上方)
        ======================================================================== -->
   <div id="orderConfirmModal" class="modal-backdrop hidden">
     <div class="modal-panel" style="max-width: 420px;">
-      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0 bg-[#12161F]">
         <div class="flex items-center gap-2">
           <span id="ocSideBadge" class="px-2 py-0.5 text-[11px] font-bold rounded pill-up">買進委託</span>
           <span class="text-[14px] font-bold text-[#F4F6F9]">請確認委託明細</span>
         </div>
-        <button onclick="closeModal('orderConfirmModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
+        <button onclick="closeModal('orderConfirmModal')" class="tap-btn px-2.5 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">關閉 ✕</button>
       </div>
-      <div class="p-4 space-y-3.5">
+      <div class="p-4 space-y-3.5 overflow-y-auto">
         <div class="py-2.5 px-3 bg-[#141923] rounded-[10px] space-y-2 text-[13px]">
           <div class="flex items-center justify-between">
             <span class="text-[#8A94A6]">委託標的</span>
@@ -950,7 +968,6 @@
       }
     };
 
-    /* 離線模擬基準價格表（採用貼近近期市場水準之合理參考價，絕不混入真實線上序列） */
     const BUILTIN_STOCK_META = {
       '2330.TW': { name: '台積電 (離線模擬)', base: 1050, vol: 32000000, drift: 0.0009, sigma: 0.016, seed: 2330 },
       '0050.TW': { name: '元大台灣50 (離線模擬)', base: 195, vol: 14000000, drift: 0.0006, sigma: 0.011, seed: 50 },
@@ -1009,6 +1026,14 @@
     let lwcChart = null;
     let lwcResizeObserver = null;
     let currentChartData = null;
+    let activeRenderedBars = [];
+    let selectedChartTargetDate = '';
+
+    /* 兩個分頁各自獨立的垂直捲動位置記憶（互不干擾） */
+    const tabScrollPositions = {
+      sim: 0,
+      chart: 0
+    };
 
     /* ========================================================================
        連線健康管理狀態機
@@ -1044,7 +1069,6 @@
           ...a,
           totalDeposited: typeof a.totalDeposited === 'number' ? a.totalDeposited : 0
         }));
-        // 啟動時剔除任何殘留的離線模擬資料或歷史異常跳空髒資料
         const cleanCache = {};
         if (parsed.marketCache && typeof parsed.marketCache === 'object') {
           for (const [k, v] of Object.entries(parsed.marketCache)) {
@@ -1096,23 +1120,110 @@
       const container = document.getElementById('toastContainer');
       const el = document.createElement('div');
       const borderColor = type === 'error' ? '#FF3B30' : (type === 'success' ? '#00C853' : '#FF9900');
-      el.className = 'px-3.5 py-2.5 bg-[#141923] text-[#F4F6F9] text-[12px] font-medium shadow-xl rounded-[10px] pointer-events-auto';
+      el.className = 'toast-item px-3.5 py-2.5 bg-[#141923] text-[#F4F6F9] text-[12px] font-medium shadow-xl rounded-[10px] pointer-events-auto flex items-center justify-between gap-2';
       el.style.border = `1px solid #2A3343`;
       el.style.borderLeft = `3px solid ${borderColor}`;
-      el.textContent = msg;
+
+      const textSpan = document.createElement('span');
+      textSpan.className = 'leading-snug';
+      textSpan.textContent = msg;
+      el.appendChild(textSpan);
+
       container.appendChild(el);
-      setTimeout(() => {
+
+      let dismissed = false;
+      let startX = 0;
+      let startY = 0;
+      let deltaX = 0;
+      let deltaY = 0;
+      let dragging = false;
+
+      const dismissToast = (dir = 'fade') => {
+        if (dismissed) return;
+        dismissed = true;
+        clearTimeout(autoTimer);
+        el.style.pointerEvents = 'none';
+        el.style.transition = 'transform 0.22s ease, opacity 0.22s ease';
+        if (dir === 'up') {
+          el.style.transform = 'translateY(-44px)';
+        } else if (dir === 'right') {
+          el.style.transform = 'translateX(115%)';
+        }
         el.style.opacity = '0';
-        el.style.transition = 'opacity 0.25s ease';
-        setTimeout(() => el.remove(), 260);
-      }, 3000);
+        setTimeout(() => el.remove(), 230);
+      };
+
+      const autoTimer = setTimeout(() => dismissToast('fade'), 3000);
+
+      const onPointerDown = (e) => {
+        if (dismissed) return;
+        dragging = true;
+        const pt = e.touches ? e.touches[0] : e;
+        startX = pt.clientX;
+        startY = pt.clientY;
+        deltaX = 0;
+        deltaY = 0;
+        el.style.transition = 'none';
+      };
+
+      const onPointerMove = (e) => {
+        if (!dragging || dismissed) return;
+        const pt = e.touches ? e.touches[0] : e;
+        const dx = pt.clientX - startX;
+        const dy = pt.clientY - startY;
+        // 僅允許向右滑動或向上滑動產生即時跟手位移
+        deltaX = Math.max(0, dx);
+        deltaY = Math.min(0, dy);
+        if (deltaX > 4 || deltaY < -4) {
+          if (e.cancelable) e.preventDefault();
+          const opacity = Math.max(0.15, 1 - Math.max(deltaX / 150, Math.abs(deltaY) / 70));
+          el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+          el.style.opacity = String(opacity);
+        }
+      };
+
+      const onPointerUp = () => {
+        if (!dragging || dismissed) return;
+        dragging = false;
+        if (deltaY <= -28) {
+          dismissToast('up');
+        } else if (deltaX >= 55) {
+          dismissToast('right');
+        } else {
+          el.style.transition = 'transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease';
+          el.style.transform = 'translate(0px, 0px)';
+          el.style.opacity = '1';
+        }
+      };
+
+      el.addEventListener('touchstart', onPointerDown, { passive: true });
+      el.addEventListener('touchmove', onPointerMove, { passive: false });
+      el.addEventListener('touchend', onPointerUp);
+      el.addEventListener('touchcancel', onPointerUp);
+
+      el.addEventListener('mousedown', (e) => {
+        onPointerDown(e);
+        const onMouseMove = (ev) => onPointerMove(ev);
+        const onMouseUp = () => {
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+          onPointerUp();
+        };
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
     }
 
     function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollTop = 0;
+        el.classList.remove('hidden');
+      }
     }
     function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
     }
 
     function showConfirmDialog(title, message, onConfirm) {
@@ -1257,14 +1368,6 @@
       return /^00\d{2,4}/.test(String(symbol || '').trim());
     }
 
-    /**
-     * 嚴格清洗與驗證每根 K 線的 OHLCV 數值與連續性：
-     * 1. 過濾非正數 (<= 0)、NaN、非 YYYY-MM-DD 日期格式
-     * 2. 修正或剔除高低價倒掛與單根極端離群振幅
-     * 3. 依日期嚴格升冪排序並去重
-     * 4. 剔除與整體中位數相差超過 2.2 倍、或單日異常跳空 (>45%) 的髒資料
-     * 5. 若傳入預期現價，檢查最後一根收盤價與現價的偏差是否超過 25%，超過則整組拒絕（嚴禁硬拼不同基準）
-     */
     function sanitizeAndValidateBars(rawBars, expectedPrice = null) {
       if (!Array.isArray(rawBars) || rawBars.length === 0) return [];
 
@@ -1305,7 +1408,6 @@
       let prevClose = null;
 
       for (const bar of sorted) {
-        // 與相鄰序列中位數價格基準相差超過 2.2 倍則視為不同基準髒資料，嚴格過濾
         if (bar.close > medianClose * 2.2 || bar.close < medianClose / 2.2) continue;
 
         if (prevClose !== null) {
@@ -1415,9 +1517,6 @@
       return `${url}${sep}_cb=${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     }
 
-    /* ------------------------------------------------------------------------
-       4A. 動態 <script> JSONP 引擎 (Yahoo Finance 官方支援 callback 參數)
-       ------------------------------------------------------------------------ */
     let jsonpSeq = 0;
 
     function fetchJsonpCallback(baseUrl, callbackParamName = 'callback', timeoutMs = 6000) {
@@ -1777,7 +1876,7 @@
     }
 
     /* ------------------------------------------------------------------------
-       4C. 美股 & 跨市場完整 K 線驗證管線 (Yahoo Finance + Stooq CSV，嚴禁跨源硬拼)
+       4C. 美股 & 跨市場完整 K 線驗證管線 (Yahoo Finance + Stooq CSV)
        ------------------------------------------------------------------------ */
     function buildCorsProxyCandidates(targetUrl, forceRefresh = false) {
       const bustedTarget = appendCacheBuster(targetUrl, forceRefresh);
@@ -1918,7 +2017,6 @@
       const hosts = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
       const tasks = [];
 
-      // 通道 1：免代理 JSONP 直連
       for (const host of hosts) {
         const jsonpBase = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
         tasks.push(
@@ -1928,7 +2026,6 @@
         );
       }
 
-      // 通道 2：純淨 Simple Request CORS 代理平行競速
       for (const host of hosts) {
         const targetUrl = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
         tasks.push(
@@ -1989,9 +2086,6 @@
       };
     }
 
-    /**
-     * 核心行情取得管線（嚴格驗證 K 線連續性 + 離線隔離，絕不混拼不同來源假資料）
-     */
     async function getMarketData(rawInput, forceRefresh = false) {
       const sym = normalizeSymbol(rawInput);
       const dispSym = formatDisplaySymbol(sym);
@@ -2000,7 +2094,6 @@
       const ttl = Number(appState.settings.cacheTtlMs);
       const cached = appState.marketCache[sym];
 
-      // 1. 僅讀取「真實 LIVE 且通過驗證的快取」
       if (!forceRefresh && cached && cached.source === 'LIVE' && Array.isArray(cached.bars) && cached.bars.length >= 5) {
         const age = Date.now() - (cached.fetchedAt || 0);
         if (ttl === 0 || age < ttl) {
@@ -2009,7 +2102,6 @@
         }
       }
 
-      // 2. 併發去重
       const myEpoch = connState.requestEpoch;
       const existingReq = connState.inFlightMap.get(sym);
       if (!forceRefresh && existingReq && existingReq.epoch === myEpoch) {
@@ -2078,9 +2170,6 @@
       return pipelineTask;
     }
 
-    /**
-     * 一鍵硬重置重連 (Hard Reset Reconnect)
-     */
     async function hardResetReconnect(silent = false) {
       connState.requestEpoch += 1;
       connState.inFlightMap.clear();
@@ -2640,7 +2729,6 @@
       const { side, sym, dispSym, stockName, price, shares, isEtf, metrics, reason, note } = pendingOrderPayload;
       const acc = getActiveAccount();
 
-      // 二次安全檢查：確保確認視窗開啟期間資金與持股仍足夠
       if (side === 'BUY' && acc.cash < metrics.netAmount) {
         closeModal('orderConfirmModal');
         pendingOrderPayload = null;
@@ -3194,6 +3282,7 @@
       const sym = normalizeSymbol(symbol);
       if (!sym) return;
       appState.activeChartSymbol = sym;
+      selectedChartTargetDate = '';
       document.getElementById('chartSymbolInput').value = formatDisplaySymbol(sym);
       saveState();
       renderWatchlistChips();
@@ -3206,10 +3295,99 @@
           saveState();
           renderWatchlistChips();
         }
+        syncChartDatePickerBounds();
         updateChartHeader();
         renderActiveChart();
       } catch (e) {
         showToast('載入圖表失敗：' + e.message, 'error');
+      }
+    }
+
+    function syncChartDatePickerBounds() {
+      const dateInput = document.getElementById('chartDateInput');
+      const labelEl = document.getElementById('chartDateJumpLabel');
+      if (!dateInput || !currentChartData || !Array.isArray(currentChartData.bars) || currentChartData.bars.length === 0) return;
+
+      const bars = currentChartData.bars;
+      const minDate = bars[0].time;
+      const maxDate = bars[bars.length - 1].time;
+      dateInput.min = minDate;
+      dateInput.max = maxDate;
+      if (!selectedChartTargetDate) {
+        dateInput.value = maxDate;
+        if (labelEl) labelEl.textContent = '選日期';
+      }
+    }
+
+    function triggerChartDatePicker() {
+      const dateInput = document.getElementById('chartDateInput');
+      if (!dateInput) return;
+      if (!currentChartData || !Array.isArray(currentChartData.bars) || currentChartData.bars.length === 0) {
+        showToast('請先載入股票線圖資料', 'warn');
+        return;
+      }
+      syncChartDatePickerBounds();
+      try {
+        if (typeof dateInput.showPicker === 'function') {
+          dateInput.showPicker();
+        } else {
+          dateInput.focus();
+          dateInput.click();
+        }
+      } catch (_) {
+        dateInput.focus();
+        dateInput.click();
+      }
+    }
+
+    function jumpToChartDate(pickedDate) {
+      if (!pickedDate || !currentChartData || !Array.isArray(currentChartData.bars) || currentChartData.bars.length === 0) {
+        return;
+      }
+      const bars = activeRenderedBars.length > 0
+        ? activeRenderedBars
+        : aggregateBars(currentChartData.bars, appState.activeTimeframe);
+
+      if (bars.length === 0) return;
+
+      // 尋找該日期或最接近的交易日索引
+      let targetIdx = bars.findIndex(b => b.time >= pickedDate);
+      if (targetIdx === -1) {
+        targetIdx = bars.length - 1;
+      } else if (targetIdx > 0 && bars[targetIdx].time !== pickedDate) {
+        // 若所選為假日，比對前後交易日距離取最近者
+        const prevTime = new Date(bars[targetIdx - 1].time).getTime();
+        const nextTime = new Date(bars[targetIdx].time).getTime();
+        const pickTime = new Date(pickedDate).getTime();
+        if (Math.abs(pickTime - prevTime) <= Math.abs(nextTime - pickTime)) {
+          targetIdx = targetIdx - 1;
+        }
+      }
+
+      const targetBar = bars[targetIdx];
+      selectedChartTargetDate = targetBar.time;
+      const labelEl = document.getElementById('chartDateJumpLabel');
+      if (labelEl) {
+        labelEl.textContent = targetBar.time;
+      }
+
+      if (lwcChart) {
+        const halfWindow = 22;
+        const fromIdx = Math.max(0, targetIdx - halfWindow);
+        const toIdx = Math.min(bars.length - 1, targetIdx + halfWindow);
+        lwcChart.timeScale().setVisibleRange({
+          from: bars[fromIdx].time,
+          to: bars[toIdx].time
+        });
+      } else {
+        renderActiveChart();
+      }
+
+      updateCrosshairReadoutForBar(bars, targetIdx, appState.activeChartMode);
+      if (targetBar.time !== pickedDate) {
+        showToast(`${pickedDate} 非交易日，已跳轉至最近交易日 ${targetBar.time}`, 'info');
+      } else {
+        showToast(`已跳轉至 ${targetBar.time} 盤面`, 'success');
       }
     }
 
@@ -3265,8 +3443,8 @@
       document.querySelectorAll('.tf-btn').forEach(btn => {
         const active = btn.dataset.tf === appState.activeTimeframe;
         btn.className = active
-          ? 'tf-btn tap-btn px-3 py-1 text-[12px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900]'
-          : 'tf-btn tap-btn px-3 py-1 text-[12px] font-medium rounded-[6px] text-[#8A94A6]';
+          ? 'tf-btn tap-btn px-2.5 py-1 text-[12px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900] whitespace-nowrap shrink-0'
+          : 'tf-btn tap-btn px-2.5 py-1 text-[12px] font-medium rounded-[6px] text-[#8A94A6] whitespace-nowrap shrink-0';
       });
 
       document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -3318,13 +3496,15 @@
       destroyActiveChart();
 
       const bars = aggregateBars(currentChartData.bars, appState.activeTimeframe);
+      activeRenderedBars = bars;
       const viewport = document.getElementById('chartViewport');
       const mode = appState.activeChartMode;
       const colors = getThemeColors();
+      const targetIdx = selectedChartTargetDate ? bars.findIndex(b => b.time >= selectedChartTargetDate) : -1;
 
       if (typeof window.LightweightCharts === 'undefined' || !window.LightweightCharts.createChart) {
         document.getElementById('chartEngineTag').textContent = 'CANVAS 2D';
-        renderFallbackCanvasChart(viewport, bars, mode, colors);
+        renderFallbackCanvasChart(viewport, bars, mode, colors, targetIdx);
         return;
       }
 
@@ -3427,11 +3607,26 @@
       }
 
       chart.timeScale().fitContent();
-      updateCrosshairReadoutFromLast(bars, mode);
+      if (targetIdx >= 0 && targetIdx < bars.length) {
+        const halfWindow = 22;
+        const fromIdx = Math.max(0, targetIdx - halfWindow);
+        const toIdx = Math.min(bars.length - 1, targetIdx + halfWindow);
+        chart.timeScale().setVisibleRange({
+          from: bars[fromIdx].time,
+          to: bars[toIdx].time
+        });
+        updateCrosshairReadoutForBar(bars, targetIdx, mode);
+      } else {
+        updateCrosshairReadoutFromLast(bars, mode);
+      }
 
       chart.subscribeCrosshairMove(param => {
         if (!param || !param.time) {
-          updateCrosshairReadoutFromLast(bars, mode);
+          if (targetIdx >= 0 && targetIdx < bars.length) {
+            updateCrosshairReadoutForBar(bars, targetIdx, mode);
+          } else {
+            updateCrosshairReadoutFromLast(bars, mode);
+          }
           return;
         }
         const barEl = document.getElementById('chartCrosshairBar');
@@ -3494,37 +3689,61 @@
       lwcResizeObserver.observe(viewport);
     }
 
-    function updateCrosshairReadoutFromLast(bars, mode) {
+    function updateCrosshairReadoutForBar(bars, idx, mode) {
       const barEl = document.getElementById('chartCrosshairBar');
-      const last = bars[bars.length - 1];
-      if (!last) return;
+      const target = bars[idx];
+      if (!target) return;
       if (mode === 'CANDLE_MA') {
-        barEl.innerHTML = `<span class="text-[#FF9900]">${last.time}</span><span>開:${last.open}</span><span>高:${last.high}</span><span>低:${last.low}</span><span>收:${last.close}</span>`;
+        let maHtml = '';
+        const maColors = ['#F59E0B', '#38BDF8', '#C084FC'];
+        appState.settings.maPeriods.forEach((p, mIdx) => {
+          const checkedEl = document.getElementById(`toggleMa${mIdx}`);
+          if (checkedEl && checkedEl.checked && idx >= p - 1) {
+            let sum = 0;
+            for (let k = idx - p + 1; k <= idx; k++) sum += bars[k].close;
+            maHtml += `<span style="color:${maColors[mIdx]}">MA${p}:${(sum / p).toFixed(2)}</span>`;
+          }
+        });
+        barEl.innerHTML = `<span class="text-[#FF9900]">${target.time}</span><span>開:${target.open}</span><span>高:${target.high}</span><span>低:${target.low}</span><span>收:${target.close}</span>${maHtml}`;
       } else if (mode === 'VOL') {
-        barEl.innerHTML = `<span class="text-[#FF9900]">${last.time}</span><span>成交量:${fmtMoney(last.volume)}</span>`;
+        barEl.innerHTML = `<span class="text-[#FF9900]">${target.time}</span><span>成交量:${fmtMoney(target.volume)}</span>`;
       } else if (mode === 'KD') {
         const { kSeries, dSeries } = calcKD(bars, 9);
-        const lk = kSeries[kSeries.length - 1], ld = dSeries[dSeries.length - 1];
-        barEl.innerHTML = lk ? `<span class="text-[#FF9900]">${lk.time}</span><span class="text-[#FF9900]">%K:${lk.value}</span><span class="text-[#38BDF8]">%D:${ld.value}</span>` : '資料筆數不足';
+        const lk = kSeries.find(x => x.time === target.time);
+        const ld = dSeries.find(x => x.time === target.time);
+        barEl.innerHTML = lk ? `<span class="text-[#FF9900]">${lk.time}</span><span class="text-[#FF9900]">%K:${lk.value}</span><span class="text-[#38BDF8]">%D:${ld ? ld.value : '--'}</span>` : '該日資料筆數不足';
       } else if (mode === 'RSI') {
         const r = calcRSI(bars, 14);
-        const lr = r[r.length - 1];
-        barEl.innerHTML = lr ? `<span class="text-[#FF9900]">${lr.time}</span><span class="text-[#C084FC]">RSI(14):${lr.value}</span>` : '資料筆數不足';
+        const lr = r.find(x => x.time === target.time);
+        barEl.innerHTML = lr ? `<span class="text-[#FF9900]">${lr.time}</span><span class="text-[#C084FC]">RSI(14):${lr.value}</span>` : '該日資料筆數不足';
       } else if (mode === 'MACD') {
         const { difSeries, macdSeries, oscSeries } = calcMACD(bars, 12, 26, 9);
-        const ld = difSeries[difSeries.length - 1], ls = macdSeries[macdSeries.length - 1], lo = oscSeries[oscSeries.length - 1];
-        barEl.innerHTML = ld ? `<span class="text-[#FF9900]">${ld.time}</span><span class="text-[#FF9900]">DIF:${ld.value}</span><span class="text-[#38BDF8]">MACD:${ls.value}</span><span>OSC:${lo.value}</span>` : '資料筆數不足';
+        const ld = difSeries.find(x => x.time === target.time);
+        const ls = macdSeries.find(x => x.time === target.time);
+        const lo = oscSeries.find(x => x.time === target.time);
+        barEl.innerHTML = ld ? `<span class="text-[#FF9900]">${ld.time}</span><span class="text-[#FF9900]">DIF:${ld.value}</span><span class="text-[#38BDF8]">MACD:${ls ? ls.value : '--'}</span><span>OSC:${lo ? lo.value : '--'}</span>` : '該日資料筆數不足';
       }
     }
 
-    function renderFallbackCanvasChart(viewport, bars, mode, colors) {
+    function updateCrosshairReadoutFromLast(bars, mode) {
+      if (!bars || bars.length === 0) return;
+      updateCrosshairReadoutForBar(bars, bars.length - 1, mode);
+    }
+
+    function renderFallbackCanvasChart(viewport, bars, mode, colors, targetIdx = -1) {
       const canvas = document.createElement('canvas');
       canvas.style.width = '100%';
       canvas.style.height = '100%';
       canvas.style.display = 'block';
       viewport.appendChild(canvas);
 
-      const slice = bars.slice(-65);
+      let slice = bars.slice(-65);
+      let sliceOffset = Math.max(0, bars.length - slice.length);
+      if (targetIdx >= 0 && targetIdx < bars.length) {
+        const start = Math.max(0, Math.min(bars.length - 65, targetIdx - 32));
+        slice = bars.slice(start, start + 65);
+        sliceOffset = start;
+      }
       const dpr = window.devicePixelRatio || 1;
       const w = viewport.clientWidth || 340;
       const h = viewport.clientHeight || 360;
@@ -3557,6 +3776,21 @@
       };
 
       const xFor = i => pad.left + ((i + 0.5) / Math.max(1, slice.length)) * cw;
+
+      // 若有指定跳轉日期，在畫布上繪製垂直定位指示線
+      const localTargetIdx = targetIdx >= 0 ? targetIdx - sliceOffset : -1;
+      if (localTargetIdx >= 0 && localTargetIdx < slice.length) {
+        const tx = xFor(localTargetIdx);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 153, 0, 0.65)';
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(tx, pad.top);
+        ctx.lineTo(tx, pad.top + ch);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       if (mode === 'CANDLE_MA') {
         let minP = Infinity, maxP = -Infinity;
@@ -3625,15 +3859,37 @@
           const y = yFor(p.value);
           ctx.fillRect(x - barW / 2, Math.min(zeroY, y), barW, Math.abs(y - zeroY));
         });
+        const drawMacdLine = (pts, col) => {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          pts.forEach((p, idx) => {
+            const x = pad.left + (idx / Math.max(1, pts.length - 1)) * cw;
+            if (idx === 0) ctx.moveTo(x, yFor(p.value));
+            else ctx.lineTo(x, yFor(p.value));
+          });
+          ctx.stroke();
+        };
+        drawMacdLine(dSub, '#FF9900');
+        drawMacdLine(mSub, '#38BDF8');
       }
 
-      updateCrosshairReadoutFromLast(bars, mode);
+      if (localTargetIdx >= 0 && localTargetIdx < slice.length) {
+        updateCrosshairReadoutForBar(bars, targetIdx, mode);
+      } else {
+        updateCrosshairReadoutFromLast(bars, mode);
+      }
     }
 
     /* ========================================================================
-       7. 分頁切換、設定 Modal 與 JSON 備份還原
+       7. 分頁切換（各自獨立保存與還原垂直捲動位置）、設定 Modal 與 JSON 備份還原
        ======================================================================== */
-    function switchMainTab(tab) {
+    function switchMainTab(tab, isInitialBoot = false) {
+      const prevTab = appState.activeTab;
+      if (!isInitialBoot && prevTab && prevTab !== tab) {
+        tabScrollPositions[prevTab] = window.scrollY || document.documentElement.scrollTop || 0;
+      }
+
       appState.activeTab = tab;
       saveState();
 
@@ -3667,6 +3923,11 @@
           renderActiveChart();
         }
       }
+
+      const targetScrollY = isInitialBoot ? 0 : (tabScrollPositions[tab] || 0);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: targetScrollY, behavior: 'auto' });
+      });
     }
 
     function openSettingsModal() {
@@ -3834,7 +4095,7 @@
         saveState();
         applyColorTheme();
         closeModal('settingsModal');
-        switchMainTab(appState.activeTab || 'sim');
+        switchMainTab(appState.activeTab || 'sim', true);
         showToast('JSON 備份已通過驗證並成功還原', 'success');
       } catch (e) {
         showToast('還原失敗（格式驗證未過）：' + e.message, 'error');
@@ -3924,7 +4185,7 @@
       setOrderUnitMode('LOT');
       document.getElementById('orderSymbol').value = '2330';
 
-      switchMainTab(appState.activeTab || 'sim');
+      switchMainTab(appState.activeTab || 'sim', true);
 
       getMarketData('2330.TW', false).then(data => {
         if (!document.getElementById('orderPrice').value) {
