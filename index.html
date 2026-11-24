@@ -10,35 +10,37 @@
   <meta name="theme-color" content="#000000">
   <title>股市策略實驗室</title>
 
-  <!-- 載入 Tailwind CSS 與等寬/繁中字體 -->
+  <!-- 載入 Tailwind CSS 與清晰無襯線/等寬數字字體 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- 載入 TradingView Lightweight Charts v4.1.3 (含內建 Canvas 2D 離線降級機制) -->
   <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 
   <style>
     /* ==========================================================================
-       華爾街專業終端機風 (Bloomberg Terminal Style) 核心視覺變數與樣式
+       現代行動券商極簡深色風 (Modern Mobile Brokerage Style) 核心變數
        ========================================================================== */
     :root {
       --bg-root: #000000;
-      --bg-app: #0A0C0F;
-      --bg-card: #11151C;
-      --bg-elevated: #171D26;
-      --border-sharp: #262E3D;
-      --border-focus: #FF9900;
+      --bg-surface: #090B0E;
+      --bg-field: #12161F;
+      --bg-elevated: #171C26;
+      --hairline: #1C222D;
+      --hairline-strong: #2A3343;
       --accent: #FF9900;
-      --accent-dim: rgba(255, 153, 0, 0.16);
-      --text-primary: #F3F4F6;
-      --text-secondary: #8B95A5;
+      --accent-soft: rgba(255, 153, 0, 0.14);
+      --text-primary: #F4F6F9;
+      --text-secondary: #8A94A6;
+      --text-muted: #586274;
       /* 預設台股模式：紅漲綠跌 */
       --up-color: #FF3B30;
       --up-bg: rgba(255, 59, 48, 0.14);
       --down-color: #00C853;
       --down-bg: rgba(0, 200, 83, 0.14);
-      --safe-top: env(safe-area-inset-top, 0px);
+      /* 因應 iOS 頂部透明化 UI，確保狀態列與動態島下方有充足安全避讓空間 */
+      --safe-top: calc(max(env(safe-area-inset-top, 0px), 20px) + 12px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
@@ -60,87 +62,128 @@
       padding: 0;
       background-color: var(--bg-root);
       color: var(--text-primary);
-      font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Noto Sans TC', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       overscroll-behavior-y: none;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* 等寬數字對齊：確保價格與損益跳動時不抖動 */
-    .mono {
-      font-family: 'JetBrains Mono', 'SF Mono', Consolas, Monaco, monospace !important;
-      font-variant-numeric: tabular-nums !important;
+    /* 僅對純數值套用等寬數字對齊，中文與介面標籤維持自然無襯線體 */
+    .num {
+      font-family: 'Inter', 'JetBrains Mono', -apple-system, sans-serif;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* 終端機銳利卡片 */
-    .term-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-sharp);
-      border-radius: 3px;
+    /* 髮絲水平分隔線 */
+    .hairline-b {
+      border-bottom: 1px solid var(--hairline);
+    }
+    .hairline-t {
+      border-top: 1px solid var(--hairline);
     }
 
-    /* 強制所有輸入控制項 >= 16px，避免 iOS Safari 點擊時自動縮放 */
-    input, select, textarea {
+    /* 無框扁平輸入框（>=16px 防止 iOS Safari 自動縮放） */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
       font-size: 16px !important;
-      background-color: #090C10;
+      background-color: var(--bg-field);
       color: var(--text-primary);
-      border: 1px solid var(--border-sharp);
-      border-radius: 3px;
+      border: 1px solid transparent;
+      border-radius: 8px;
       outline: none;
-      transition: border-color 0.15s ease;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
     }
-    input:focus, select:focus, textarea:focus {
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--hairline-strong);
+      background-color: #161B26;
+    }
+
+    /* 自訂深色質感核取方塊，消除原生白色方塊視覺突兀感 */
+    input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      background-color: #161C27;
+      border: 1.5px solid #354054;
+      border-radius: 4px;
+      display: inline-grid;
+      place-content: center;
+      cursor: pointer;
+      margin: 0;
+      transition: background-color 0.12s ease, border-color 0.12s ease;
+    }
+    input[type="checkbox"]::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      transform: scale(0);
+      transition: transform 0.1s ease-in-out;
+      box-shadow: inset 1em 1em #000000;
+      clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    }
+    input[type="checkbox"]:checked {
+      background-color: var(--accent);
       border-color: var(--accent);
     }
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent);
+    input[type="checkbox"]:checked::before {
+      transform: scale(1);
     }
 
-    /* 漲跌文字與背景輔助類 */
+    /* 漲跌顏色與膠囊標籤 */
     .txt-up { color: var(--up-color); }
     .txt-down { color: var(--down-color); }
-    .bg-up-soft { background-color: var(--up-bg); color: var(--up-color); border: 1px solid var(--up-color); }
-    .bg-down-soft { background-color: var(--down-bg); color: var(--down-color); border: 1px solid var(--down-color); }
+    .pill-up { background-color: var(--up-bg); color: var(--up-color); }
+    .pill-down { background-color: var(--down-bg); color: var(--down-color); }
+    .pill-neutral { background-color: #151A24; color: var(--text-secondary); }
+    .btn-buy-solid { background-color: var(--up-color); color: #FFFFFF; }
+    .btn-sell-solid { background-color: var(--down-color); color: #FFFFFF; }
 
-    /* 頂部固定狀態列 (含 iOS 安全邊距) */
+    /* 頂部精簡純黑狀態列 */
     .top-bar {
       position: sticky;
       top: 0;
       z-index: 40;
-      background-color: rgba(10, 12, 15, 0.96);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border-sharp);
+      background-color: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--hairline);
       padding-top: var(--safe-top);
     }
 
-    /* 底部固定雙分頁導覽列 (含 iOS 安全邊距) */
+    /* Toast 通知列動態避開頂部狀態列 */
+    #toastContainer {
+      top: calc(var(--safe-top) + 52px);
+    }
+
+    /* 底部 iOS 原生毛玻璃純黑雙分頁導覽列 */
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       z-index: 40;
-      background-color: rgba(10, 12, 15, 0.98);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border-sharp);
+      background-color: rgba(0, 0, 0, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--hairline);
       padding-bottom: var(--safe-bottom);
     }
 
-    /* 主內容區預留底部導覽列高度 */
+    /* 主內容區 */
     .main-container {
-      padding-bottom: calc(74px + var(--safe-bottom));
+      padding-bottom: calc(78px + var(--safe-bottom));
       min-height: 100vh;
-      background-color: var(--bg-app);
+      background-color: var(--bg-surface);
     }
 
-    /* 自訂捲軸 (終端機極細風格) */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 狀態燈號動畫 */
     @keyframes pulseDot {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.35; }
@@ -149,13 +192,14 @@
       animation: pulseDot 2s infinite;
     }
 
-    /* Modal 遮罩 */
+    /* 一般底部彈出 Modal 遮罩 */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       z-index: 60;
-      background-color: rgba(0, 0, 0, 0.78);
-      backdrop-filter: blur(3px);
+      background-color: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -168,76 +212,77 @@
     }
     .modal-panel {
       width: 100%;
-      max-width: 560px;
-      max-height: 90vh;
-      background-color: #11151C;
-      border: 1px solid #364154;
-      border-radius: 4px 4px 0 0;
+      max-width: 520px;
+      max-height: 88vh;
+      background-color: #0F131A;
+      border-top: 1px solid #2A3343;
+      border-radius: 16px 16px 0 0;
       display: flex;
       flex-direction: column;
       padding-bottom: var(--safe-bottom);
     }
     @media (min-width: 640px) {
       .modal-panel {
-        border-radius: 4px;
+        border: 1px solid #2A3343;
+        border-radius: 12px;
         padding-bottom: 0;
       }
     }
 
-    /* 按鈕點擊反饋 */
-    .btn-term {
-      border-radius: 3px;
-      transition: background-color 0.12s ease, opacity 0.12s ease, transform 0.08s ease, border-color 0.12s ease;
-      user-select: none;
+    /* 設定頁面全螢幕佔滿樣式 */
+    #settingsModal {
+      align-items: stretch;
+      padding: 0;
+      background-color: #000000;
     }
-    .btn-term:active {
-      transform: scale(0.98);
-      opacity: 0.9;
+    #settingsModal .settings-full-panel {
+      width: 100%;
+      max-width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      background-color: #090B0E;
+      border: none;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
     }
 
-    /* 總資產可點擊充值卡片 */
-    .deposit-card {
-      cursor: pointer;
-      transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.08s ease;
+    /* 觸控點擊微幅回饋 */
+    .tap-btn {
+      transition: opacity 0.12s ease, transform 0.08s ease, background-color 0.12s ease;
+      user-select: none;
     }
-    .deposit-card:hover {
-      border-color: #FF9900;
-      background-color: #121720;
-    }
-    .deposit-card:active {
-      transform: scale(0.985);
-      border-color: #FF9900;
-      background-color: #161C27;
+    .tap-btn:active {
+      transform: scale(0.97);
+      opacity: 0.82;
     }
   </style>
 </head>
 <body>
   <!-- ========================================================================
-       頂部終端機狀態列 (HEADER)
+       頂部狀態列 (HEADER：左側主標題完整不截斷，時間精簡為 HH:MM:SS)
        ======================================================================== -->
   <header class="top-bar">
-    <div class="max-w-4xl mx-auto px-3 h-12 flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2 min-w-0">
-        <button onclick="openAccountSwitchModal()" title="切換帳戶" aria-label="切換帳戶"
-          class="btn-term cursor-pointer px-1.5 py-0.5 text-[11px] font-bold tracking-wider bg-[#FF9900] text-black rounded-[2px] mono shrink-0 hover:brightness-110 active:scale-95">BBG</button>
-        <div class="truncate">
-          <div class="text-[13px] font-bold tracking-wide text-[#F3F4F6] leading-tight truncate">股市策略實驗室</div>
-          <div id="headerClock" class="text-[10px] text-[#8B95A5] mono leading-tight">--:--:--</div>
-        </div>
+    <div class="max-w-3xl mx-auto px-4 h-[46px] flex items-center justify-between gap-2">
+      <div class="flex items-baseline gap-2 shrink-0">
+        <span class="text-[15px] font-bold tracking-tight text-[#F4F6F9] whitespace-nowrap shrink-0">股市策略實驗室</span>
+        <span id="headerClock" class="text-[11px] text-[#586274] num whitespace-nowrap shrink-0">--:--:--</span>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <!-- 行情連線狀態燈號（顯示資料來源：LIVE · FINMIND / YAHOO / STOOQ / CACHED / OFFLINE SIM） -->
-        <button id="statusBadgeBtn" onclick="forceRefreshCurrentContext()" title="點擊強制重新連網抓取最新行情"
-          class="flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold mono border border-[#262E3D] bg-[#11151C] rounded-[2px] active:bg-[#1E2634]">
-          <span id="statusDot" class="w-2 h-2 rounded-full bg-[#FF9900]"></span>
-          <span id="statusText" class="text-[#FF9900]">INIT</span>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <!-- 行情來源狀態與一鍵重連膠囊 -->
+        <button id="statusBadgeBtn" onclick="hardResetReconnect(false)" title="點擊清除快取與失敗狀態並強制重新連線"
+          class="tap-btn flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium bg-[#141923] rounded-full whitespace-nowrap">
+          <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-[#FF9900] shrink-0"></span>
+          <span id="statusText" class="text-[#FF9900]">連線中</span>
         </button>
 
-        <!-- 右上角齒輪設定按鈕 -->
+        <!-- 右上角設定齒輪圖示 -->
         <button onclick="openSettingsModal()" aria-label="設定" title="設定"
-          class="btn-term w-8 h-8 flex items-center justify-center border border-[#364154] bg-[#171D26] text-[#F3F4F6] hover:border-[#FF9900] hover:text-[#FF9900]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
+          class="tap-btn w-8 h-8 flex items-center justify-center rounded-full text-[#8A94A6] hover:text-[#F4F6F9] active:bg-[#171C26] shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
@@ -247,155 +292,167 @@
   </header>
 
   <!-- ========================================================================
-       主內容區 (MAIN)
+       主內容區 (MAIN - 充足呼吸感與主次分明的行動券商版面)
        ======================================================================== -->
   <main class="main-container">
-    <div class="max-w-4xl mx-auto px-3 py-3">
+    <div class="max-w-3xl mx-auto">
 
       <!-- ====================================================================
-           分頁一：模擬股票 (多帳戶策略實驗室)
+           分頁一：模擬股票
            ==================================================================== -->
-      <section id="tab-sim" class="space-y-3">
-        <!-- 1. 多帳戶管理列 -->
-        <div class="term-card p-3 space-y-2.5">
+      <section id="tab-sim">
+
+        <!-- 1. 帳戶切換與管理列 -->
+        <div class="px-4 py-3 hairline-b">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-[12px] font-bold tracking-wider text-[#FF9900] whitespace-nowrap">多帳戶管理</span>
-            <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="openAccountSwitchModal()" title="點擊切換帳戶"
+              class="tap-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#141923] text-[#F4F6F9] text-[13px] font-semibold max-w-[65%]">
+              <span id="accountDisplayName" class="truncate">帳戶 1</span>
+              <span class="text-[11px] text-[#8A94A6] shrink-0">▾</span>
+            </button>
+
+            <div class="flex items-center gap-1 shrink-0">
               <button onclick="openAccountModal('create')" title="新增帳戶" aria-label="新增帳戶"
-                class="btn-term w-7 h-7 flex items-center justify-center text-[15px] font-bold bg-[#FF9900] text-black whitespace-nowrap shrink-0">+</button>
+                class="tap-btn w-8 h-8 flex items-center justify-center text-[17px] font-semibold text-[#FF9900] rounded-full active:bg-[#171C26]">+</button>
               <button onclick="openAccountModal('edit')" title="編輯帳戶" aria-label="編輯帳戶"
-                class="btn-term w-7 h-7 flex items-center justify-center text-[13px] font-semibold border border-[#262E3D] bg-[#171D26] text-[#F3F4F6] whitespace-nowrap shrink-0">✎</button>
+                class="tap-btn w-8 h-8 flex items-center justify-center text-[13px] text-[#8A94A6] rounded-full active:bg-[#171C26]">✎</button>
               <button onclick="confirmResetAccount()" title="重置帳戶" aria-label="重置帳戶"
-                class="btn-term w-7 h-7 flex items-center justify-center text-[14px] font-semibold border border-[#262E3D] bg-[#171D26] text-[#FF9900] whitespace-nowrap shrink-0">↺</button>
+                class="tap-btn w-8 h-8 flex items-center justify-center text-[14px] text-[#8A94A6] rounded-full active:bg-[#171C26]">↺</button>
               <button onclick="confirmDeleteAccount()" title="刪除帳戶" aria-label="刪除帳戶"
-                class="btn-term w-7 h-7 flex items-center justify-center text-[13px] font-semibold border border-[#262E3D] bg-[#171D26] text-[#FF3B30] whitespace-nowrap shrink-0">✕</button>
+                class="tap-btn w-8 h-8 flex items-center justify-center text-[13px] text-[#8A94A6] hover:text-[#FF3B30] rounded-full active:bg-[#171C26]">✕</button>
             </div>
           </div>
-
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div onclick="openAccountSwitchModal()" title="點擊切換其他帳戶"
-              id="accountDisplayName" class="cursor-pointer w-full sm:w-64 px-2.5 py-2 text-[15px] font-semibold bg-[#0A0C0F] border border-[#262E3D] hover:border-[#FF9900] rounded-[3px] text-[#F3F4F6] truncate select-none"></div>
-            <div id="accountStrategyTag" class="hidden text-[12px] text-[#8B95A5] bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-1.5 rounded-[2px] flex-1 truncate"></div>
-          </div>
+          <div id="accountStrategyTag" class="hidden text-[12px] text-[#8A94A6] truncate pt-2"></div>
         </div>
 
-        <!-- 2. 資產總覽儀表板 -->
-        <div class="term-card p-3 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-[12px] font-bold tracking-wider text-[#8B95A5]">資產總覽</span>
-            <button onclick="refreshAccountHoldingsPrices()" class="btn-term text-[11px] mono text-[#FF9900] border border-[#262E3D] px-2 py-0.5 bg-[#0A0C0F]">
-              ↻ 更新現價
-            </button>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <!-- 總資產卡片：點擊開啟帳戶充值 -->
-            <div onclick="openDepositModal()" role="button" tabindex="0" title="點擊為目前帳戶充值"
-              class="deposit-card bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px] relative">
-              <div class="flex items-center justify-between gap-1">
-                <span class="text-[11px] text-[#8B95A5]">總資產</span>
-                <span class="text-[10px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] border border-[rgba(255,153,0,0.4)] px-1.5 py-0.2 rounded-[2px] whitespace-nowrap">+ 充值</span>
+        <!-- 2. 資產總覽主視覺區 -->
+        <div class="px-4 py-5 hairline-b space-y-4">
+          <!-- 上排：總資產大字 + 報酬率膠囊 + 單一簡潔充值入口 -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[12px] text-[#8A94A6] font-medium">總資產淨值</span>
+                <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral">0.00%</span>
               </div>
-              <div id="ovTotalAssets" class="text-[17px] font-bold mono mt-0.5 text-[#F3F4F6]">0</div>
-              <div id="ovTotalRoi" class="text-[11px] mono mt-0.5 text-[#8B95A5]">總報酬 0.00%</div>
+              <div id="ovTotalAssets" class="text-[34px] sm:text-[38px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5">0</div>
             </div>
-            <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px]">
-              <div class="text-[11px] text-[#8B95A5]">可用現金</div>
-              <div id="ovCash" class="text-[17px] font-bold mono mt-0.5 text-[#F3F4F6]">0</div>
-              <div id="ovInitial" class="text-[11px] mono mt-0.5 text-[#8B95A5]">本金 0</div>
-            </div>
-            <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px]">
-              <div class="text-[11px] text-[#8B95A5]">未實現損益</div>
-              <div id="ovUnrealized" class="text-[17px] font-bold mono mt-0.5">0</div>
-              <div id="ovUnrealizedPct" class="text-[11px] mono mt-0.5">0.00%</div>
-            </div>
-            <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px]">
-              <div class="text-[11px] text-[#8B95A5]">累計已實現損益</div>
-              <div id="ovRealized" class="text-[17px] font-bold mono mt-0.5">0</div>
-              <div id="ovHoldingsVal" class="text-[11px] mono mt-0.5 text-[#8B95A5]">持股現值 0</div>
+
+            <div class="shrink-0 pt-1">
+              <button onclick="openDepositModal()"
+                class="tap-btn px-3.5 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full">
+                + 充值
+              </button>
             </div>
           </div>
 
-          <!-- 一鍵匯出 AI 檢討報告按鈕 -->
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button onclick="exportReport('current')"
-              class="btn-term py-2 px-2 text-[12px] font-semibold border border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.08)]">
-              匯出此帳戶分析文字
-            </button>
-            <button onclick="exportReport('all')"
-              class="btn-term py-2 px-2 text-[12px] font-semibold border border-[#364154] text-[#F3F4F6] bg-[#171D26]">
-              匯出全部帳戶分析文字
-            </button>
+          <!-- 中排：三欄橫向並列 -->
+          <div class="grid grid-cols-3 divide-x divide-[#1C222D] pt-1">
+            <div class="pr-3">
+              <div class="text-[11px] text-[#8A94A6]">可用現金</div>
+              <div id="ovCash" class="text-[15px] font-bold num text-[#F4F6F9] mt-1 truncate">0</div>
+              <div id="ovInitial" class="text-[11px] num text-[#586274] mt-0.5 truncate">本金 0</div>
+            </div>
+            <div class="px-3">
+              <div class="text-[11px] text-[#8A94A6]">未實現損益</div>
+              <div id="ovUnrealized" class="text-[15px] font-bold num mt-1 truncate">0</div>
+              <div id="ovUnrealizedPct" class="text-[11px] num mt-0.5 truncate">0.00%</div>
+            </div>
+            <div class="pl-3">
+              <div class="text-[11px] text-[#8A94A6]">已實現損益</div>
+              <div id="ovRealized" class="text-[15px] font-bold num mt-1 truncate">0</div>
+              <div id="ovHoldingsVal" class="text-[11px] num text-[#586274] mt-0.5 truncate">現值 0</div>
+            </div>
+          </div>
+
+          <!-- 下排：匯出報告連結 -->
+          <div class="flex items-center gap-2.5 text-[12px] text-[#8A94A6] pt-0.5">
+            <button onclick="exportReport('current')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出此帳戶報告</button>
+            <span class="text-[#2A3343]">·</span>
+            <button onclick="exportReport('all')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出全部帳戶報告</button>
           </div>
         </div>
 
-        <!-- 3. 擬真下單面板 -->
-        <div class="term-card p-3 space-y-3">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[12px] font-bold tracking-wider text-[#FF9900] whitespace-nowrap">擬真下單面板</span>
-            <span id="orderQuoteName" class="text-[11px] text-[#8B95A5] truncate max-w-[210px]">尚未查詢標的</span>
-          </div>
-
-          <!-- 標的代號與報價查詢 -->
-          <div class="flex gap-2">
-            <input id="orderSymbol" type="text" placeholder="輸入代號如 2330 或 NVDA" autocomplete="off"
-              class="flex-1 px-2.5 py-2 mono uppercase" onkeydown="if(event.key==='Enter') fetchOrderQuote()">
-            <button id="btnQueryQuote" onclick="fetchOrderQuote()"
-              class="btn-term px-3.5 py-2 text-[13px] font-bold bg-[#FF9900] text-black shrink-0">
-              查詢報價
-            </button>
-          </div>
-
-          <!-- 買賣方向切換 -->
-          <div class="grid grid-cols-2 gap-2">
+        <!-- 3. 委託下單區 -->
+        <div class="px-4 py-5 hairline-b space-y-3.5">
+          <!-- 買進 / 賣出 Segmented Control -->
+          <div class="grid grid-cols-2 p-1 bg-[#12161F] rounded-[9px]">
             <button id="btnSideBuy" onclick="setOrderSide('BUY')"
-              class="btn-term py-2 text-[13px] font-bold border">
+              class="tap-btn py-1.5 text-[13px] font-bold rounded-[7px] transition-colors">
               買進
             </button>
             <button id="btnSideSell" onclick="setOrderSide('SELL')"
-              class="btn-term py-2 text-[13px] font-bold border">
+              class="tap-btn py-1.5 text-[13px] font-bold rounded-[7px] transition-colors">
               賣出
             </button>
           </div>
 
-          <!-- 交易單位模式與 ETF 稅率 -->
-          <div class="flex flex-wrap items-center justify-between gap-2 bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-2 rounded-[2px]">
-            <div class="flex items-center gap-2">
-              <button id="btnUnitLot" onclick="setOrderUnitMode('LOT')"
-                class="btn-term px-2.5 py-1 text-[12px] font-semibold border whitespace-nowrap">
-                整股 (1000股/張)
-              </button>
-              <button id="btnUnitOdd" onclick="setOrderUnitMode('ODD')"
-                class="btn-term px-2.5 py-1 text-[12px] font-semibold border whitespace-nowrap">
-                零股 (1~999股)
-              </button>
-            </div>
-            <label class="flex items-center gap-1.5 text-[12px] text-[#F3F4F6] cursor-pointer select-none">
-              <input id="orderIsEtf" type="checkbox" onchange="updateOrderPreview()">
-              <span>ETF 稅率 (<span id="etfTaxLabel" class="mono">0.1%</span>)</span>
-            </label>
+          <!-- 代號輸入框 -->
+          <div class="relative flex items-center">
+            <input id="orderSymbol" type="text" placeholder="輸入代號如 2330 或 AAPL" autocomplete="off"
+              class="w-full pl-3.5 pr-16 py-2.5 num uppercase" onkeydown="if(event.key==='Enter') fetchOrderQuote()">
+            <button id="btnQueryQuote" onclick="fetchOrderQuote()"
+              class="tap-btn absolute right-2 px-3 py-1 text-[12px] font-semibold text-[#FF9900] rounded-[6px] active:bg-[#1C222D]">
+              查詢
+            </button>
           </div>
 
-          <!-- 價格與數量輸入 -->
-          <div class="grid grid-cols-2 gap-2 items-end">
-            <div>
-              <label class="block text-[11px] text-[#8B95A5] mb-1 whitespace-nowrap">委託/成交單價</label>
-              <input id="orderPrice" type="number" step="any" min="0" placeholder=""
-                oninput="updateOrderPreview()" class="w-full px-2.5 py-2 mono">
-            </div>
-            <div>
-              <label id="orderQtyLabel" class="block text-[11px] text-[#8B95A5] mb-1 whitespace-nowrap">數量（張）</label>
-              <input id="orderQty" type="number" step="any" min="0" placeholder=""
-                oninput="updateOrderPreview()" class="w-full px-2.5 py-2 mono">
+          <!-- 標的名稱 + 整股/零股與 ETF 切換 -->
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[12px]">
+            <span id="orderQuoteName" class="text-[#8A94A6] font-medium truncate max-w-[195px]">尚未查詢標的</span>
+
+            <div class="flex items-center gap-2.5 shrink-0">
+              <div class="inline-flex bg-[#12161F] p-0.5 rounded-[6px]">
+                <button id="btnUnitLot" onclick="setOrderUnitMode('LOT')"
+                  class="tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px]">
+                  整股(張)
+                </button>
+                <button id="btnUnitOdd" onclick="setOrderUnitMode('ODD')"
+                  class="tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px]">
+                  零股(股)
+                </button>
+              </div>
+
+              <label class="inline-flex items-center gap-1.5 text-[#8A94A6] cursor-pointer select-none text-[11px]">
+                <input id="orderIsEtf" type="checkbox" onchange="updateOrderPreview()">
+                <span>ETF <span id="etfTaxLabel" class="num">0.1%</span>稅</span>
+              </label>
             </div>
           </div>
 
-          <!-- 交易理由與筆記 -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <!-- 單價與數量並排 -->
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] text-[#8B95A5] mb-1">交易理由</label>
-              <select id="orderReason" class="w-full px-2.5 py-2">
-                <option value="">（不填寫）</option>
+              <label class="block text-[11px] text-[#8A94A6] mb-1">委託單價</label>
+              <input id="orderPrice" type="number" step="any" min="0" placeholder="0.00"
+                oninput="updateOrderPreview()" class="w-full px-3 py-2 num">
+            </div>
+            <div>
+              <label id="orderQtyLabel" class="block text-[11px] text-[#8A94A6] mb-1">數量（張）</label>
+              <input id="orderQty" type="number" step="any" min="0" placeholder="0"
+                oninput="updateOrderPreview()" class="w-full px-3 py-2 num">
+            </div>
+          </div>
+
+          <!-- 精簡為 3 個實用快捷按鈕：1張(或100股) / 半倉 / 全倉 -->
+          <div class="grid grid-cols-3 gap-2">
+            <button id="btnQuickBaseQty" type="button" onclick="applyQuickQty('BASE')"
+              class="tap-btn py-1.5 text-[12px] font-medium text-[#8A94A6] bg-[#12161F] rounded-[6px]">1張</button>
+            <button type="button" onclick="applyQuickQty('HALF')"
+              class="tap-btn py-1.5 text-[12px] font-medium text-[#8A94A6] bg-[#12161F] rounded-[6px]">半倉</button>
+            <button type="button" onclick="applyQuickQty('FULL')"
+              class="tap-btn py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[#12161F] rounded-[6px]">全倉</button>
+          </div>
+
+          <!-- 可折疊交易理由與筆記抽屜（預設收合） -->
+          <div>
+            <button type="button" onclick="toggleOrderExtraDrawer()"
+              class="tap-btn flex items-center justify-between w-full py-1 text-[12px] text-[#8A94A6] hover:text-[#F4F6F9]">
+              <span id="orderExtraToggleText">+ 附加交易理由與筆記（選填）</span>
+              <span id="orderExtraArrow" class="text-[10px]">▾</span>
+            </button>
+            <div id="orderExtraDrawer" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+              <select id="orderReason" class="w-full px-3 py-2">
+                <option value="">交易理由（不填寫）</option>
                 <option value="突破均線">突破均線</option>
                 <option value="回測支撐">回測支撐</option>
                 <option value="基本面/題材">基本面/題材</option>
@@ -403,145 +460,136 @@
                 <option value="策略測試">策略測試</option>
                 <option value="情緒/試單">情緒/試單</option>
               </select>
-            </div>
-            <div>
-              <label class="block text-[11px] text-[#8B95A5] mb-1">操作筆記 / 停損停利計畫</label>
-              <input id="orderNote" type="text" placeholder="" class="w-full px-2.5 py-2">
+              <input id="orderNote" type="text" placeholder="操作筆記 / 停損停利計畫" class="w-full px-3 py-2">
             </div>
           </div>
 
-          <!-- 即時成本與稅費試算表 -->
-          <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px] text-[12px] space-y-1 mono">
-            <div class="flex justify-between">
-              <span class="text-[#8B95A5]">換算股數 / 成交金額</span>
-              <span id="prevGross" class="text-[#F3F4F6]">0 股 / $0</span>
+          <!-- 試算明細 -->
+          <div class="pt-1.5 space-y-1.5 text-[12px]">
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[#8A94A6] num leading-normal">
+              <span id="prevGross">0 股 · 成交 $0</span>
+              <span id="prevFeeTax">手續費 $0 · 買進免證交稅</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-[#8B95A5]">預估手續費 / 證交稅</span>
-              <span id="prevFeeTax" class="text-[#F3F4F6]">費 $0 / 稅 $0</span>
+            <div class="flex items-center justify-between py-1 leading-normal">
+              <span id="prevNetLabel" class="text-[#8A94A6]">預計扣款總額</span>
+              <span id="prevNetAmount" class="text-[16px] font-bold num text-[#F4F6F9] leading-normal">$0</span>
             </div>
-            <div class="flex justify-between border-t border-[#262E3D] pt-1 font-bold">
-              <span id="prevNetLabel" class="text-[#FF9900]">預計扣款總額</span>
-              <span id="prevNetAmount" class="text-[#FF9900]">$0</span>
-            </div>
-            <div id="orderValidationMsg" class="hidden text-[11px] text-[#FF3B30] pt-1 font-sans"></div>
           </div>
 
           <!-- 確認下單按鈕 -->
           <button id="btnSubmitOrder" onclick="submitOrder()"
-            class="btn-term w-full py-2.5 text-[14px] font-bold tracking-wider bg-[#FF9900] text-black">
+            class="tap-btn w-full py-3 text-[14px] font-bold tracking-wide rounded-[8px] btn-buy-solid">
             買進
           </button>
         </div>
 
-        <!-- 4. 目前持股清單 -->
-        <div class="term-card p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[12px] font-bold tracking-wider text-[#8B95A5]">目前持股</span>
-            <span id="holdingsCount" class="text-[11px] mono text-[#FF9900]">0 檔</span>
+        <!-- 4. 目前持股 -->
+        <div class="pt-5 hairline-b">
+          <div class="px-4 pb-2.5 flex items-center justify-between">
+            <span class="text-[13px] font-bold text-[#F4F6F9]">目前持股</span>
+            <span id="holdingsCount" class="text-[12px] num text-[#8A94A6]">0 檔</span>
           </div>
-          <div id="holdingsList" class="space-y-2"></div>
+          <div id="holdingsList" class="divide-y divide-[#1C222D]"></div>
         </div>
 
-        <!-- 5. 交易與資金紀錄日誌 -->
-        <div class="term-card p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[12px] font-bold tracking-wider text-[#8B95A5]">交易紀錄</span>
-            <span id="tradesCount" class="text-[11px] mono text-[#8B95A5]">0 筆</span>
+        <!-- 5. 交易紀錄 -->
+        <div class="pt-5">
+          <div class="px-4 pb-2.5 flex items-center justify-between">
+            <span class="text-[13px] font-bold text-[#F4F6F9]">交易紀錄</span>
+            <span id="tradesCount" class="text-[12px] num text-[#8A94A6]">0 筆</span>
           </div>
-          <div id="tradesList" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
+          <div id="tradesList" class="divide-y divide-[#1C222D]"></div>
         </div>
       </section>
 
       <!-- ====================================================================
-           分頁二：盤面分析 (純淨單一圖表檢視器)
+           分頁二：盤面分析 (純淨圖表檢視器，確保價格數字完整不裁切)
            ==================================================================== -->
-      <section id="tab-chart" class="hidden space-y-3">
-        <!-- 1. 標的搜尋與自選股快捷列 -->
-        <div class="term-card p-3 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[12px] font-bold tracking-wider text-[#FF9900]">盤面分析</span>
-            <span id="chartSourceTag" class="text-[10px] mono text-[#8B95A5]">--</span>
-          </div>
-          <div class="flex gap-2">
-            <input id="chartSymbolInput" type="text" placeholder="輸入台股/美股代號如 2330 或 NVDA" autocomplete="off"
-              class="flex-1 px-2.5 py-2 mono uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
+      <section id="tab-chart" class="hidden">
+        <!-- 1. 搜尋列與自選股 Chips -->
+        <div class="px-4 py-4 hairline-b space-y-3">
+          <div class="relative flex items-center">
+            <input id="chartSymbolInput" type="text" placeholder="搜尋台股/美股代號如 2330 或 AAPL" autocomplete="off"
+              class="w-full pl-3.5 pr-16 py-2.5 num uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
             <button onclick="loadChartSymbolFromInput()"
-              class="btn-term px-3.5 py-2 text-[13px] font-bold bg-[#FF9900] text-black shrink-0">
+              class="tap-btn absolute right-2 px-3 py-1 text-[12px] font-semibold text-[#FF9900] rounded-[6px] active:bg-[#1C222D]">
               載入
             </button>
           </div>
-          <!-- 自選股快速切換 Chips -->
-          <div id="watchlistChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+          <div id="watchlistChips" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
         </div>
 
-        <!-- 2. 報價摘要與週期/單圖互斥控制列 -->
-        <div class="term-card p-3 space-y-2.5">
-          <div class="flex items-baseline justify-between gap-2 border-b border-[#262E3D] pb-2">
-            <div class="min-w-0">
-              <span id="chartHeaderSymbol" class="text-[16px] font-bold mono text-[#FF9900]">--</span>
-              <span id="chartHeaderName" class="text-[12px] text-[#8B95A5] ml-1.5 truncate">--</span>
+        <!-- 2. 報價標題與週期/單圖控制列 -->
+        <div class="px-4 py-4 hairline-b space-y-3">
+          <div class="flex items-center justify-between gap-3 pt-0.5">
+            <div class="min-w-0 flex items-baseline gap-2">
+              <span id="chartHeaderSymbol" class="text-[19px] font-bold num text-[#F4F6F9] shrink-0">--</span>
+              <span id="chartHeaderName" class="text-[13px] text-[#8A94A6] truncate">--</span>
             </div>
             <div class="text-right shrink-0">
-              <span id="chartHeaderPrice" class="text-[18px] font-bold mono">--</span>
-              <span id="chartHeaderChange" class="text-[12px] mono ml-1.5">--</span>
+              <div id="chartHeaderPrice" class="text-[22px] font-bold num leading-snug">--</div>
+              <div id="chartHeaderChange" class="text-[12px] num leading-tight">--</div>
             </div>
           </div>
 
-          <!-- 時間週期切換 (日K / 週K / 月K) -->
+          <!-- 時間週期切換 (日K / 週K / 月K) 與資料來源 -->
           <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-1">
-              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn btn-term px-3 py-1 text-[12px] font-semibold mono border">日K</button>
-              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn btn-term px-3 py-1 text-[12px] font-semibold mono border">週K</button>
-              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn btn-term px-3 py-1 text-[12px] font-semibold mono border">月K</button>
+            <div class="flex items-center gap-1.5">
+              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-3 py-1 text-[12px] font-semibold rounded-[6px]">日K</button>
+              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-3 py-1 text-[12px] font-semibold rounded-[6px]">週K</button>
+              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-3 py-1 text-[12px] font-semibold rounded-[6px]">月K</button>
             </div>
-            <span id="chartEngineTag" class="text-[10px] mono text-[#8B95A5] border border-[#262E3D] px-1.5 py-0.5 rounded-[2px]">LWC v4</span>
+            <div class="flex items-center gap-2 text-[11px] num text-[#586274]">
+              <span id="chartSourceTag">--</span>
+              <span>·</span>
+              <span id="chartEngineTag">LWC</span>
+            </div>
           </div>
 
-          <!-- 「一次只顯示一個圖表」互斥切換器 -->
-          <div class="grid grid-cols-5 gap-1">
-            <button data-mode="CANDLE_MA" onclick="setChartMode('CANDLE_MA')" class="mode-btn btn-term py-1.5 text-[11px] font-bold border text-center">K線+MA</button>
-            <button data-mode="VOL" onclick="setChartMode('VOL')" class="mode-btn btn-term py-1.5 text-[11px] font-bold border text-center">成交量</button>
-            <button data-mode="KD" onclick="setChartMode('KD')" class="mode-btn btn-term py-1.5 text-[11px] font-bold border text-center">KD</button>
-            <button data-mode="RSI" onclick="setChartMode('RSI')" class="mode-btn btn-term py-1.5 text-[11px] font-bold border text-center">RSI</button>
-            <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn btn-term py-1.5 text-[11px] font-bold border text-center">MACD</button>
+          <!-- 單一指標圖表互斥切換列 -->
+          <div class="grid grid-cols-5 p-1 bg-[#12161F] rounded-[8px]">
+            <button data-mode="CANDLE_MA" onclick="setChartMode('CANDLE_MA')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">K線+MA</button>
+            <button data-mode="VOL" onclick="setChartMode('VOL')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">成交量</button>
+            <button data-mode="KD" onclick="setChartMode('KD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">KD</button>
+            <button data-mode="RSI" onclick="setChartMode('RSI')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">RSI</button>
+            <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">MACD</button>
           </div>
 
           <!-- 均線顯示開關 (僅在 K線+MA 模式顯示) -->
-          <div id="maToggleRow" class="flex items-center justify-between gap-2 bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-1.5 rounded-[2px] text-[11px] mono">
-            <div class="flex items-center gap-3 flex-wrap">
-              <label class="flex items-center gap-1 cursor-pointer">
+          <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num pt-0.5">
+            <div class="flex items-center gap-3.5 flex-wrap">
+              <label class="flex items-center gap-1.5 cursor-pointer">
                 <input id="toggleMa0" type="checkbox" checked onchange="renderActiveChart()">
                 <span id="labelMa0" class="text-[#F59E0B]">MA5</span>
               </label>
-              <label class="flex items-center gap-1 cursor-pointer">
+              <label class="flex items-center gap-1.5 cursor-pointer">
                 <input id="toggleMa1" type="checkbox" checked onchange="renderActiveChart()">
                 <span id="labelMa1" class="text-[#38BDF8]">MA20</span>
               </label>
-              <label class="flex items-center gap-1 cursor-pointer">
+              <label class="flex items-center gap-1.5 cursor-pointer">
                 <input id="toggleMa2" type="checkbox" checked onchange="renderActiveChart()">
                 <span id="labelMa2" class="text-[#C084FC]">MA60</span>
               </label>
             </div>
-            <button onclick="openSettingsModal()" class="text-[#8B95A5] underline">自訂週期</button>
+            <button onclick="openSettingsModal()" class="text-[#8A94A6] hover:text-[#F4F6F9]">參數 ⚙</button>
           </div>
 
           <!-- 十字準星精確數值讀數列 -->
-          <div id="chartCrosshairBar" class="bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-1.5 rounded-[2px] text-[11px] mono text-[#D1D5DB] flex flex-wrap gap-x-3 gap-y-0.5 min-h-[28px] items-center">
+          <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2.5 gap-y-0.5 min-h-[20px] items-center">
             滑動圖表查看詳細數值...
           </div>
-
-          <!-- 單一純淨圖表畫布容器 -->
-          <div id="chartViewport" class="w-full h-[340px] sm:h-[420px] bg-[#0A0C0F] border border-[#262E3D] rounded-[2px] relative overflow-hidden"></div>
         </div>
 
-        <!-- 3. 可收合指標判讀重點提示卡 -->
-        <div class="term-card overflow-hidden">
-          <button onclick="toggleGuideBox()" class="w-full px-3 py-2 flex items-center justify-between bg-[#171D26] text-left">
-            <span id="guideTitle" class="text-[12px] font-bold text-[#FF9900]">指標判讀重點</span>
-            <span id="guideChevron" class="text-[11px] mono text-[#8B95A5]">[收合 ▲]</span>
+        <!-- 3. 貼合螢幕全寬的單一純淨圖表畫布容器 -->
+        <div id="chartViewport" class="w-full h-[360px] sm:h-[440px] bg-[#090B0E] hairline-b relative overflow-hidden"></div>
+
+        <!-- 4. 可收合指標判讀重點提示 -->
+        <div class="px-4 py-4">
+          <button onclick="toggleGuideBox()" class="w-full flex items-center justify-between text-left py-1">
+            <span id="guideTitle" class="text-[12px] font-semibold text-[#8A94A6]">指標判讀重點</span>
+            <span id="guideChevron" class="text-[11px] text-[#586274]">收合 ▲</span>
           </button>
-          <div id="guideContent" class="p-3 text-[12px] leading-relaxed text-[#D1D5DB] border-t border-[#262E3D]"></div>
+          <div id="guideContent" class="pt-1.5 text-[12px] leading-relaxed text-[#8A94A6]"></div>
         </div>
       </section>
 
@@ -549,17 +597,19 @@
   </main>
 
   <!-- ========================================================================
-       底部固定雙分頁導覽列 (BOTTOM TAB BAR)
+       底部 iOS 原生毛玻璃純黑雙分頁導覽列 (BOTTOM TAB BAR)
        ======================================================================== -->
   <nav class="bottom-nav">
-    <div class="max-w-4xl mx-auto grid grid-cols-2 h-14">
+    <div class="max-w-3xl mx-auto grid grid-cols-2 h-[54px]">
       <button id="navBtnSim" onclick="switchMainTab('sim')"
-        class="flex items-center justify-center border-t-2 transition-colors">
-        <span class="text-[14px] font-bold tracking-wide">模擬股票</span>
+        class="relative flex flex-col items-center justify-center gap-0.5 transition-colors">
+        <span id="navIndSim" class="absolute top-0 w-10 h-[2px] bg-[#FF9900] rounded-full"></span>
+        <span class="text-[13px] font-bold tracking-wide">模擬股票</span>
       </button>
       <button id="navBtnChart" onclick="switchMainTab('chart')"
-        class="flex items-center justify-center border-t-2 transition-colors">
-        <span class="text-[14px] font-bold tracking-wide">盤面分析</span>
+        class="relative flex flex-col items-center justify-center gap-0.5 transition-colors">
+        <span id="navIndChart" class="hidden absolute top-0 w-10 h-[2px] bg-[#FF9900] rounded-full"></span>
+        <span class="text-[13px] font-bold tracking-wide">盤面分析</span>
       </button>
     </div>
   </nav>
@@ -568,27 +618,27 @@
        MODAL 1：新增 / 編輯帳戶視窗 (accountModal)
        ======================================================================== -->
   <div id="accountModal" class="modal-backdrop hidden">
-    <div class="modal-panel" style="max-width: 440px;">
-      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
-        <span id="accountModalTitle" class="text-[13px] font-bold text-[#FF9900]">建立新帳戶</span>
-        <button onclick="closeModal('accountModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+    <div class="modal-panel">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+        <span id="accountModalTitle" class="text-[14px] font-bold text-[#F4F6F9]">建立新帳戶</span>
+        <button onclick="closeModal('accountModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
       </div>
-      <div class="p-4 space-y-3 overflow-y-auto">
+      <div class="p-4 space-y-3.5 overflow-y-auto">
         <div>
-          <label class="block text-[11px] text-[#8B95A5] mb-1">帳戶名稱</label>
-          <input id="accNameInput" type="text" placeholder="例如：波段突破策略戶" class="w-full px-2.5 py-2">
+          <label class="block text-[11px] text-[#8A94A6] mb-1">帳戶名稱</label>
+          <input id="accNameInput" type="text" placeholder="例如：波段突破策略戶" class="w-full px-3 py-2">
         </div>
         <div id="accCapitalGroup">
-          <label class="block text-[11px] text-[#8B95A5] mb-1">初始本金（最低 1,000）</label>
-          <input id="accCapitalInput" type="number" min="1000" step="1000" value="1000000" class="w-full px-2.5 py-2 mono">
+          <label class="block text-[11px] text-[#8A94A6] mb-1">初始本金（最低 1,000）</label>
+          <input id="accCapitalInput" type="number" min="1000" step="1000" value="1000000" class="w-full px-3 py-2 num">
         </div>
         <div>
-          <label class="block text-[11px] text-[#8B95A5] mb-1">策略說明與紀律備註（選填）</label>
-          <textarea id="accStrategyInput" rows="3" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-2.5 py-2"></textarea>
+          <label class="block text-[11px] text-[#8A94A6] mb-1">策略說明與紀律備註（選填）</label>
+          <textarea id="accStrategyInput" rows="3" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-3 py-2"></textarea>
         </div>
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="closeModal('accountModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">取消</button>
-          <button onclick="saveAccountModal()" class="btn-term py-2 bg-[#FF9900] text-black font-bold">儲存帳戶</button>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeModal('accountModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
+          <button onclick="saveAccountModal()" class="tap-btn py-2.5 bg-[#FF9900] text-black font-bold rounded-[8px]">儲存帳戶</button>
         </div>
       </div>
     </div>
@@ -598,151 +648,157 @@
        MODAL 2：帳戶充值視窗 (depositModal)
        ======================================================================== -->
   <div id="depositModal" class="modal-backdrop hidden">
-    <div class="modal-panel" style="max-width: 440px;">
-      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
-        <span class="text-[13px] font-bold text-[#FF9900]">帳戶資金充值</span>
-        <button onclick="closeModal('depositModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+    <div class="modal-panel">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+        <span class="text-[14px] font-bold text-[#F4F6F9]">帳戶資金充值</span>
+        <button onclick="closeModal('depositModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
       </div>
-      <div class="p-4 space-y-3 overflow-y-auto">
-        <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px] text-[12px] space-y-1">
+      <div class="p-4 space-y-3.5 overflow-y-auto">
+        <div class="py-2 hairline-b text-[12px] space-y-1.5">
           <div class="flex justify-between">
-            <span class="text-[#8B95A5]">目標帳戶</span>
-            <span id="depAccountName" class="font-bold text-[#F3F4F6]">--</span>
+            <span class="text-[#8A94A6]">目標帳戶</span>
+            <span id="depAccountName" class="font-bold text-[#F4F6F9]">--</span>
           </div>
-          <div class="flex justify-between mono">
-            <span class="text-[#8B95A5]">目前本金 / 累計充值</span>
+          <div class="flex justify-between num">
+            <span class="text-[#8A94A6]">目前本金 / 累計充值</span>
             <span id="depCurrentStats" class="text-[#FF9900]">0 / 0</span>
           </div>
         </div>
 
         <div>
-          <label class="block text-[11px] text-[#8B95A5] mb-1">充值金額（同步計入初始本金，不灌水報酬率）</label>
-          <input id="depositAmountInput" type="number" min="1" step="1000" placeholder="輸入充值金額" class="w-full px-2.5 py-2 mono">
+          <label class="block text-[11px] text-[#8A94A6] mb-1">充值金額（同步計入初始本金，不灌水報酬率）</label>
+          <input id="depositAmountInput" type="number" min="1" step="1000" placeholder="輸入充值金額" class="w-full px-3 py-2 num">
         </div>
 
-        <div class="grid grid-cols-4 gap-1.5">
-          <button onclick="setDepositQuickAmount(50000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+5萬</button>
-          <button onclick="setDepositQuickAmount(100000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+10萬</button>
-          <button onclick="setDepositQuickAmount(500000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+50萬</button>
-          <button onclick="setDepositQuickAmount(1000000)" class="btn-term py-1.5 text-[11px] mono border border-[#262E3D] bg-[#0A0C0F] text-[#D1D5DB] hover:border-[#FF9900]">+100萬</button>
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="setDepositQuickAmount(50000)" class="tap-btn py-1.5 text-[11px] num bg-[#171C26] text-[#D1D5DB] rounded-[6px]">+5萬</button>
+          <button onclick="setDepositQuickAmount(100000)" class="tap-btn py-1.5 text-[11px] num bg-[#171C26] text-[#D1D5DB] rounded-[6px]">+10萬</button>
+          <button onclick="setDepositQuickAmount(500000)" class="tap-btn py-1.5 text-[11px] num bg-[#171C26] text-[#D1D5DB] rounded-[6px]">+50萬</button>
+          <button onclick="setDepositQuickAmount(1000000)" class="tap-btn py-1.5 text-[11px] num bg-[#171C26] text-[#D1D5DB] rounded-[6px]">+100萬</button>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="closeModal('depositModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">取消</button>
-          <button onclick="confirmDeposit()" class="btn-term py-2 bg-[#FF9900] text-black font-bold">確認充值</button>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeModal('depositModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
+          <button onclick="confirmDeposit()" class="tap-btn py-2.5 bg-[#FF9900] text-black font-bold rounded-[8px]">確認充值</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ========================================================================
-       MODAL 3：終端機系統設定視窗 (settingsModal)
+       MODAL 3：全螢幕系統設定視窗 (settingsModal)
        ======================================================================== -->
   <div id="settingsModal" class="modal-backdrop hidden">
-    <div class="modal-panel">
-      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
-        <span class="text-[13px] font-bold text-[#FF9900]">終端機參數與系統設定</span>
-        <button onclick="closeModal('settingsModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+    <div class="settings-full-panel">
+      <div class="px-4 h-[48px] hairline-b flex items-center justify-between bg-[#000000] shrink-0">
+        <span class="text-[15px] font-bold text-[#F4F6F9]">系統設定</span>
+        <button onclick="closeModal('settingsModal')" class="tap-btn px-3 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">
+          關閉 ✕
+        </button>
       </div>
-      <div class="p-4 space-y-4 overflow-y-auto max-h-[75vh]">
-        <!-- 漲跌配色模式 -->
-        <div class="space-y-1.5">
-          <label class="block text-[11px] font-bold text-[#FF9900]">盤面漲跌配色模式</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button id="setColorTW" onclick="setColorMode('TW')" class="btn-term py-2 border">台股模式（紅漲綠跌）</button>
-            <button id="setColorUS" onclick="setColorMode('US')" class="btn-term py-2 border">美股模式（綠漲紅跌）</button>
+
+      <div class="flex-1 overflow-y-auto">
+        <div class="max-w-3xl mx-auto px-4 py-4 space-y-5">
+          <!-- 漲跌配色模式 -->
+          <div class="space-y-2 pb-4 hairline-b">
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">盤面漲跌配色模式</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="setColorTW" onclick="setColorMode('TW')" class="tap-btn py-2.5 rounded-[8px] text-[13px]">台股模式（紅漲綠跌）</button>
+              <button id="setColorUS" onclick="setColorMode('US')" class="tap-btn py-2.5 rounded-[8px] text-[13px]">美股模式（綠漲紅跌）</button>
+            </div>
+          </div>
+
+          <!-- 交易手續費與證交稅率 -->
+          <div class="space-y-2.5 pb-4 hairline-b">
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">交易成本與稅率設定</label>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">手續費率</label>
+                <input id="setFeeRate" type="number" step="0.000001" class="w-full px-2.5 py-2 num">
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">券商折數</label>
+                <input id="setDiscount" type="number" step="0.01" class="w-full px-2.5 py-2 num">
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">最低手續費</label>
+                <input id="setMinFee" type="number" step="1" class="w-full px-2.5 py-2 num">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">一般股票證交稅率</label>
+                <input id="setStockTax" type="number" step="0.0001" class="w-full px-2.5 py-2 num">
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">ETF 證交稅率</label>
+                <input id="setEtfTax" type="number" step="0.0001" class="w-full px-2.5 py-2 num">
+              </div>
+            </div>
+          </div>
+
+          <!-- 均線週期與行情快取 -->
+          <div class="space-y-2.5 pb-4 hairline-b">
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">技術指標與行情快取</label>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">均線 1 (日)</label>
+                <input id="setMa0" type="number" min="2" max="240" class="w-full px-2.5 py-2 num">
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">均線 2 (日)</label>
+                <input id="setMa1" type="number" min="2" max="240" class="w-full px-2.5 py-2 num">
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#8A94A6] mb-1">均線 3 (日)</label>
+                <input id="setMa2" type="number" min="2" max="240" class="w-full px-2.5 py-2 num">
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] text-[#8A94A6] mb-1">行情快取有效時間（僅對已成功抓取之真實資料生效）</label>
+              <select id="setCacheTtl" class="w-full px-3 py-2">
+                <option value="60000">1 分鐘 (高頻即時)</option>
+                <option value="300000">5 分鐘 (預設平衡)</option>
+                <option value="900000">15 分鐘 (省流量)</option>
+                <option value="0">永久快取 (僅手動強制更新)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 自選股快捷管理 -->
+          <div class="space-y-2.5 pb-4 hairline-b">
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">自選股快捷列表</label>
+            <div id="settingsWatchlist" class="flex flex-wrap gap-2"></div>
+            <div class="flex gap-2">
+              <input id="newWatchSymbol" type="text" placeholder="新增代號如 2317 或 TSLA" class="flex-1 px-3 py-2 num uppercase"
+                onkeydown="if(event.key==='Enter') addWatchlistSymbol()">
+              <button onclick="addWatchlistSymbol()" class="tap-btn px-4 py-2 text-[13px] font-bold bg-[#171C26] text-[#FF9900] rounded-[8px]">新增</button>
+            </div>
+          </div>
+
+          <!-- JSON 備份與還原 -->
+          <div class="space-y-2.5 pb-4">
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">系統資料備份與還原 (JSON)</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="exportJsonBackup()" class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#F4F6F9] rounded-[8px]">
+                匯出 JSON 備份
+              </button>
+              <label class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#38BDF8] text-center cursor-pointer rounded-[8px]">
+                選擇 JSON 檔還原
+                <input type="file" accept=".json,application/json" class="hidden" onchange="handleImportJsonFile(event)">
+              </label>
+            </div>
+            <div class="flex gap-2">
+              <input id="importJsonText" type="text" placeholder="或直接在此貼上 JSON 備份字串..." class="flex-1 px-3 py-2 num text-[12px]">
+              <button onclick="importJsonFromTextarea()" class="tap-btn px-4 py-2 text-[12px] font-bold bg-[#171C26] text-[#F4F6F9] rounded-[8px] shrink-0">還原</button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- 交易手續費與證交稅率 -->
-        <div class="space-y-2 border-t border-[#262E3D] pt-3">
-          <label class="block text-[11px] font-bold text-[#FF9900]">交易成本與稅率設定</label>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">手續費率</label>
-              <input id="setFeeRate" type="number" step="0.000001" class="w-full px-2 py-1.5 mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">券商折數</label>
-              <input id="setDiscount" type="number" step="0.01" class="w-full px-2 py-1.5 mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">最低手續費</label>
-              <input id="setMinFee" type="number" step="1" class="w-full px-2 py-1.5 mono">
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">一般股票證交稅率</label>
-              <input id="setStockTax" type="number" step="0.0001" class="w-full px-2 py-1.5 mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">ETF 證交稅率</label>
-              <input id="setEtfTax" type="number" step="0.0001" class="w-full px-2 py-1.5 mono">
-            </div>
-          </div>
-        </div>
-
-        <!-- 均線週期與行情快取 -->
-        <div class="space-y-2 border-t border-[#262E3D] pt-3">
-          <label class="block text-[11px] font-bold text-[#FF9900]">技術指標與行情快取</label>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">均線 1 (日)</label>
-              <input id="setMa0" type="number" min="2" max="240" class="w-full px-2 py-1.5 mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">均線 2 (日)</label>
-              <input id="setMa1" type="number" min="2" max="240" class="w-full px-2 py-1.5 mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-[#8B95A5] mb-1">均線 3 (日)</label>
-              <input id="setMa2" type="number" min="2" max="240" class="w-full px-2 py-1.5 mono">
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] text-[#8B95A5] mb-1">行情快取有效時間</label>
-            <select id="setCacheTtl" class="w-full px-2.5 py-1.5 mono">
-              <option value="60000">1 分鐘 (高頻即時)</option>
-              <option value="300000">5 分鐘 (預設平衡)</option>
-              <option value="900000">15 分鐘 (省流量)</option>
-              <option value="0">永久快取 (僅手動強制更新)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 自選股快捷管理 -->
-        <div class="space-y-2 border-t border-[#262E3D] pt-3">
-          <label class="block text-[11px] font-bold text-[#FF9900]">自選股快捷列表</label>
-          <div id="settingsWatchlist" class="flex flex-wrap gap-1.5"></div>
-          <div class="flex gap-2">
-            <input id="newWatchSymbol" type="text" placeholder="新增代號如 2317 或 TSLA" class="flex-1 px-2.5 py-1.5 mono uppercase"
-              onkeydown="if(event.key==='Enter') addWatchlistSymbol()">
-            <button onclick="addWatchlistSymbol()" class="btn-term px-3 py-1.5 text-[12px] font-bold bg-[#171D26] border border-[#364154] text-[#FF9900]">新增</button>
-          </div>
-        </div>
-
-        <!-- JSON 備份與還原 -->
-        <div class="space-y-2 border-t border-[#262E3D] pt-3">
-          <label class="block text-[11px] font-bold text-[#FF9900]">系統資料備份與還原 (JSON)</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="exportJsonBackup()" class="btn-term py-2 text-[12px] font-semibold border border-[#364154] bg-[#171D26] text-[#F3F4F6]">
-              匯出 JSON 備份
-            </button>
-            <label class="btn-term py-2 text-[12px] font-semibold border border-[#364154] bg-[#171D26] text-[#38BDF8] text-center cursor-pointer">
-              選擇 JSON 檔還原
-              <input type="file" accept=".json,application/json" class="hidden" onchange="handleImportJsonFile(event)">
-            </label>
-          </div>
-          <div class="flex gap-2">
-            <input id="importJsonText" type="text" placeholder="或直接在此貼上 JSON 備份字串..." class="flex-1 px-2.5 py-1.5 mono text-[12px]">
-            <button onclick="importJsonFromTextarea()" class="btn-term px-3 py-1.5 text-[12px] font-bold bg-[#171D26] border border-[#364154] text-[#F3F4F6] shrink-0">還原</button>
-          </div>
-        </div>
-
-        <!-- 儲存按鈕 -->
-        <div class="pt-1">
-          <button onclick="saveSettingsFromModal()" class="btn-term w-full py-2.5 bg-[#FF9900] text-black font-bold text-[14px]">
+      <div class="px-4 py-3 hairline-t bg-[#000000] shrink-0">
+        <div class="max-w-3xl mx-auto">
+          <button onclick="saveSettingsFromModal()" class="tap-btn w-full py-2.5 bg-[#FF9900] text-black font-bold text-[14px] rounded-[8px]">
             儲存並套用設定
           </button>
         </div>
@@ -755,30 +811,30 @@
        ======================================================================== -->
   <div id="exportModal" class="modal-backdrop hidden">
     <div class="modal-panel">
-      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
-        <span id="exportModalTitle" class="text-[13px] font-bold text-[#FF9900]">檢討報告匯出</span>
-        <button onclick="closeModal('exportModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+        <span id="exportModalTitle" class="text-[14px] font-bold text-[#F4F6F9]">檢討報告匯出</span>
+        <button onclick="closeModal('exportModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
       </div>
       <div class="p-4 space-y-3">
-        <textarea id="exportTextarea" rows="12" readonly class="w-full p-2.5 mono text-[12px] leading-relaxed"></textarea>
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="closeModal('exportModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">關閉</button>
-          <button onclick="copyExportTextarea()" class="btn-term py-2 bg-[#FF9900] text-black font-bold">一鍵複製全部文字</button>
+        <textarea id="exportTextarea" rows="12" readonly class="w-full p-3 num text-[12px] leading-relaxed"></textarea>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button onclick="closeModal('exportModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">關閉</button>
+          <button onclick="copyExportTextarea()" class="tap-btn py-2.5 bg-[#FF9900] text-black font-bold rounded-[8px]">一鍵複製全部文字</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ========================================================================
-       MODAL 5：切換帳戶視窗 (點擊左上角 BBG 或帳戶列開啟)
+       MODAL 5：切換帳戶視窗
        ======================================================================== -->
   <div id="accountSwitchModal" class="modal-backdrop hidden">
-    <div class="modal-panel" style="max-width: 440px;">
-      <div class="px-4 py-3 border-b border-[#262E3D] flex items-center justify-between bg-[#171D26]">
-        <span class="text-[13px] font-bold text-[#FF9900]">切換帳戶</span>
-        <button onclick="closeModal('accountSwitchModal')" class="text-[13px] text-[#8B95A5]">[關閉 ✕]</button>
+    <div class="modal-panel">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+        <span class="text-[14px] font-bold text-[#F4F6F9]">切換帳戶</span>
+        <button onclick="closeModal('accountSwitchModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
       </div>
-      <div id="accountSwitchList" class="p-3 overflow-y-auto space-y-2 max-h-[65vh]"></div>
+      <div id="accountSwitchList" class="divide-y divide-[#1C222D] overflow-y-auto max-h-[65vh]"></div>
     </div>
   </div>
 
@@ -787,14 +843,66 @@
        ======================================================================== -->
   <div id="confirmModal" class="modal-backdrop hidden">
     <div class="modal-panel" style="max-width: 400px;">
-      <div class="px-4 py-3 border-b border-[#262E3D] bg-[#171D26]">
-        <span id="confirmTitle" class="text-[13px] font-bold text-[#FF9900]">確認操作</span>
+      <div class="px-4 py-3.5 hairline-b">
+        <span id="confirmTitle" class="text-[14px] font-bold text-[#F4F6F9]">確認操作</span>
       </div>
       <div class="p-4 space-y-4">
-        <p id="confirmMessage" class="text-[13px] text-[#F3F4F6] leading-relaxed"></p>
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="closeModal('confirmModal')" class="btn-term py-2 border border-[#364154] bg-[#171D26] text-[#F3F4F6] font-semibold">取消</button>
-          <button id="confirmOkBtn" class="btn-term py-2 bg-[#FF3B30] text-white font-bold">確定執行</button>
+        <p id="confirmMessage" class="text-[13px] text-[#D1D5DB] leading-relaxed"></p>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button onclick="closeModal('confirmModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
+          <button id="confirmOkBtn" class="tap-btn py-2.5 bg-[#FF3B30] text-white font-bold rounded-[8px]">確定執行</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 7：買入 / 賣出委託確認視窗 (orderConfirmModal - 確認後才扣款)
+       ======================================================================== -->
+  <div id="orderConfirmModal" class="modal-backdrop hidden">
+    <div class="modal-panel" style="max-width: 420px;">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="ocSideBadge" class="px-2 py-0.5 text-[11px] font-bold rounded pill-up">買進委託</span>
+          <span class="text-[14px] font-bold text-[#F4F6F9]">請確認委託明細</span>
+        </div>
+        <button onclick="closeModal('orderConfirmModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
+      </div>
+      <div class="p-4 space-y-3.5">
+        <div class="py-2.5 px-3 bg-[#141923] rounded-[10px] space-y-2 text-[13px]">
+          <div class="flex items-center justify-between">
+            <span class="text-[#8A94A6]">委託標的</span>
+            <span id="ocSymbolName" class="font-bold text-[#F4F6F9]">--</span>
+          </div>
+          <div class="flex items-center justify-between num">
+            <span class="text-[#8A94A6]">委託單價 / 總股數</span>
+            <span id="ocPriceShares" class="font-semibold text-[#F4F6F9]">--</span>
+          </div>
+          <div class="flex items-center justify-between num">
+            <span class="text-[#8A94A6]">成交價金</span>
+            <span id="ocGrossAmount" class="text-[#F4F6F9]">$0</span>
+          </div>
+          <div class="flex items-center justify-between num">
+            <span class="text-[#8A94A6]">券商手續費</span>
+            <span id="ocFeeAmount" class="text-[#F4F6F9]">$0</span>
+          </div>
+          <div class="flex items-center justify-between num">
+            <span id="ocTaxLabel" class="text-[#8A94A6]">證券交易稅</span>
+            <span id="ocTaxAmount" class="text-[#F4F6F9]">$0</span>
+          </div>
+          <div class="pt-2 hairline-t flex items-center justify-between num">
+            <span id="ocNetLabel" class="font-semibold text-[#F4F6F9]">實際扣款總額</span>
+            <span id="ocNetAmount" class="text-[18px] font-bold text-[#FF9900]">$0</span>
+          </div>
+          <div class="flex items-center justify-between text-[12px] num">
+            <span class="text-[#8A94A6]">委託後預計剩餘現金</span>
+            <span id="ocAfterCash" class="text-[#8A94A6]">$0</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="closeModal('orderConfirmModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">返回修改</button>
+          <button id="ocConfirmBtn" onclick="executeConfirmedOrder()" class="tap-btn py-2.5 font-bold rounded-[8px] btn-buy-solid">確認下單並扣款</button>
         </div>
       </div>
     </div>
@@ -803,7 +911,7 @@
   <!-- ========================================================================
        TOAST 通知列 (取代 alert())
        ======================================================================== -->
-  <div id="toastContainer" class="fixed top-14 left-1/2 -translate-x-1/2 z-[80] w-[92%] max-w-md pointer-events-none space-y-2"></div>
+  <div id="toastContainer" class="fixed left-1/2 -translate-x-1/2 z-[80] w-[92%] max-w-md pointer-events-none space-y-2"></div>
 
   <!-- ========================================================================
        CORE JAVASCRIPT ENGINE
@@ -816,6 +924,8 @@
        ======================================================================== */
     const STORAGE_KEY = 'bloomberg_sim_lab_v1';
     const TW_INFO_CACHE_KEY = 'bloomberg_tw_stock_info_v1';
+    const SNAPSHOT_CACHE_TTL_MS = 180000;
+    const HEARTBEAT_INTERVAL_MS = 45000;
 
     const INDICATOR_GUIDES = {
       CANDLE_MA: {
@@ -840,10 +950,15 @@
       }
     };
 
+    /* 離線模擬基準價格表（採用貼近近期市場水準之合理參考價，絕不混入真實線上序列） */
     const BUILTIN_STOCK_META = {
-      '2330.TW': { name: '台積電 (離線模擬)', base: 980, vol: 32000000, drift: 0.0011, sigma: 0.017, seed: 2330 },
-      '0050.TW': { name: '元大台灣50 (離線模擬)', base: 185, vol: 14000000, drift: 0.0007, sigma: 0.011, seed: 50 },
-      'NVDA':    { name: 'NVIDIA Corp (離線模擬)', base: 132, vol: 240000000, drift: 0.0018, sigma: 0.031, seed: 8888 }
+      '2330.TW': { name: '台積電 (離線模擬)', base: 1050, vol: 32000000, drift: 0.0009, sigma: 0.016, seed: 2330 },
+      '0050.TW': { name: '元大台灣50 (離線模擬)', base: 195, vol: 14000000, drift: 0.0006, sigma: 0.011, seed: 50 },
+      '00830.TW': { name: '國泰費城半導體 (離線模擬)', base: 46, vol: 12000000, drift: 0.0008, sigma: 0.015, seed: 830 },
+      'AAPL':    { name: 'Apple Inc. (離線模擬)', base: 230, vol: 52000000, drift: 0.0007, sigma: 0.015, seed: 1001 },
+      'NVDA':    { name: 'NVIDIA Corp. (離線模擬)', base: 140, vol: 240000000, drift: 0.0014, sigma: 0.028, seed: 8888 },
+      'TSLA':    { name: 'Tesla Inc. (離線模擬)', base: 340, vol: 88000000, drift: 0.0011, sigma: 0.032, seed: 4242 },
+      'MSFT':    { name: 'Microsoft Corp. (離線模擬)', base: 425, vol: 21000000, drift: 0.0006, sigma: 0.014, seed: 7777 }
     };
 
     function createDefaultState() {
@@ -857,14 +972,14 @@
         activeChartMode: 'CANDLE_MA',
         guideExpanded: true,
         settings: {
-          colorMode: 'TW',        // 'TW' (紅漲綠跌) | 'US' (綠漲紅跌)
+          colorMode: 'TW',
           feeRate: 0.001425,
           discount: 0.28,
           minFee: 1,
           stockTaxRate: 0.003,
           etfTaxRate: 0.001,
           maPeriods: [5, 20, 60],
-          cacheTtlMs: 300000,     // 預設 5 分鐘
+          cacheTtlMs: 300000,
           watchlist: ['2330.TW', '0050.TW', 'NVDA', 'AAPL', '00830.TW']
         },
         accounts: [
@@ -886,11 +1001,32 @@
 
     let appState = loadState();
     let orderSide = 'BUY';
-    let orderUnitMode = 'LOT'; // 'LOT' | 'ODD'
+    let orderUnitMode = 'LOT';
+    let orderExtraOpen = false;
+    let pendingOrderPayload = null;
+    let expandedHoldingSym = null;
     let accountModalMode = 'create';
     let lwcChart = null;
     let lwcResizeObserver = null;
     let currentChartData = null;
+
+    /* ========================================================================
+       連線健康管理狀態機
+       ======================================================================== */
+    const connState = {
+      status: 'INIT',
+      sourceDetail: '',
+      lastErrorDetail: '',
+      lastSuccessAt: 0,
+      lastAttemptAt: 0,
+      consecutiveFailures: 0,
+      requestEpoch: 0,
+      inFlightMap: new Map(),
+      offlineMemoryMap: new Map(),
+      proxyCooldownUntil: new Map(),
+      twseSnapshot: { fetchedAt: 0, map: null, inFlight: null },
+      tpexSnapshot: { fetchedAt: 0, map: null, inFlight: null }
+    };
 
     /* ========================================================================
        2. 狀態持久化 (localStorage) 與 Toast/Modal 工具
@@ -908,12 +1044,24 @@
           ...a,
           totalDeposited: typeof a.totalDeposited === 'number' ? a.totalDeposited : 0
         }));
+        // 啟動時剔除任何殘留的離線模擬資料或歷史異常跳空髒資料
+        const cleanCache = {};
+        if (parsed.marketCache && typeof parsed.marketCache === 'object') {
+          for (const [k, v] of Object.entries(parsed.marketCache)) {
+            if (v && v.source === 'LIVE' && v.sourceLabel !== 'SCRIPT-LIVE' && Array.isArray(v.bars)) {
+              const sanitized = sanitizeAndValidateBars(v.bars, v.price);
+              if (sanitized.length >= 5) {
+                cleanCache[k] = { ...v, bars: sanitized, price: sanitized[sanitized.length - 1].close };
+              }
+            }
+          }
+        }
         return {
           ...def,
           ...parsed,
           accounts,
           settings: { ...def.settings, ...(parsed.settings || {}) },
-          marketCache: parsed.marketCache || {}
+          marketCache: cleanCache
         };
       } catch (e) {
         return createDefaultState();
@@ -922,13 +1070,20 @@
 
     function saveState() {
       try {
-        const keys = Object.keys(appState.marketCache || {});
-        if (keys.length > 16) {
-          keys.sort((a, b) => (appState.marketCache[a].fetchedAt || 0) - (appState.marketCache[b].fetchedAt || 0));
-          for (let i = 0; i < keys.length - 16; i++) {
-            delete appState.marketCache[keys[i]];
+        const sanitizedCache = {};
+        for (const [k, v] of Object.entries(appState.marketCache || {})) {
+          if (v && v.source === 'LIVE' && Array.isArray(v.bars) && v.bars.length >= 5) {
+            sanitizedCache[k] = v;
           }
         }
+        const keys = Object.keys(sanitizedCache);
+        if (keys.length > 16) {
+          keys.sort((a, b) => (sanitizedCache[a].fetchedAt || 0) - (sanitizedCache[b].fetchedAt || 0));
+          for (let i = 0; i < keys.length - 16; i++) {
+            delete sanitizedCache[keys[i]];
+          }
+        }
+        appState.marketCache = sanitizedCache;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       } catch (e) {
         showToast('本機儲存空間不足，已自動清理舊行情快取', 'warn');
@@ -941,16 +1096,16 @@
       const container = document.getElementById('toastContainer');
       const el = document.createElement('div');
       const borderColor = type === 'error' ? '#FF3B30' : (type === 'success' ? '#00C853' : '#FF9900');
-      el.className = 'px-3 py-2.5 bg-[#11151C] text-[#F3F4F6] text-[12px] font-medium shadow-lg rounded-[3px] pointer-events-auto';
-      el.style.border = `1px solid ${borderColor}`;
-      el.style.borderLeftWidth = '4px';
+      el.className = 'px-3.5 py-2.5 bg-[#141923] text-[#F4F6F9] text-[12px] font-medium shadow-xl rounded-[10px] pointer-events-auto';
+      el.style.border = `1px solid #2A3343`;
+      el.style.borderLeft = `3px solid ${borderColor}`;
       el.textContent = msg;
       container.appendChild(el);
       setTimeout(() => {
         el.style.opacity = '0';
         el.style.transition = 'opacity 0.25s ease';
         setTimeout(() => el.remove(), 260);
-      }, 2800);
+      }, 3000);
     }
 
     function openModal(id) {
@@ -991,8 +1146,12 @@
     }
 
     /* ========================================================================
-       3. 數值格式化與顏色輔助
+       3. 數值與代號格式化、顏色與狀態燈號輔助
        ======================================================================== */
+    function formatDisplaySymbol(symbol) {
+      return String(symbol || '').trim().replace(/\.(TW|TWO)$/i, '');
+    }
+
     function fmtMoney(n, decimals = 0) {
       if (!Number.isFinite(n)) return '0';
       return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -1018,7 +1177,7 @@
     function getPnlClass(val) {
       if (val > 0) return 'txt-up';
       if (val < 0) return 'txt-down';
-      return 'text-[#8B95A5]';
+      return 'text-[#8A94A6]';
     }
 
     function getThemeColors() {
@@ -1027,9 +1186,9 @@
         up: isUS ? '#00C853' : '#FF3B30',
         down: isUS ? '#FF3B30' : '#00C853',
         accent: '#FF9900',
-        grid: '#1C222D',
-        text: '#8B95A5',
-        bg: '#0A0C0F'
+        grid: '#161B25',
+        text: '#8A94A6',
+        bg: '#090B0E'
       };
     }
 
@@ -1041,41 +1200,45 @@
       }
     }
 
-    /**
-     * 更新頂部終端機連線狀態指示燈與資料來源標籤
-     * 支援來源：LIVE · FINMIND / LIVE · TWSE / LIVE · YAHOO / LIVE · STOOQ / CACHED / OFFLINE SIM
-     */
     function updateStatusBadge(mode, sourceDetail = '') {
+      connState.status = mode;
+      if (sourceDetail) connState.sourceDetail = sourceDetail;
+
       const dot = document.getElementById('statusDot');
       const txt = document.getElementById('statusText');
-      dot.className = 'w-2 h-2 rounded-full';
+      if (!dot || !txt) return;
+
+      dot.className = 'w-1.5 h-1.5 rounded-full shrink-0';
 
       if (mode === 'LIVE') {
+        connState.lastSuccessAt = Date.now();
+        connState.consecutiveFailures = 0;
+        connState.lastErrorDetail = '';
         dot.classList.add('bg-[#00C853]', 'dot-live');
         txt.className = 'text-[#00C853]';
-        txt.textContent = sourceDetail ? `LIVE · ${sourceDetail}` : 'LIVE';
+        txt.textContent = sourceDetail ? `即時 · ${sourceDetail}` : '即時連線';
       } else if (mode === 'CACHED') {
         dot.classList.add('bg-[#FF9900]');
         txt.className = 'text-[#FF9900]';
-        txt.textContent = sourceDetail ? `CACHED · ${sourceDetail}` : 'CACHED';
+        txt.textContent = sourceDetail ? `快取 · ${sourceDetail}` : '快取報價';
       } else if (mode === 'LOADING') {
         dot.classList.add('bg-[#38BDF8]', 'dot-live');
         txt.className = 'text-[#38BDF8]';
-        txt.textContent = 'SYNC...';
+        txt.textContent = sourceDetail || '更新中...';
       } else {
+        connState.consecutiveFailures += 1;
         dot.classList.add('bg-[#FF3B30]');
         txt.className = 'text-[#FF3B30]';
-        txt.textContent = 'OFFLINE SIM';
+        txt.textContent = '離線模擬 · 重連';
       }
     }
 
     /* ========================================================================
-       4. 多層次免代理 + 多代理備援行情引擎 (FinMind + TWSE/TPEx + Yahoo + Stooq)
+       4. 嚴格 OHLC 資料清洗驗證 + 跨市場純淨行情管線
        ======================================================================== */
     function normalizeSymbol(rawInput) {
       const clean = String(rawInput || '').trim().toUpperCase();
       if (!clean) return '';
-      // 台股純數字或 ETF 代號（如 2330, 0050, 00830, 00878, 00631L）自動補上 .TW
       if (/^\d{4,6}[A-Z]?$/.test(clean)) {
         return clean + '.TW';
       }
@@ -1094,41 +1257,220 @@
       return /^00\d{2,4}/.test(String(symbol || '').trim());
     }
 
-    function mulberry32(seed) {
-      let a = seed >>> 0;
-      return function () {
-        a |= 0; a = (a + 0x6D2B79F5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    function hashString(str) {
-      let h = 2166136261;
-      for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return Math.abs(h);
-    }
-
     /**
-     * 第三層降級：僅在完全無網路且無快取時啟用的確定性模擬數據
+     * 嚴格清洗與驗證每根 K 線的 OHLCV 數值與連續性：
+     * 1. 過濾非正數 (<= 0)、NaN、非 YYYY-MM-DD 日期格式
+     * 2. 修正或剔除高低價倒掛與單根極端離群振幅
+     * 3. 依日期嚴格升冪排序並去重
+     * 4. 剔除與整體中位數相差超過 2.2 倍、或單日異常跳空 (>45%) 的髒資料
+     * 5. 若傳入預期現價，檢查最後一根收盤價與現價的偏差是否超過 25%，超過則整組拒絕（嚴禁硬拼不同基準）
      */
+    function sanitizeAndValidateBars(rawBars, expectedPrice = null) {
+      if (!Array.isArray(rawBars) || rawBars.length === 0) return [];
+
+      const byDate = new Map();
+      for (const b of rawBars) {
+        if (!b || typeof b.time !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(b.time)) continue;
+        const o = Number(b.open);
+        const h = Number(b.high);
+        const l = Number(b.low);
+        const c = Number(b.close);
+        const v = Math.max(0, Math.round(Number(b.volume) || 0));
+
+        if (![o, h, l, c].every(x => Number.isFinite(x) && x > 0)) continue;
+        if (h < l) continue;
+
+        const maxOC = Math.max(o, c);
+        const minOC = Math.min(o, c);
+        if ((h - l) / minOC > 0.45) continue;
+
+        byDate.set(b.time, {
+          time: b.time,
+          open: Number(o.toFixed(2)),
+          high: Number(Math.max(h, maxOC).toFixed(2)),
+          low: Number(Math.min(l, minOC).toFixed(2)),
+          close: Number(c.toFixed(2)),
+          volume: v
+        });
+      }
+
+      const sorted = Array.from(byDate.values()).sort((a, b) => a.time.localeCompare(b.time));
+      if (sorted.length < 5) return [];
+
+      const closes = sorted.map(b => b.close).sort((a, b) => a - b);
+      const medianClose = closes[Math.floor(closes.length / 2)];
+      if (!Number.isFinite(medianClose) || medianClose <= 0) return [];
+
+      const cleanBars = [];
+      let prevClose = null;
+
+      for (const bar of sorted) {
+        // 與相鄰序列中位數價格基準相差超過 2.2 倍則視為不同基準髒資料，嚴格過濾
+        if (bar.close > medianClose * 2.2 || bar.close < medianClose / 2.2) continue;
+
+        if (prevClose !== null) {
+          const jumpRatio = Math.abs(bar.close - prevClose) / prevClose;
+          const openJumpRatio = Math.abs(bar.open - prevClose) / prevClose;
+          if (jumpRatio > 0.45 || openJumpRatio > 0.45) {
+            continue;
+          }
+        }
+        cleanBars.push(bar);
+        prevClose = bar.close;
+      }
+
+      if (cleanBars.length < 5) return [];
+
+      if (Number.isFinite(expectedPrice) && expectedPrice > 0) {
+        const lastClose = cleanBars[cleanBars.length - 1].close;
+        const diffRatio = Math.abs(expectedPrice - lastClose) / lastClose;
+        if (diffRatio > 0.25) {
+          return [];
+        }
+      }
+
+      return cleanBars;
+    }
+
+    function raceSuccess(promises) {
+      return new Promise((resolve, reject) => {
+        if (!Array.isArray(promises) || promises.length === 0) {
+          return reject(new Error('無可用資料源'));
+        }
+        let settled = false;
+        let rejectedCount = 0;
+        const errors = new Array(promises.length);
+
+        promises.forEach((p, idx) => {
+          Promise.resolve(p).then(
+            val => {
+              if (!settled) {
+                settled = true;
+                resolve(val);
+              }
+            },
+            err => {
+              errors[idx] = err;
+              rejectedCount += 1;
+              if (!settled && rejectedCount === promises.length) {
+                const firstMsg = errors.find(e => e && e.message)?.message || '所有資料源均無回應';
+                reject(new Error(firstMsg));
+              }
+            }
+          );
+        });
+      });
+    }
+
+    function withHardTimeout(promiseFactory, timeoutMs, label = 'Request') {
+      const controller = new AbortController();
+      let timerId = null;
+
+      const timeoutPromise = new Promise((_, reject) => {
+        timerId = setTimeout(() => {
+          try { controller.abort(); } catch (_) {}
+          reject(new Error(`${label} 逾時 (${timeoutMs}ms)`));
+        }, timeoutMs);
+      });
+
+      return Promise.race([
+        Promise.resolve().then(() => promiseFactory(controller.signal)),
+        timeoutPromise
+      ]).finally(() => {
+        if (timerId !== null) clearTimeout(timerId);
+      });
+    }
+
+    async function fetchSimpleJson(url, timeoutMs = 6500) {
+      return withHardTimeout(async (signal) => {
+        const res = await fetch(url, {
+          method: 'GET',
+          signal,
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      }, timeoutMs, 'JSON');
+    }
+
+    async function fetchSimpleText(url, timeoutMs = 6500) {
+      return withHardTimeout(async (signal) => {
+        const res = await fetch(url, {
+          method: 'GET',
+          signal,
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.text();
+      }, timeoutMs, 'TEXT');
+    }
+
+    function appendCacheBuster(url, forceRefresh) {
+      if (!forceRefresh) return url;
+      const sep = url.includes('?') ? '&' : '?';
+      return `${url}${sep}_cb=${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    }
+
+    /* ------------------------------------------------------------------------
+       4A. 動態 <script> JSONP 引擎 (Yahoo Finance 官方支援 callback 參數)
+       ------------------------------------------------------------------------ */
+    let jsonpSeq = 0;
+
+    function fetchJsonpCallback(baseUrl, callbackParamName = 'callback', timeoutMs = 6000) {
+      return new Promise((resolve, reject) => {
+        jsonpSeq += 1;
+        const cbName = `__bbg_jsonp_cb_${Date.now()}_${jsonpSeq}`;
+        const script = document.createElement('script');
+        let done = false;
+
+        const cleanup = () => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          try { delete window[cbName]; } catch (_) { window[cbName] = undefined; }
+          if (script.parentNode) script.parentNode.removeChild(script);
+        };
+
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('JSONP 回應逾時'));
+        }, timeoutMs);
+
+        window[cbName] = (payload) => {
+          cleanup();
+          resolve(payload);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error('JSONP 載入失敗'));
+        };
+
+        const sep = baseUrl.includes('?') ? '&' : '?';
+        script.src = `${baseUrl}${sep}${encodeURIComponent(callbackParamName)}=${cbName}&_t=${Date.now()}`;
+        script.async = true;
+        document.head.appendChild(script);
+      });
+    }
+
     function generateOfflineDataset(symbol) {
+      const dispSym = formatDisplaySymbol(symbol);
       const meta = BUILTIN_STOCK_META[symbol] || {
-        name: `${symbol} (離線模擬)`,
-        base: 50 + (hashString(symbol) % 350),
+        name: `${dispSym} (離線模擬)`,
+        base: 80 + (hashString(symbol) % 260),
         vol: 5000000 + (hashString(symbol) % 25000000),
         drift: 0.0005,
-        sigma: 0.021,
+        sigma: 0.018,
         seed: hashString(symbol)
       };
 
       const rand = mulberry32(meta.seed);
       const bars = [];
-      let price = meta.base * 0.86;
+      let price = meta.base * 0.88;
       const totalDays = 140;
 
       const dates = [];
@@ -1145,15 +1487,15 @@
       }
 
       for (let i = 0; i < dates.length; i++) {
-        const wave = Math.sin(i / 14) * 0.004 + Math.cos(i / 31) * 0.002;
-        const z = (rand() + rand() + rand() - 1.5) * 1.6;
+        const wave = Math.sin(i / 14) * 0.0035 + Math.cos(i / 31) * 0.002;
+        const z = (rand() + rand() + rand() - 1.5) * 1.5;
         const ret = meta.drift + wave + z * meta.sigma;
 
-        const open = price * (1 + (rand() - 0.5) * 0.008);
+        const open = price * (1 + (rand() - 0.5) * 0.007);
         const close = Math.max(1, open * (1 + ret));
-        const high = Math.max(open, close) * (1 + rand() * meta.sigma * 0.75);
-        const low = Math.max(0.5, Math.min(open, close) * (1 - rand() * meta.sigma * 0.75));
-        const volFactor = 0.65 + Math.abs(ret) * 28 + rand() * 0.7;
+        const high = Math.max(open, close) * (1 + rand() * meta.sigma * 0.7);
+        const low = Math.max(0.5, Math.min(open, close) * (1 - rand() * meta.sigma * 0.7));
+        const volFactor = 0.65 + Math.abs(ret) * 26 + rand() * 0.7;
         const volume = Math.round(meta.vol * volFactor);
 
         bars.push({
@@ -1181,32 +1523,27 @@
       };
     }
 
-    async function fetchJsonWithTimeout(url, timeoutMs = 6000) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
-      } finally {
-        clearTimeout(timer);
-      }
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function () {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
     }
 
-    async function fetchTextWithTimeout(url, timeoutMs = 6000) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.text();
-      } finally {
-        clearTimeout(timer);
+    function hashString(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
       }
+      return Math.abs(h);
     }
 
     /* ------------------------------------------------------------------------
-       4A. 台股免代理直連引擎：FinMind Open Data + TWSE / TPEx OpenAPI
+       4B. 台股免代理原生 CORS 直連引擎 (FinMind + TWSE / TPEx OpenAPI)
        ------------------------------------------------------------------------ */
     function getTwStockInfoCache() {
       try {
@@ -1223,9 +1560,6 @@
       } catch (_) {}
     }
 
-    /**
-     * 透過 FinMind TaiwanStockInfo 取得真實中文股票名稱與上市/上櫃市場別（並快取於 localStorage）
-     */
     async function fetchTaiwanStockMetaDirect(stockCode) {
       const cache = getTwStockInfoCache();
       if (cache[stockCode] && cache[stockCode].name) {
@@ -1233,7 +1567,7 @@
       }
       try {
         const url = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&data_id=${encodeURIComponent(stockCode)}`;
-        const json = await fetchJsonWithTimeout(url, 4500);
+        const json = await fetchSimpleJson(url, 4500);
         if (json && Array.isArray(json.data) && json.data.length > 0) {
           const item = json.data.find(d => d.stock_id === stockCode) || json.data[0];
           const info = {
@@ -1248,9 +1582,6 @@
       return { name: stockCode, market: 'TW' };
     }
 
-    /**
-     * 將民國年日期 (如 "1151124" 或 "115/11/24") 轉為 YYYY-MM-DD
-     */
     function parseRocDateToIso(rocStr) {
       const digits = String(rocStr || '').replace(/\D/g, '');
       if (digits.length === 7) {
@@ -1264,122 +1595,162 @@
       return null;
     }
 
-    /**
-     * 輔助抓取 TWSE 證交所 / TPEx 櫃買中心 OpenAPI 最新交易日收盤與即時報價（免代理 CORS 直連）
-     */
-    async function fetchTwseOrTpexLatestQuote(stockCode) {
-      // 1. 嘗試 TWSE 上市每日收盤行情 OpenAPI
-      try {
-        const twseList = await fetchJsonWithTimeout('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL', 5000);
-        if (Array.isArray(twseList)) {
-          const found = twseList.find(row => String(row.Code || '').trim() === stockCode);
-          if (found) {
-            const close = parseFloat(String(found.ClosingPrice || '').replace(/,/g, ''));
-            const open = parseFloat(String(found.OpeningPrice || '').replace(/,/g, '')) || close;
-            const high = parseFloat(String(found.HighestPrice || '').replace(/,/g, '')) || close;
-            const low = parseFloat(String(found.LowestPrice || '').replace(/,/g, '')) || close;
-            const volume = parseInt(String(found.TradeVolume || '0').replace(/,/g, ''), 10) || 0;
-            const isoDate = parseRocDateToIso(found.Date);
-            if (Number.isFinite(close) && close > 0) {
-              return {
-                name: String(found.Name || '').trim() || stockCode,
-                market: 'TW',
-                date: isoDate,
-                open, high, low, close, volume,
-                apiSource: 'TWSE'
-              };
-            }
-          }
-        }
-      } catch (_) {}
+    async function getTwseMarketSnapshotMap(forceRefresh = false) {
+      const snap = connState.twseSnapshot;
+      const now = Date.now();
+      if (!forceRefresh && snap.map && (now - snap.fetchedAt) < SNAPSHOT_CACHE_TTL_MS) {
+        return snap.map;
+      }
+      if (snap.inFlight) return snap.inFlight;
 
-      // 2. 嘗試 TPEx 上櫃每日收盤行情 OpenAPI
-      try {
-        const tpexList = await fetchJsonWithTimeout('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes', 5000);
-        if (Array.isArray(tpexList)) {
-          const found = tpexList.find(row => String(row.SecuritiesCompanyCode || '').trim() === stockCode);
-          if (found) {
-            const close = parseFloat(String(found.Close || '').replace(/,/g, ''));
-            const open = parseFloat(String(found.Open || '').replace(/,/g, '')) || close;
-            const high = parseFloat(String(found.High || '').replace(/,/g, '')) || close;
-            const low = parseFloat(String(found.Low || '').replace(/,/g, '')) || close;
-            const volume = parseInt(String(found.TradingShares || '0').replace(/,/g, ''), 10) || 0;
-            const isoDate = parseRocDateToIso(found.Date);
-            if (Number.isFinite(close) && close > 0) {
-              return {
-                name: String(found.CompanyName || '').trim() || stockCode,
-                market: 'TWO',
-                date: isoDate,
-                open, high, low, close, volume,
-                apiSource: 'TPEX'
-              };
-            }
-          }
-        }
-      } catch (_) {}
+      snap.inFlight = (async () => {
+        try {
+          const url = appendCacheBuster('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL', forceRefresh);
+          const twseList = await fetchSimpleJson(url, 5500);
+          if (!Array.isArray(twseList) || twseList.length === 0) return snap.map;
 
+          const map = new Map();
+          for (const row of twseList) {
+            const code = String(row.Code || '').trim();
+            if (!code) continue;
+            const close = parseFloat(String(row.ClosingPrice || '').replace(/,/g, ''));
+            if (!Number.isFinite(close) || close <= 0) continue;
+            const open = parseFloat(String(row.OpeningPrice || '').replace(/,/g, '')) || close;
+            const high = parseFloat(String(row.HighestPrice || '').replace(/,/g, '')) || close;
+            const low = parseFloat(String(row.LowestPrice || '').replace(/,/g, '')) || close;
+            const volume = parseInt(String(row.TradeVolume || '0').replace(/,/g, ''), 10) || 0;
+            const isoDate = parseRocDateToIso(row.Date);
+            map.set(code, {
+              name: String(row.Name || '').trim() || code,
+              market: 'TW',
+              date: isoDate,
+              open, high, low, close, volume,
+              apiSource: 'TWSE'
+            });
+          }
+          if (map.size > 0) {
+            snap.map = map;
+            snap.fetchedAt = Date.now();
+          }
+          return snap.map;
+        } catch (_) {
+          return snap.map;
+        } finally {
+          snap.inFlight = null;
+        }
+      })();
+
+      return snap.inFlight;
+    }
+
+    async function getTpexMarketSnapshotMap(forceRefresh = false) {
+      const snap = connState.tpexSnapshot;
+      const now = Date.now();
+      if (!forceRefresh && snap.map && (now - snap.fetchedAt) < SNAPSHOT_CACHE_TTL_MS) {
+        return snap.map;
+      }
+      if (snap.inFlight) return snap.inFlight;
+
+      snap.inFlight = (async () => {
+        try {
+          const url = appendCacheBuster('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes', forceRefresh);
+          const tpexList = await fetchSimpleJson(url, 5500);
+          if (!Array.isArray(tpexList) || tpexList.length === 0) return snap.map;
+
+          const map = new Map();
+          for (const row of tpexList) {
+            const code = String(row.SecuritiesCompanyCode || '').trim();
+            if (!code) continue;
+            const close = parseFloat(String(row.Close || '').replace(/,/g, ''));
+            if (!Number.isFinite(close) || close <= 0) continue;
+            const open = parseFloat(String(row.Open || '').replace(/,/g, '')) || close;
+            const high = parseFloat(String(row.High || '').replace(/,/g, '')) || close;
+            const low = parseFloat(String(row.Low || '').replace(/,/g, '')) || close;
+            const volume = parseInt(String(row.TradingShares || '0').replace(/,/g, ''), 10) || 0;
+            const isoDate = parseRocDateToIso(row.Date);
+            map.set(code, {
+              name: String(row.CompanyName || '').trim() || code,
+              market: 'TWO',
+              date: isoDate,
+              open, high, low, close, volume,
+              apiSource: 'TPEX'
+            });
+          }
+          if (map.size > 0) {
+            snap.map = map;
+            snap.fetchedAt = Date.now();
+          }
+          return snap.map;
+        } catch (_) {
+          return snap.map;
+        } finally {
+          snap.inFlight = null;
+        }
+      })();
+
+      return snap.inFlight;
+    }
+
+    async function fetchTwseOrTpexLatestQuote(stockCode, forceRefresh = false) {
+      const twseMap = await getTwseMarketSnapshotMap(forceRefresh);
+      if (twseMap && twseMap.has(stockCode)) {
+        return twseMap.get(stockCode);
+      }
+      const tpexMap = await getTpexMarketSnapshotMap(forceRefresh);
+      if (tpexMap && tpexMap.has(stockCode)) {
+        return tpexMap.get(stockCode);
+      }
       return null;
     }
 
-    /**
-     * 台股第一層主力：直接透過瀏覽器 CORS 連線 FinMind Open Data + TWSE/TPEx OpenAPI
-     */
-    async function fetchTaiwanStockDirect(normalizedSym) {
+    async function fetchTaiwanStockDirect(normalizedSym, forceRefresh = false) {
       const stockCode = extractTaiwanCode(normalizedSym);
       const startDt = new Date();
       startDt.setDate(startDt.getDate() - 380);
       const startDateStr = `${startDt.getFullYear()}-${String(startDt.getMonth() + 1).padStart(2, '0')}-${String(startDt.getDate()).padStart(2, '0')}`;
 
-      const priceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${encodeURIComponent(stockCode)}&start_date=${startDateStr}`;
+      const rawPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${encodeURIComponent(stockCode)}&start_date=${startDateStr}`;
+      const priceUrl = appendCacheBuster(rawPriceUrl, forceRefresh);
 
-      // 並行發起 FinMind 歷史 K 線、FinMind 中文名稱、以及 TWSE/TPEx 最新報價
       const [priceRes, metaRes, latestQuote] = await Promise.allSettled([
-        fetchJsonWithTimeout(priceUrl, 6500),
+        fetchSimpleJson(priceUrl, 6500),
         fetchTaiwanStockMetaDirect(stockCode),
-        fetchTwseOrTpexLatestQuote(stockCode)
+        fetchTwseOrTpexLatestQuote(stockCode, forceRefresh)
       ]);
 
-      const barsMap = new Map();
+      const rawList = [];
       let sourceLabel = 'FINMIND';
 
       if (priceRes.status === 'fulfilled' && priceRes.value && Array.isArray(priceRes.value.data)) {
         for (const row of priceRes.value.data) {
-          const c = Number(row.close);
-          const o = Number(row.open) || c;
-          const h = Number(row.max) || Math.max(o, c);
-          const l = Number(row.min) || Math.min(o, c);
-          const v = Math.max(0, Math.round(Number(row.Trading_Volume) || 0));
-          if (!row.date || !Number.isFinite(c) || c <= 0) continue;
-          barsMap.set(row.date, {
+          rawList.push({
             time: row.date,
-            open: Number(o.toFixed(2)),
-            high: Number(h.toFixed(2)),
-            low: Number(l.toFixed(2)),
-            close: Number(c.toFixed(2)),
-            volume: v
+            open: Number(row.open) || Number(row.close),
+            high: Number(row.max) || Number(row.close),
+            low: Number(row.min) || Number(row.close),
+            close: Number(row.close),
+            volume: Number(row.Trading_Volume) || 0
           });
         }
       }
 
-      // 若 TWSE / TPEx OpenAPI 取得最新交易日資料，補齊或更新最新一根 K 線
       const lq = latestQuote.status === 'fulfilled' ? latestQuote.value : null;
       if (lq && lq.date) {
-        barsMap.set(lq.date, {
+        rawList.push({
           time: lq.date,
-          open: Number(lq.open.toFixed(2)),
-          high: Number(lq.high.toFixed(2)),
-          low: Number(lq.low.toFixed(2)),
-          close: Number(lq.close.toFixed(2)),
+          open: lq.open,
+          high: lq.high,
+          low: lq.low,
+          close: lq.close,
           volume: lq.volume
         });
-        if (barsMap.size <= 5) {
-          sourceLabel = lq.apiSource;
-        }
+        if (rawList.length <= 5) sourceLabel = lq.apiSource;
       }
 
-      const bars = Array.from(barsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
+      const expectedPrice = (lq && Number.isFinite(lq.close) && lq.close > 0) ? lq.close : null;
+      const bars = sanitizeAndValidateBars(rawList, expectedPrice);
       if (bars.length < 5) {
-        throw new Error(`FinMind / TWSE 無足夠 ${stockCode} 歷史資料`);
+        throw new Error(`FinMind / TWSE 暫無足夠 ${stockCode} 有效歷史資料`);
       }
 
       const meta = metaRes.status === 'fulfilled' ? metaRes.value : { name: stockCode, market: 'TW' };
@@ -1389,7 +1760,9 @@
 
       const lastBar = bars[bars.length - 1];
       const prevBar = bars[bars.length - 2] || lastBar;
-      const livePrice = (lq && Number.isFinite(lq.close) && lq.close > 0) ? Number(lq.close.toFixed(2)) : lastBar.close;
+      const livePrice = (expectedPrice && Math.abs(expectedPrice - lastBar.close) / lastBar.close <= 0.15)
+        ? Number(expectedPrice.toFixed(2))
+        : lastBar.close;
 
       return {
         symbol: finalSymbol,
@@ -1404,144 +1777,182 @@
     }
 
     /* ------------------------------------------------------------------------
-       4B. 多代理高可用閘道池：Yahoo Finance (query1 / query2) + Stooq CSV
+       4C. 美股 & 跨市場完整 K 線驗證管線 (Yahoo Finance + Stooq CSV，嚴禁跨源硬拼)
        ------------------------------------------------------------------------ */
-    function buildCorsProxyCandidates(targetUrl) {
+    function buildCorsProxyCandidates(targetUrl, forceRefresh = false) {
+      const bustedTarget = appendCacheBuster(targetUrl, forceRefresh);
       return [
         {
+          id: 'allorigins',
           type: 'ALLORIGINS_WRAP',
-          url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
+          url: `https://api.allorigins.win/get?url=${encodeURIComponent(bustedTarget)}`
         },
         {
+          id: 'codetabs',
           type: 'DIRECT_JSON',
-          url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+          url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(bustedTarget)}`
         },
         {
+          id: 'corsproxy',
           type: 'DIRECT_JSON',
-          url: `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
-        },
-        {
-          type: 'DIRECT_JSON',
-          url: `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+          url: `https://corsproxy.io/?${encodeURIComponent(bustedTarget)}`
         }
       ];
     }
 
-    async function fetchViaCorsGatewaysJson(targetUrl) {
-      const candidates = buildCorsProxyCandidates(targetUrl);
-      let lastErr = null;
+    function getHealthyProxyCandidates(targetUrl, forceRefresh = false) {
+      const all = buildCorsProxyCandidates(targetUrl, forceRefresh);
+      if (forceRefresh) {
+        connState.proxyCooldownUntil.clear();
+        return all;
+      }
+      const now = Date.now();
+      const healthy = all.filter(c => (connState.proxyCooldownUntil.get(c.id) || 0) <= now);
+      return healthy.length > 0 ? healthy : all;
+    }
 
-      for (const cand of candidates) {
+    function markProxyFailure(proxyId) {
+      connState.proxyCooldownUntil.set(proxyId, Date.now() + 45000);
+    }
+
+    async function fetchViaCorsGatewaysJson(targetUrl, forceRefresh = false) {
+      const candidates = getHealthyProxyCandidates(targetUrl, forceRefresh);
+      const tasks = candidates.map(async (cand) => {
         try {
-          const rawJson = await fetchJsonWithTimeout(cand.url, 5500);
+          const rawJson = await fetchSimpleJson(cand.url, 6000);
           if (cand.type === 'ALLORIGINS_WRAP') {
             if (!rawJson || !rawJson.contents) throw new Error('AllOrigins contents 為空');
             return JSON.parse(rawJson.contents);
           }
+          if (!rawJson || typeof rawJson !== 'object') throw new Error('無效 JSON 回應');
           return rawJson;
         } catch (err) {
-          lastErr = err;
+          markProxyFailure(cand.id);
+          throw err;
         }
-      }
-      throw lastErr || new Error('所有 CORS 代理閘道均無法取得回應');
+      });
+
+      return raceSuccess(tasks);
     }
 
-    async function fetchViaCorsGatewaysText(targetUrl) {
-      const candidates = buildCorsProxyCandidates(targetUrl);
-      let lastErr = null;
-
-      for (const cand of candidates) {
+    async function fetchViaCorsGatewaysText(targetUrl, forceRefresh = false) {
+      const candidates = getHealthyProxyCandidates(targetUrl, forceRefresh);
+      const tasks = candidates.map(async (cand) => {
         try {
           if (cand.type === 'ALLORIGINS_WRAP') {
-            const rawJson = await fetchJsonWithTimeout(cand.url, 5500);
+            const rawJson = await fetchSimpleJson(cand.url, 6000);
             if (!rawJson || !rawJson.contents) throw new Error('AllOrigins contents 為空');
             return String(rawJson.contents);
           }
-          return await fetchTextWithTimeout(cand.url, 5500);
+          const txt = await fetchSimpleText(cand.url, 6000);
+          if (!txt || txt.length < 15) throw new Error('文字回應過短');
+          return txt;
         } catch (err) {
-          lastErr = err;
+          markProxyFailure(cand.id);
+          throw err;
         }
-      }
-      throw lastErr || new Error('所有 CORS 代理閘道均無法取得文字回應');
+      });
+
+      return raceSuccess(tasks);
     }
 
-    function parseYahooChartPayload(data, symbol) {
+    function parseYahooChartPayload(data, symbol, sourceTag = 'YAHOO') {
       const result = data && data.chart && data.chart.result && data.chart.result[0];
       if (!result || !result.timestamp || !result.indicators || !result.indicators.quote || !result.indicators.quote[0]) {
         throw new Error('Yahoo 回傳資料缺少 K 線欄位');
       }
 
+      const meta = result.meta || {};
+      if (meta.symbol && normalizeSymbol(meta.symbol) !== normalizeSymbol(symbol)) {
+        throw new Error(`標的代號不符 (${meta.symbol} != ${symbol})`);
+      }
+
       const ts = result.timestamp;
       const q = result.indicators.quote[0];
-      const barsMap = new Map();
+      const rawBars = [];
 
       for (let i = 0; i < ts.length; i++) {
         const o = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i], v = q.volume[i];
         if (o == null || h == null || l == null || c == null || isNaN(c) || c <= 0) continue;
         const d = new Date(ts[i] * 1000);
         const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-        barsMap.set(dateStr, {
+        rawBars.push({
           time: dateStr,
-          open: Number(o.toFixed(2)),
-          high: Number(h.toFixed(2)),
-          low: Number(l.toFixed(2)),
-          close: Number(c.toFixed(2)),
-          volume: Math.max(0, Math.round(v || 0))
+          open: o,
+          high: h,
+          low: l,
+          close: c,
+          volume: v || 0
         });
       }
 
-      const bars = Array.from(barsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
-      if (bars.length < 5) throw new Error('Yahoo K 線有效筆數不足');
+      const expectedMarketPrice = Number(meta.regularMarketPrice);
+      const bars = sanitizeAndValidateBars(
+        rawBars,
+        Number.isFinite(expectedMarketPrice) && expectedMarketPrice > 0 ? expectedMarketPrice : null
+      );
+      if (bars.length < 5) throw new Error('Yahoo K 線驗證未通過或有效筆數不足');
 
-      const meta = result.meta || {};
       const lastBar = bars[bars.length - 1];
       const prevBar = bars[bars.length - 2] || lastBar;
-      const livePrice = Number((meta.regularMarketPrice || lastBar.close).toFixed(2));
-      const prevClose = Number((meta.chartPreviousClose || prevBar.close).toFixed(2));
+      const livePrice = (Number.isFinite(expectedMarketPrice) && expectedMarketPrice > 0 && Math.abs(expectedMarketPrice - lastBar.close) / lastBar.close <= 0.15)
+        ? Number(expectedMarketPrice.toFixed(2))
+        : lastBar.close;
+      const prevClose = (Number.isFinite(Number(meta.chartPreviousClose)) && Number(meta.chartPreviousClose) > 0 && Math.abs(Number(meta.chartPreviousClose) - prevBar.close) / prevBar.close <= 0.25)
+        ? Number(Number(meta.chartPreviousClose).toFixed(2))
+        : prevBar.close;
 
       return {
         symbol,
-        name: meta.shortName || meta.longName || symbol,
+        name: meta.shortName || meta.longName || formatDisplaySymbol(symbol),
         price: livePrice,
         prevClose,
         bars,
         fetchedAt: Date.now(),
         source: 'LIVE',
-        sourceLabel: 'YAHOO'
+        sourceLabel: sourceTag
       };
     }
 
-    async function fetchYahooChartMultiHost(symbol) {
+    async function fetchYahooChartMultiChannel(symbol, forceRefresh = false) {
       const hosts = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
-      let lastErr = null;
+      const tasks = [];
+
+      // 通道 1：免代理 JSONP 直連
+      for (const host of hosts) {
+        const jsonpBase = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+        tasks.push(
+          fetchJsonpCallback(jsonpBase, 'callback', 5500).then(payload =>
+            parseYahooChartPayload(payload, symbol, 'YAHOO')
+          )
+        );
+      }
+
+      // 通道 2：純淨 Simple Request CORS 代理平行競速
       for (const host of hosts) {
         const targetUrl = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
-        try {
-          const payload = await fetchViaCorsGatewaysJson(targetUrl);
-          return parseYahooChartPayload(payload, symbol);
-        } catch (err) {
-          lastErr = err;
-        }
+        tasks.push(
+          fetchViaCorsGatewaysJson(targetUrl, forceRefresh).then(payload =>
+            parseYahooChartPayload(payload, symbol, 'YAHOO')
+          )
+        );
       }
-      throw lastErr || new Error('Yahoo Finance 抓取失敗');
+
+      return raceSuccess(tasks);
     }
 
-    /**
-     * 美股第二層備援：Stooq 歷史日線 CSV (https://stooq.com/q/d/l/?s=nvda.us&i=d)
-     */
-    async function fetchStooqDailyCsv(symbol) {
+    async function fetchStooqDailyCsv(symbol, forceRefresh = false) {
       const cleanBase = symbol.replace(/[^A-Z0-9.-]/gi, '').toLowerCase();
       const stooqSym = cleanBase.includes('.') ? cleanBase : `${cleanBase}.us`;
       const stooqUrl = `https://stooq.com/q/d/l/?s=${encodeURIComponent(stooqSym)}&i=d`;
 
-      const csvText = await fetchViaCorsGatewaysText(stooqUrl);
+      const csvText = await fetchViaCorsGatewaysText(stooqUrl, forceRefresh);
       const lines = csvText.trim().split(/\r?\n/);
       if (lines.length < 10 || !lines[0].toLowerCase().includes('date')) {
         throw new Error('Stooq CSV 格式無效或查無標的');
       }
 
-      const bars = [];
-      // 取最近 260 個交易日（約一年）
+      const rawBars = [];
       const recentLines = lines.slice(-260);
       for (const line of recentLines) {
         const parts = line.split(',');
@@ -1550,25 +1961,25 @@
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
         const o = parseFloat(oStr), h = parseFloat(hStr), l = parseFloat(lStr), c = parseFloat(cStr);
         const v = Math.max(0, Math.round(parseFloat(vStr) || 0));
-        if (!Number.isFinite(c) || c <= 0) continue;
-        bars.push({
+        rawBars.push({
           time: dateStr,
-          open: Number((Number.isFinite(o) ? o : c).toFixed(2)),
-          high: Number((Number.isFinite(h) ? h : c).toFixed(2)),
-          low: Number((Number.isFinite(l) ? l : c).toFixed(2)),
-          close: Number(c.toFixed(2)),
+          open: Number.isFinite(o) ? o : c,
+          high: Number.isFinite(h) ? h : c,
+          low: Number.isFinite(l) ? l : c,
+          close: c,
           volume: v
         });
       }
 
+      const bars = sanitizeAndValidateBars(rawBars);
       if (bars.length < 5) throw new Error('Stooq 有效 K 線不足');
-      bars.sort((a, b) => a.time.localeCompare(b.time));
+
       const last = bars[bars.length - 1];
       const prev = bars[bars.length - 2] || last;
 
       return {
         symbol,
-        name: `${symbol} (Stooq)`,
+        name: formatDisplaySymbol(symbol),
         price: last.close,
         prevClose: prev.close,
         bars,
@@ -1579,89 +1990,163 @@
     }
 
     /**
-     * 統一行情入口調度器：依市場別執行多層次連網抓取與降級保護
+     * 核心行情取得管線（嚴格驗證 K 線連續性 + 離線隔離，絕不混拼不同來源假資料）
      */
     async function getMarketData(rawInput, forceRefresh = false) {
       const sym = normalizeSymbol(rawInput);
+      const dispSym = formatDisplaySymbol(sym);
       if (!sym) throw new Error('請輸入有效的股票代號');
 
       const ttl = Number(appState.settings.cacheTtlMs);
       const cached = appState.marketCache[sym];
 
-      // 0. 檢查本地快取是否仍在有效期限內
-      if (!forceRefresh && cached && cached.bars && cached.bars.length > 0) {
+      // 1. 僅讀取「真實 LIVE 且通過驗證的快取」
+      if (!forceRefresh && cached && cached.source === 'LIVE' && Array.isArray(cached.bars) && cached.bars.length >= 5) {
         const age = Date.now() - (cached.fetchedAt || 0);
         if (ttl === 0 || age < ttl) {
-          if (cached.source === 'OFFLINE') {
-            updateStatusBadge('OFFLINE');
-          } else {
-            updateStatusBadge('CACHED', cached.sourceLabel || 'LOCAL');
-          }
+          updateStatusBadge('LIVE', cached.sourceLabel || 'CACHED');
           return cached;
         }
       }
 
-      updateStatusBadge('LOADING');
+      // 2. 併發去重
+      const myEpoch = connState.requestEpoch;
+      const existingReq = connState.inFlightMap.get(sym);
+      if (!forceRefresh && existingReq && existingReq.epoch === myEpoch) {
+        return existingReq.promise;
+      }
 
-      // 路徑 A：台股與台股 ETF（優先免代理直連 FinMind + TWSE/TPEx，其次 Yahoo .TW / .TWO）
-      if (isTaiwanSymbol(sym)) {
+      const pipelineTask = (async () => {
+        connState.lastAttemptAt = Date.now();
+        updateStatusBadge('LOADING', forceRefresh ? '重連中...' : '同步中...');
+
         try {
-          const twData = await fetchTaiwanStockDirect(sym);
-          appState.marketCache[sym] = twData;
-          if (twData.symbol !== sym) {
-            appState.marketCache[twData.symbol] = twData;
+          const liveResult = await withHardTimeout(async () => {
+            if (isTaiwanSymbol(sym)) {
+              const code = extractTaiwanCode(sym);
+              const yCandidates = sym.endsWith('.TWO') ? [`${code}.TWO`, `${code}.TW`] : [`${code}.TW`, `${code}.TWO`];
+              return await raceSuccess([
+                fetchTaiwanStockDirect(sym, forceRefresh),
+                ...yCandidates.map(ySym => fetchYahooChartMultiChannel(ySym, forceRefresh))
+              ]);
+            } else {
+              return await raceSuccess([
+                fetchYahooChartMultiChannel(sym, forceRefresh),
+                fetchStooqDailyCsv(sym, forceRefresh)
+              ]);
+            }
+          }, 11500, `${dispSym} 行情連線`);
+
+          appState.marketCache[sym] = liveResult;
+          if (liveResult.symbol && liveResult.symbol !== sym) {
+            appState.marketCache[liveResult.symbol] = liveResult;
           }
+          connState.offlineMemoryMap.delete(sym);
           saveState();
-          updateStatusBadge('LIVE', twData.sourceLabel || 'FINMIND');
-          return twData;
-        } catch (errDirect) {
-          // 第二層：多代理 Yahoo Finance (.TW 與 .TWO)
-          const code = extractTaiwanCode(sym);
-          const candidates = sym.endsWith('.TWO') ? [`${code}.TWO`, `${code}.TW`] : [`${code}.TW`, `${code}.TWO`];
-          for (const ySym of candidates) {
-            try {
-              const yData = await fetchYahooChartMultiHost(ySym);
-              appState.marketCache[sym] = yData;
-              appState.marketCache[ySym] = yData;
-              saveState();
-              updateStatusBadge('LIVE', 'YAHOO');
-              return yData;
-            } catch (_) {}
+          updateStatusBadge('LIVE', liveResult.sourceLabel || 'LIVE');
+          return liveResult;
+        } catch (err) {
+          connState.lastErrorDetail = err && err.message ? err.message : '網路連線逾時';
+
+          if (cached && cached.source === 'LIVE' && Array.isArray(cached.bars) && cached.bars.length >= 5) {
+            updateStatusBadge('CACHED', cached.sourceLabel || 'STALE');
+            if (forceRefresh) {
+              showToast(`重連暫時失敗 (${connState.lastErrorDetail})，保留顯示最後有效報價`, 'warn');
+            }
+            return cached;
+          }
+
+          let memOffline = connState.offlineMemoryMap.get(sym);
+          if (!memOffline) {
+            memOffline = generateOfflineDataset(sym);
+            connState.offlineMemoryMap.set(sym, memOffline);
+          }
+          updateStatusBadge('OFFLINE');
+          if (forceRefresh) {
+            showToast(`無法取得 ${dispSym} 線上報價，已切換為離線模擬行情`, 'warn');
+          }
+          return memOffline;
+        } finally {
+          const cur = connState.inFlightMap.get(sym);
+          if (cur && cur.promise === pipelineTask) {
+            connState.inFlightMap.delete(sym);
           }
         }
-      } else {
-        // 路徑 B：美股與全球標的（第一層 Yahoo 多代理池，第二層 Stooq CSV）
-        try {
-          const yData = await fetchYahooChartMultiHost(sym);
-          appState.marketCache[sym] = yData;
-          saveState();
-          updateStatusBadge('LIVE', 'YAHOO');
-          return yData;
-        } catch (errYahoo) {
-          try {
-            const stooqData = await fetchStooqDailyCsv(sym);
-            appState.marketCache[sym] = stooqData;
-            saveState();
-            updateStatusBadge('LIVE', 'STOOQ');
-            return stooqData;
-          } catch (_) {}
+      })();
+
+      connState.inFlightMap.set(sym, { promise: pipelineTask, epoch: myEpoch });
+      return pipelineTask;
+    }
+
+    /**
+     * 一鍵硬重置重連 (Hard Reset Reconnect)
+     */
+    async function hardResetReconnect(silent = false) {
+      connState.requestEpoch += 1;
+      connState.inFlightMap.clear();
+      connState.proxyCooldownUntil.clear();
+      connState.offlineMemoryMap.clear();
+      connState.twseSnapshot = { fetchedAt: 0, map: null, inFlight: null };
+      connState.tpexSnapshot = { fetchedAt: 0, map: null, inFlight: null };
+
+      if (!silent) {
+        showToast('正在重置連線通道並強制重新抓取即時行情...', 'info');
+      }
+
+      if (appState.activeTab === 'chart') {
+        await loadChartSymbol(appState.activeChartSymbol, true);
+        if (!silent && connState.status === 'LIVE') {
+          showToast(`重連成功！已取得 ${formatDisplaySymbol(appState.activeChartSymbol)} 最新報價`, 'success');
+        }
+        return;
+      }
+
+      const orderSymRaw = document.getElementById('orderSymbol').value.trim();
+      const acc = getActiveAccount();
+      const holdingSyms = Object.keys(acc.holdings || {});
+      const targetSyms = new Set();
+
+      if (orderSymRaw) targetSyms.add(normalizeSymbol(orderSymRaw));
+      holdingSyms.forEach(s => targetSyms.add(s));
+      if (targetSyms.size === 0) targetSyms.add('2330.TW');
+
+      const results = await Promise.allSettled(
+        Array.from(targetSyms).map(s => getMarketData(s, true))
+      );
+
+      if (orderSymRaw) {
+        const normOrder = normalizeSymbol(orderSymRaw);
+        const orderData = appState.marketCache[normOrder] || connState.offlineMemoryMap.get(normOrder);
+        if (orderData && Number.isFinite(orderData.price)) {
+          const dispSym = formatDisplaySymbol(orderData.symbol);
+          document.getElementById('orderPrice').value = orderData.price;
+          document.getElementById('orderQuoteName').textContent = `${dispSym} ${orderData.name} · ${fmtPrice(orderData.price)}`;
+          updateOrderPreview();
         }
       }
 
-      // 降級保護 1：若有舊快取，優先使用舊快取而非假數據
-      if (cached && cached.bars && cached.bars.length > 0 && cached.source !== 'OFFLINE') {
-        updateStatusBadge('CACHED', cached.sourceLabel || 'LOCAL');
-        showToast(`即時連線逾時，已載入 ${sym} 歷史快取報價`, 'warn');
-        return cached;
+      for (const s of holdingSyms) {
+        const d = appState.marketCache[s];
+        if (d && d.name && acc.holdings[s]) {
+          acc.holdings[s].name = d.name;
+        }
       }
-
-      // 降級保護 2：完全離線或無效代號時，退回確定性離線模擬
-      const offlineData = generateOfflineDataset(sym);
-      appState.marketCache[sym] = offlineData;
       saveState();
-      updateStatusBadge('OFFLINE');
-      showToast(`網路受限或查無此標的，${sym} 已啟用離線模擬行情`, 'warn');
-      return offlineData;
+      renderSimTab();
+
+      const liveItems = results
+        .filter(r => r.status === 'fulfilled' && r.value && r.value.source === 'LIVE')
+        .map(r => r.value);
+
+      if (liveItems.length > 0) {
+        updateStatusBadge('LIVE', liveItems[0].sourceLabel || 'LIVE');
+        if (!silent) {
+          showToast(`重連成功！已更新 ${liveItems.length} 檔標的即時行情`, 'success');
+        }
+      } else if (!silent) {
+        const reason = connState.lastErrorDetail ? `：${connState.lastErrorDetail}` : '';
+        showToast(`重連失敗${reason}，目前為離線模擬狀態`, 'error');
+      }
     }
 
     /* ========================================================================
@@ -1695,18 +2180,19 @@
         const name = escapeHtml(getAccountDisplayName(a));
         return `
           <button onclick="selectAccountFromModal('${a.id}')"
-            class="btn-term w-full text-left p-3 rounded-[3px] border ${
-              active
-                ? 'border-[#FF9900] bg-[rgba(255,153,0,0.12)]'
-                : 'border-[#262E3D] bg-[#0A0C0F] hover:border-[#364154]'
+            class="tap-btn w-full text-left px-4 py-3.5 flex items-center justify-between gap-2 ${
+              active ? 'bg-[#171C26]' : 'hover:bg-[#12161F]'
             }">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[14px] font-bold ${active ? 'text-[#FF9900]' : 'text-[#F3F4F6]'} truncate">${name}</span>
-              ${active ? '<span class="text-[10px] font-bold px-1.5 py-0.5 bg-[#FF9900] text-black rounded-[2px] shrink-0">目前使用</span>' : ''}
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-bold ${active ? 'text-[#FF9900]' : 'text-[#F4F6F9]'} truncate">${name}</span>
+                ${active ? '<span class="text-[10px] font-semibold px-1.5 py-0.5 bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-full shrink-0">使用中</span>' : ''}
+              </div>
+              <div class="text-[12px] num text-[#8A94A6] mt-0.5">可用現金 ${fmtMoney(a.cash, 0)}</div>
             </div>
-            <div class="flex items-center justify-between text-[11px] mono text-[#8B95A5] mt-1.5">
-              <span>總資產 <strong class="text-[#F3F4F6]">${fmtMoney(st.totalAssets, 0)}</strong></span>
-              <span>現金 ${fmtMoney(a.cash, 0)}</span>
+            <div class="text-right shrink-0 num">
+              <div class="text-[14px] font-bold text-[#F4F6F9]">${fmtMoney(st.totalAssets, 0)}</div>
+              <div class="text-[11px] ${getPnlClass(st.totalRoi)}">${fmtSignedPct(st.totalRoi)}</div>
             </div>
           </button>
         `;
@@ -1780,7 +2266,6 @@
       renderSimTab();
     }
 
-    /* ---------- 帳戶充值功能 ---------- */
     function openDepositModal() {
       const acc = getActiveAccount();
       document.getElementById('depAccountName').textContent = getAccountDisplayName(acc);
@@ -1803,7 +2288,6 @@
       const depositAmount = Math.round(rawVal);
       const acc = getActiveAccount();
 
-      // 充值核心運算：現金與初始本金同步增加，確保總報酬率不灌水
       acc.cash = Number((acc.cash + depositAmount).toFixed(2));
       acc.initialCapital = Number((acc.initialCapital + depositAmount).toFixed(2));
       acc.totalDeposited = Number(((acc.totalDeposited || 0) + depositAmount).toFixed(2));
@@ -1902,12 +2386,14 @@
       const submitBtn = document.getElementById('btnSubmitOrder');
 
       if (side === 'BUY') {
-        buyBtn.className = 'btn-term py-2 text-[13px] font-bold border bg-up-soft';
-        sellBtn.className = 'btn-term py-2 text-[13px] font-bold border border-[#262E3D] bg-[#0A0C0F] text-[#8B95A5]';
+        buyBtn.className = 'tap-btn py-1.5 text-[13px] font-bold rounded-[7px] btn-buy-solid';
+        sellBtn.className = 'tap-btn py-1.5 text-[13px] font-semibold rounded-[7px] text-[#8A94A6]';
+        submitBtn.className = 'tap-btn w-full py-3 text-[14px] font-bold tracking-wide rounded-[8px] btn-buy-solid';
         submitBtn.textContent = '買進';
       } else {
-        sellBtn.className = 'btn-term py-2 text-[13px] font-bold border bg-down-soft';
-        buyBtn.className = 'btn-term py-2 text-[13px] font-bold border border-[#262E3D] bg-[#0A0C0F] text-[#8B95A5]';
+        sellBtn.className = 'tap-btn py-1.5 text-[13px] font-bold rounded-[7px] btn-sell-solid';
+        buyBtn.className = 'tap-btn py-1.5 text-[13px] font-semibold rounded-[7px] text-[#8A94A6]';
+        submitBtn.className = 'tap-btn w-full py-3 text-[14px] font-bold tracking-wide rounded-[8px] btn-sell-solid';
         submitBtn.textContent = '賣出';
       }
       updateOrderPreview();
@@ -1918,15 +2404,79 @@
       const lotBtn = document.getElementById('btnUnitLot');
       const oddBtn = document.getElementById('btnUnitOdd');
       const qtyLabel = document.getElementById('orderQtyLabel');
+      const baseBtn = document.getElementById('btnQuickBaseQty');
 
       if (mode === 'LOT') {
-        lotBtn.className = 'btn-term px-2.5 py-1 text-[12px] font-semibold border border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.12)] whitespace-nowrap';
-        oddBtn.className = 'btn-term px-2.5 py-1 text-[12px] font-semibold border border-[#262E3D] text-[#8B95A5] bg-[#11151C] whitespace-nowrap';
+        lotBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] bg-[#1F2633] text-[#F4F6F9]';
+        oddBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] text-[#8A94A6]';
         qtyLabel.textContent = '數量（張）';
+        if (baseBtn) baseBtn.textContent = '1張';
       } else {
-        oddBtn.className = 'btn-term px-2.5 py-1 text-[12px] font-semibold border border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.12)] whitespace-nowrap';
-        lotBtn.className = 'btn-term px-2.5 py-1 text-[12px] font-semibold border border-[#262E3D] text-[#8B95A5] bg-[#11151C] whitespace-nowrap';
+        oddBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] bg-[#1F2633] text-[#F4F6F9]';
+        lotBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] text-[#8A94A6]';
         qtyLabel.textContent = '數量（股）';
+        if (baseBtn) baseBtn.textContent = '100股';
+      }
+      updateOrderPreview();
+    }
+
+    function toggleOrderExtraDrawer() {
+      orderExtraOpen = !orderExtraOpen;
+      const drawer = document.getElementById('orderExtraDrawer');
+      const arrow = document.getElementById('orderExtraArrow');
+      drawer.classList.toggle('hidden', !orderExtraOpen);
+      arrow.textContent = orderExtraOpen ? '▴' : '▾';
+    }
+
+    function applyQuickQty(preset) {
+      const acc = getActiveAccount();
+      const sym = normalizeSymbol(document.getElementById('orderSymbol').value);
+      const price = Number(document.getElementById('orderPrice').value);
+
+      if (preset === 'BASE') {
+        document.getElementById('orderQty').value = orderUnitMode === 'LOT' ? '1' : '100';
+        updateOrderPreview();
+        return;
+      }
+
+      if (preset === 'HALF' || preset === 'FULL') {
+        const ratio = preset === 'HALF' ? 0.5 : 1;
+        if (orderSide === 'BUY') {
+          if (!Number.isFinite(price) || price <= 0) {
+            showToast('請先輸入或查詢委託單價', 'warn');
+            return;
+          }
+          const s = appState.settings;
+          const effFee = s.feeRate * s.discount;
+          const budget = acc.cash * ratio;
+          const maxShares = Math.floor(budget / (price * (1 + effFee)));
+          if (orderUnitMode === 'LOT') {
+            const lots = Math.floor(maxShares / 1000);
+            document.getElementById('orderQty').value = lots > 0 ? lots : '';
+            if (lots <= 0) showToast('可用資金不足購買 1 張（可切換零股模式）', 'warn');
+          } else {
+            const oddShares = Math.min(999, maxShares);
+            document.getElementById('orderQty').value = oddShares > 0 ? oddShares : '';
+            if (oddShares <= 0) showToast('可用資金不足購買 1 股', 'warn');
+          }
+        } else {
+          const held = acc.holdings[sym] ? acc.holdings[sym].shares : 0;
+          if (held <= 0) {
+            showToast('目前無該標的持股可計算倉位', 'warn');
+            return;
+          }
+          const targetShares = Math.max(1, Math.floor(held * ratio));
+          if (targetShares >= 1000 && targetShares % 1000 === 0) {
+            setOrderUnitMode('LOT');
+            document.getElementById('orderQty').value = targetShares / 1000;
+          } else if (targetShares <= 999) {
+            setOrderUnitMode('ODD');
+            document.getElementById('orderQty').value = targetShares;
+          } else {
+            setOrderUnitMode('LOT');
+            document.getElementById('orderQty').value = Math.floor(targetShares / 1000);
+          }
+        }
       }
       updateOrderPreview();
     }
@@ -1939,23 +2489,24 @@
       }
       const btn = document.getElementById('btnQueryQuote');
       btn.disabled = true;
-      btn.textContent = '查詢中...';
+      btn.textContent = '...';
       try {
         const data = await getMarketData(raw, true);
-        document.getElementById('orderSymbol').value = data.symbol;
+        const dispSym = formatDisplaySymbol(data.symbol);
+        document.getElementById('orderSymbol').value = dispSym;
         document.getElementById('orderPrice').value = data.price;
-        document.getElementById('orderQuoteName').textContent = `${data.symbol} ${data.name}`;
+        document.getElementById('orderQuoteName').textContent = `${dispSym} ${data.name} · ${fmtPrice(data.price)}`;
         document.getElementById('orderIsEtf').checked = isLikelyEtf(data.symbol);
         updateOrderPreview();
         renderSimTab();
         if (data.source === 'LIVE') {
-          showToast(`已取得 ${data.symbol} (${data.name}) 最新報價 ${fmtPrice(data.price)}`, 'success');
+          showToast(`已取得 ${dispSym} ${data.name} 最新報價 ${fmtPrice(data.price)}`, 'success');
         }
       } catch (e) {
         showToast('報價查詢失敗：' + e.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = '查詢報價';
+        btn.textContent = '查詢';
       }
     }
 
@@ -1970,34 +2521,37 @@
 
     function updateOrderPreview() {
       const { sym, price, rawQty, shares, isEtf } = getParsedOrderInput();
+      const dispSym = formatDisplaySymbol(sym);
       const acc = getActiveAccount();
       const validNum = Number.isFinite(price) && price > 0 && Number.isFinite(shares) && shares > 0;
       const m = validNum ? calculateOrderMetrics(orderSide, price, shares, isEtf) : { grossAmount: 0, fee: 0, tax: 0, netAmount: 0 };
 
-      document.getElementById('prevGross').textContent = `${fmtMoney(shares)} 股 / $${fmtMoney(m.grossAmount, 0)}`;
-      document.getElementById('prevFeeTax').textContent = `費 $${fmtMoney(m.fee)} / 稅 $${fmtMoney(m.tax)}`;
-      document.getElementById('prevNetLabel').textContent = orderSide === 'BUY' ? '預計扣款總額 (含費)' : '預計淨得款項 (扣費稅)';
+      document.getElementById('prevGross').textContent = `${fmtMoney(shares)} 股 · 成交 $${fmtMoney(m.grossAmount, 0)}`;
+
+      if (orderSide === 'BUY') {
+        document.getElementById('prevFeeTax').textContent = `手續費 $${fmtMoney(m.fee)} · 買進免證交稅`;
+      } else {
+        const taxRatePct = ((isEtf ? appState.settings.etfTaxRate : appState.settings.stockTaxRate) * 100)
+          .toFixed(2)
+          .replace(/\.?0+$/, '');
+        document.getElementById('prevFeeTax').textContent = `手續費 $${fmtMoney(m.fee)} · 證交稅(${taxRatePct}%) $${fmtMoney(m.tax)}`;
+      }
+
+      document.getElementById('prevNetLabel').textContent = orderSide === 'BUY' ? '預計扣款總額' : '預計淨得款項';
       document.getElementById('prevNetAmount').textContent = `$${fmtMoney(m.netAmount, 0)}`;
 
-      const msgEl = document.getElementById('orderValidationMsg');
       let errMsg = '';
       if (orderUnitMode === 'ODD' && Number.isFinite(rawQty) && rawQty > 0 && (rawQty > 999 || !Number.isInteger(rawQty))) {
-        errMsg = '零股模式請輸入 1 ~ 999 之整數股數（若超過 1000 股請切換整股模式）';
+        errMsg = '零股模式請輸入 1 ~ 999 之整數股數（超過 1000 股請切換整股）';
       } else if (validNum && orderSide === 'BUY' && acc.cash < m.netAmount) {
-        errMsg = `可用現金不足！目前現金 $${fmtMoney(acc.cash)}，短缺 $${fmtMoney(Math.ceil(m.netAmount - acc.cash))}`;
+        errMsg = `帳戶可用餘額不足（目前 $${fmtMoney(acc.cash)}，短缺 $${fmtMoney(Math.ceil(m.netAmount - acc.cash))}）`;
       } else if (validNum && orderSide === 'SELL') {
         const held = acc.holdings[sym] ? acc.holdings[sym].shares : 0;
         if (held < shares) {
-          errMsg = `持股庫存不足！目前持有 ${sym || '該標的'} ${fmtMoney(held)} 股，無法賣出 ${fmtMoney(shares)} 股`;
+          errMsg = `持股庫存不足（目前持有 ${dispSym || '該標的'} ${fmtMoney(held)} 股）`;
         }
       }
 
-      if (errMsg) {
-        msgEl.textContent = '⚠ ' + errMsg;
-        msgEl.classList.remove('hidden');
-      } else {
-        msgEl.classList.add('hidden');
-      }
       return { valid: validNum && !errMsg && Boolean(sym), errMsg, metrics: m, sym, price, shares, isEtf };
     }
 
@@ -2022,21 +2576,90 @@
 
       const acc = getActiveAccount();
       const { sym, price, shares, isEtf, metrics } = check;
+      const dispSym = formatDisplaySymbol(sym);
       const rawReason = document.getElementById('orderReason').value;
       const reason = rawReason ? rawReason : '未填寫';
       const note = document.getElementById('orderNote').value.trim();
-      const cached = appState.marketCache[sym];
-      const stockName = cached ? cached.name : sym;
+      const cached = appState.marketCache[sym] || connState.offlineMemoryMap.get(sym);
+      const stockName = cached ? cached.name : dispSym;
 
-      if (!cached) {
-        const offline = generateOfflineDataset(sym);
-        offline.price = price;
-        appState.marketCache[sym] = offline;
+      pendingOrderPayload = {
+        side: orderSide,
+        sym,
+        dispSym,
+        stockName,
+        price,
+        shares,
+        isEtf,
+        metrics,
+        reason,
+        note
+      };
+
+      const isBuy = orderSide === 'BUY';
+      const badge = document.getElementById('ocSideBadge');
+      badge.textContent = isBuy ? '買進委託' : '賣出委託';
+      badge.className = `px-2 py-0.5 text-[11px] font-bold rounded ${isBuy ? 'pill-up' : 'pill-down'}`;
+
+      document.getElementById('ocSymbolName').textContent = stockName && stockName !== dispSym ? `${dispSym} ${stockName}` : dispSym;
+      const lotNote = shares >= 1000 && shares % 1000 === 0 ? ` (${shares / 1000}張)` : '';
+      document.getElementById('ocPriceShares').textContent = `${fmtPrice(price)} × ${fmtMoney(shares)} 股${lotNote}`;
+      document.getElementById('ocGrossAmount').textContent = `$${fmtMoney(metrics.grossAmount, 0)}`;
+      document.getElementById('ocFeeAmount').textContent = `$${fmtMoney(metrics.fee, 0)}`;
+
+      if (isBuy) {
+        document.getElementById('ocTaxLabel').textContent = '證券交易稅（買進免稅）';
+        document.getElementById('ocTaxAmount').textContent = '$0';
+        document.getElementById('ocNetLabel').textContent = '實際扣款總額';
+        document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netAmount, 0)}`;
+        document.getElementById('ocAfterCash').textContent = `$${fmtMoney(Math.max(0, acc.cash - metrics.netAmount), 0)}`;
+      } else {
+        const taxPct = ((isEtf ? appState.settings.etfTaxRate : appState.settings.stockTaxRate) * 100)
+          .toFixed(2)
+          .replace(/\.?0+$/, '');
+        document.getElementById('ocTaxLabel').textContent = `證券交易稅（${isEtf ? 'ETF ' : ''}${taxPct}%）`;
+        document.getElementById('ocTaxAmount').textContent = `$${fmtMoney(metrics.tax, 0)}`;
+        document.getElementById('ocNetLabel').textContent = '實際淨得款項';
+        document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netAmount, 0)}`;
+        document.getElementById('ocAfterCash').textContent = `$${fmtMoney(acc.cash + metrics.netAmount, 0)}`;
+      }
+
+      const confirmBtn = document.getElementById('ocConfirmBtn');
+      confirmBtn.className = `tap-btn py-2.5 font-bold rounded-[8px] ${isBuy ? 'btn-buy-solid' : 'btn-sell-solid'}`;
+      confirmBtn.textContent = isBuy ? '確認下單並扣款' : '確認下單並賣出';
+
+      openModal('orderConfirmModal');
+    }
+
+    function executeConfirmedOrder() {
+      if (!pendingOrderPayload) {
+        closeModal('orderConfirmModal');
+        return;
+      }
+
+      const { side, sym, dispSym, stockName, price, shares, isEtf, metrics, reason, note } = pendingOrderPayload;
+      const acc = getActiveAccount();
+
+      // 二次安全檢查：確保確認視窗開啟期間資金與持股仍足夠
+      if (side === 'BUY' && acc.cash < metrics.netAmount) {
+        closeModal('orderConfirmModal');
+        pendingOrderPayload = null;
+        showToast(`帳戶可用餘額不足（短缺 $${fmtMoney(Math.ceil(metrics.netAmount - acc.cash))}）`, 'error');
+        return;
+      }
+      if (side === 'SELL') {
+        const held = acc.holdings[sym] ? acc.holdings[sym].shares : 0;
+        if (held < shares) {
+          closeModal('orderConfirmModal');
+          pendingOrderPayload = null;
+          showToast(`持股庫存不足（目前持有 ${dispSym} ${fmtMoney(held)} 股）`, 'error');
+          return;
+        }
       }
 
       let realizedPnlThisTrade = null;
 
-      if (orderSide === 'BUY') {
+      if (side === 'BUY') {
         acc.cash = Number((acc.cash - metrics.netAmount).toFixed(2));
         const existing = acc.holdings[sym];
         if (existing) {
@@ -2077,7 +2700,7 @@
       acc.trades.unshift({
         id: 'tr_' + Date.now(),
         time: new Date().toISOString(),
-        side: orderSide,
+        side,
         symbol: sym,
         name: stockName,
         price,
@@ -2091,24 +2714,33 @@
         note
       });
 
+      pendingOrderPayload = null;
+      closeModal('orderConfirmModal');
       document.getElementById('orderNote').value = '';
       saveState();
       renderSimTab();
       updateOrderPreview();
       showToast(
-        `${orderSide === 'BUY' ? '買進' : '賣出'}成交：${sym} ${fmtMoney(shares)} 股 @ ${fmtPrice(price)}`,
+        `${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 @ ${fmtPrice(price)}`,
         'success'
       );
+    }
+
+    function toggleHoldingRowActions(symbol) {
+      expandedHoldingSym = (expandedHoldingSym === symbol) ? null : symbol;
+      renderSimTab();
     }
 
     function prefillOrderFromHolding(symbol, side) {
       const acc = getActiveAccount();
       const h = acc.holdings[symbol];
       if (!h) return;
-      const curPrice = (appState.marketCache[symbol] && appState.marketCache[symbol].price) || h.avgCost;
-      document.getElementById('orderSymbol').value = symbol;
+      const dispSym = formatDisplaySymbol(symbol);
+      const cached = appState.marketCache[symbol] || connState.offlineMemoryMap.get(symbol);
+      const curPrice = (cached && cached.price) || h.avgCost;
+      document.getElementById('orderSymbol').value = dispSym;
       document.getElementById('orderPrice').value = curPrice;
-      document.getElementById('orderQuoteName').textContent = `${symbol} ${h.name}`;
+      document.getElementById('orderQuoteName').textContent = `${dispSym} ${h.name} · ${fmtPrice(curPrice)}`;
       document.getElementById('orderIsEtf').checked = Boolean(h.isEtf);
       setOrderSide(side);
       if (h.shares >= 1000 && h.shares % 1000 === 0) {
@@ -2119,26 +2751,37 @@
         document.getElementById('orderQty').value = Math.min(999, h.shares);
       }
       updateOrderPreview();
-      window.scrollTo({ top: 180, behavior: 'smooth' });
+      window.scrollTo({ top: 140, behavior: 'smooth' });
     }
 
-    async function refreshAccountHoldingsPrices() {
+    async function refreshAccountHoldingsPrices(isManual = false) {
       const acc = getActiveAccount();
       const syms = Object.keys(acc.holdings);
       if (syms.length === 0) {
-        showToast('目前帳戶尚無持股需要更新現價', 'info');
+        if (isManual) {
+          const orderSym = document.getElementById('orderSymbol').value.trim();
+          if (orderSym) {
+            await fetchOrderQuote();
+          } else {
+            showToast('目前帳戶尚無持股需要更新現價', 'info');
+          }
+        }
         return;
       }
-      showToast(`正在更新 ${syms.length} 檔持股即時報價...`, 'info');
-      for (const sym of syms) {
-        const data = await getMarketData(sym, true);
+      if (isManual) {
+        showToast(`正在更新 ${syms.length} 檔持股即時報價...`, 'info');
+      }
+      await Promise.allSettled(syms.map(async (sym) => {
+        const data = await getMarketData(sym, isManual);
         if (data && data.name && acc.holdings[sym]) {
           acc.holdings[sym].name = data.name;
         }
-      }
+      }));
       saveState();
       renderSimTab();
-      showToast('持股現價更新完成', 'success');
+      if (isManual) {
+        showToast('持股現價更新完成', 'success');
+      }
     }
 
     function computeAccountStats(acc) {
@@ -2147,7 +2790,7 @@
       const rows = [];
 
       Object.values(acc.holdings).forEach(h => {
-        const cached = appState.marketCache[h.symbol];
+        const cached = appState.marketCache[h.symbol] || connState.offlineMemoryMap.get(h.symbol);
         const curPrice = (cached && Number.isFinite(cached.price)) ? cached.price : h.avgCost;
         const marketVal = curPrice * h.shares;
         const unrealized = marketVal - h.totalCost;
@@ -2182,7 +2825,7 @@
 
       const stratEl = document.getElementById('accountStrategyTag');
       if (acc.strategy && acc.strategy.trim()) {
-        stratEl.textContent = '策略：' + acc.strategy.trim();
+        stratEl.textContent = acc.strategy.trim();
         stratEl.classList.remove('hidden');
       } else {
         stratEl.textContent = '';
@@ -2193,65 +2836,77 @@
 
       const st = computeAccountStats(acc);
       document.getElementById('ovTotalAssets').textContent = fmtMoney(st.totalAssets, 0);
+
       const roiEl = document.getElementById('ovTotalRoi');
-      roiEl.textContent = `總報酬 ${fmtSignedPct(st.totalRoi)}`;
-      roiEl.className = `text-[11px] mono mt-0.5 ${getPnlClass(st.totalRoi)}`;
+      roiEl.textContent = fmtSignedPct(st.totalRoi);
+      roiEl.className = `px-2 py-0.5 text-[11px] font-semibold num rounded-full ${
+        st.totalRoi > 0 ? 'pill-up' : (st.totalRoi < 0 ? 'pill-down' : 'pill-neutral')
+      }`;
 
       document.getElementById('ovCash').textContent = fmtMoney(acc.cash, 0);
-      const depNote = acc.totalDeposited > 0 ? ` (含充值 ${fmtMoney(acc.totalDeposited, 0)})` : '';
+      const depNote = acc.totalDeposited > 0 ? ` (+${fmtMoney(acc.totalDeposited, 0)})` : '';
       document.getElementById('ovInitial').textContent = `本金 ${fmtMoney(acc.initialCapital, 0)}${depNote}`;
 
       const unEl = document.getElementById('ovUnrealized');
       unEl.textContent = fmtSignedMoney(st.unrealizedTotal, 0);
-      unEl.className = `text-[17px] font-bold mono mt-0.5 ${getPnlClass(st.unrealizedTotal)}`;
+      unEl.className = `text-[15px] font-bold num mt-1 truncate ${getPnlClass(st.unrealizedTotal)}`;
 
       const unPctEl = document.getElementById('ovUnrealizedPct');
       unPctEl.textContent = fmtSignedPct(st.unrealizedPctTotal);
-      unPctEl.className = `text-[11px] mono mt-0.5 ${getPnlClass(st.unrealizedPctTotal)}`;
+      unPctEl.className = `text-[11px] num mt-0.5 truncate ${getPnlClass(st.unrealizedPctTotal)}`;
 
       const reEl = document.getElementById('ovRealized');
       reEl.textContent = fmtSignedMoney(acc.realizedPnl, 0);
-      reEl.className = `text-[17px] font-bold mono mt-0.5 ${getPnlClass(acc.realizedPnl)}`;
-      document.getElementById('ovHoldingsVal').textContent = `持股現值 ${fmtMoney(st.holdingsMarketValue, 0)}`;
+      reEl.className = `text-[15px] font-bold num mt-1 truncate ${getPnlClass(acc.realizedPnl)}`;
+      document.getElementById('ovHoldingsVal').textContent = `現值 ${fmtMoney(st.holdingsMarketValue, 0)}`;
 
       document.getElementById('holdingsCount').textContent = `${st.rows.length} 檔`;
       const hList = document.getElementById('holdingsList');
       if (st.rows.length === 0) {
-        hList.innerHTML = `<div class="text-center py-5 text-[12px] text-[#8B95A5] border border-dashed border-[#262E3D] rounded-[2px]">目前無持有部位</div>`;
+        hList.innerHTML = `<div class="px-4 py-7 text-center text-[12px] text-[#586274]">目前無持有部位</div>`;
       } else {
-        hList.innerHTML = st.rows.map(r => `
-          <div class="bg-[#0A0C0F] border border-[#262E3D] p-2.5 rounded-[2px] space-y-2">
-            <div class="flex items-start justify-between gap-2">
-              <div class="min-w-0">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-[14px] font-bold mono text-[#FF9900]">${escapeHtml(r.symbol)}</span>
-                  ${r.isEtf ? '<span class="text-[10px] px-1 bg-[#1E2634] text-[#38BDF8] rounded-[2px] mono">ETF</span>' : ''}
-                  <span class="text-[12px] text-[#8B95A5] truncate">${escapeHtml(r.name)}</span>
+        hList.innerHTML = st.rows.map(r => {
+          const dispSym = escapeHtml(formatDisplaySymbol(r.symbol));
+          const rawSym = escapeHtml(r.symbol);
+          const isExpanded = expandedHoldingSym === r.symbol;
+          return `
+            <div onclick="toggleHoldingRowActions('${rawSym}')" class="px-4 py-3.5 cursor-pointer active:bg-[#12161F] transition-colors">
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[14px] font-bold text-[#F4F6F9] truncate">${escapeHtml(r.name)}</span>
+                    <span class="text-[12px] font-medium num text-[#8A94A6] shrink-0">${dispSym}</span>
+                    ${r.isEtf ? '<span class="text-[10px] px-1.5 py-0.2 bg-[#171C26] text-[#38BDF8] rounded shrink-0">ETF</span>' : ''}
+                  </div>
+                  <div class="text-[11px] num text-[#8A94A6] mt-1">
+                    ${fmtMoney(r.shares)}股 · 均 ${fmtPrice(r.avgCost)} · 損平 ${fmtPrice(r.breakEven)}
+                  </div>
                 </div>
-                <div class="text-[11px] mono text-[#8B95A5] mt-0.5">
-                  股數 ${fmtMoney(r.shares)} | 均價 ${fmtPrice(r.avgCost)} | 損平 <span class="text-[#F3F4F6]">${fmtPrice(r.breakEven)}</span>
+
+                <div class="text-right shrink-0 num">
+                  <div class="text-[14px] font-bold ${getPnlClass(r.unrealized)}">${fmtSignedMoney(r.unrealized, 0)}</div>
+                  <div class="text-[11px] ${getPnlClass(r.unrealized)} mt-0.5">
+                    ${fmtSignedPct(r.unrealizedPct)} <span class="text-[#8A94A6]">· ${fmtPrice(r.curPrice)}</span>
+                  </div>
                 </div>
               </div>
-              <div class="text-right shrink-0 mono">
-                <div class="text-[14px] font-bold ${getPnlClass(r.unrealized)}">${fmtSignedMoney(r.unrealized, 0)}</div>
-                <div class="text-[11px] ${getPnlClass(r.unrealized)}">${fmtSignedPct(r.unrealizedPct)}</div>
+
+              <div class="${isExpanded ? 'flex' : 'hidden'} items-center justify-between pt-2.5 mt-2.5 hairline-t text-[12px]" onclick="event.stopPropagation()">
+                <span class="num text-[#8A94A6]">市值 $${fmtMoney(r.marketVal, 0)}</span>
+                <div class="flex items-center gap-2">
+                  <button onclick="jumpToChart('${rawSym}')" class="tap-btn px-3 py-1 bg-[#171C26] text-[#38BDF8] font-semibold rounded-[6px]">看線圖</button>
+                  <button onclick="prefillOrderFromHolding('${rawSym}','SELL')" class="tap-btn px-3 py-1 bg-[#171C26] text-[#FF9900] font-semibold rounded-[6px]">帶入賣出</button>
+                </div>
               </div>
             </div>
-            <div class="flex items-center justify-between border-t border-[#1D2430] pt-1.5 text-[11px] mono">
-              <span class="text-[#8B95A5]">現價 <strong class="text-[#F3F4F6]">${fmtPrice(r.curPrice)}</strong> / 市值 ${fmtMoney(r.marketVal, 0)}</span>
-              <div class="flex items-center gap-1.5">
-                <button onclick="jumpToChart('${escapeHtml(r.symbol)}')" class="btn-term px-2 py-0.5 border border-[#262E3D] text-[#38BDF8] bg-[#11151C]">看線圖</button>
-                <button onclick="prefillOrderFromHolding('${escapeHtml(r.symbol)}','SELL')" class="btn-term px-2 py-0.5 border border-[#262E3D] text-[#FF9900] bg-[#11151C]">帶入賣出</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
       document.getElementById('tradesCount').textContent = `${acc.trades.length} 筆`;
       const tList = document.getElementById('tradesList');
       if (acc.trades.length === 0) {
-        tList.innerHTML = `<div class="text-center py-4 text-[12px] text-[#8B95A5]">尚無成交紀錄</div>`;
+        tList.innerHTML = `<div class="px-4 py-7 text-center text-[12px] text-[#586274]">尚無成交紀錄</div>`;
       } else {
         tList.innerHTML = acc.trades.slice(0, 40).map(t => {
           const dt = new Date(t.time);
@@ -2259,38 +2914,41 @@
 
           if (t.side === 'DEPOSIT') {
             return `
-              <div class="bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-2 rounded-[2px] text-[11px] flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 mono">
-                  <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-[2px] border border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.12)]">充值</span>
-                  <span class="font-bold text-[#F3F4F6]">+${fmtMoney(t.netAmount, 0)}</span>
-                  <span class="text-[#8B95A5]">(本金同步調整)</span>
+              <div class="px-4 py-3 flex items-center justify-between gap-2 text-[12px]">
+                <div class="flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[rgba(255,153,0,0.14)] text-[#FF9900]">充值</span>
+                  <span class="font-bold num text-[#F4F6F9]">+${fmtMoney(t.netAmount, 0)}</span>
+                  <span class="text-[#586274]">本金同步更新</span>
                 </div>
-                <span class="mono text-[#8B95A5]">${ts}</span>
+                <span class="num text-[11px] text-[#586274]">${ts}</span>
               </div>
             `;
           }
 
+          const dispSym = escapeHtml(formatDisplaySymbol(t.symbol));
           const sideTag = t.side === 'BUY'
-            ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded-[2px] bg-up-soft">買進</span>`
-            : `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded-[2px] bg-down-soft">賣出</span>`;
+            ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded pill-up">買</span>`
+            : `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded pill-down">賣</span>`;
           const pnlHtml = t.realizedPnl !== null && t.realizedPnl !== undefined
-            ? `<span class="mono font-bold ${getPnlClass(t.realizedPnl)}">損益 ${fmtSignedMoney(t.realizedPnl, 0)}</span>`
-            : `<span class="mono text-[#8B95A5]">扣款 ${fmtMoney(t.netAmount, 0)}</span>`;
-          const reasonLabel = t.reason || '未填寫';
+            ? `<span class="num font-bold ${getPnlClass(t.realizedPnl)}">${fmtSignedMoney(t.realizedPnl, 0)}</span>`
+            : `<span class="num text-[#8A94A6]">$${fmtMoney(t.netAmount, 0)}</span>`;
+          const reasonLabel = (t.reason && t.reason !== '未填寫') ? t.reason : '';
+          const subNote = [reasonLabel, t.note].filter(Boolean).join(' · ');
+
           return `
-            <div class="bg-[#0A0C0F] border border-[#262E3D] px-2.5 py-2 rounded-[2px] text-[11px] space-y-1">
+            <div class="px-4 py-3 text-[12px] space-y-1">
               <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 mono">
+                <div class="flex items-center gap-1.5 min-w-0">
                   ${sideTag}
-                  <span class="font-bold text-[#F3F4F6]">${escapeHtml(t.symbol)}</span>
-                  <span class="text-[#8B95A5]">${fmtMoney(t.shares)}股 @ ${fmtPrice(t.price)}</span>
+                  <span class="font-bold text-[#F4F6F9]">${dispSym}</span>
+                  <span class="num text-[#8A94A6] truncate">${fmtMoney(t.shares)}股 @ ${fmtPrice(t.price)}</span>
                 </div>
-                <span class="mono text-[#8B95A5]">${ts}</span>
+                <div class="flex items-center gap-2 shrink-0">
+                  ${pnlHtml}
+                  <span class="num text-[11px] text-[#586274]">${ts}</span>
+                </div>
               </div>
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-[#D1D5DB] truncate">[${escapeHtml(reasonLabel)}]${t.note ? ' ' + escapeHtml(t.note) : ''}</span>
-                ${pnlHtml}
-              </div>
+              ${subNote ? `<div class="text-[11px] text-[#586274] truncate pl-6">${escapeHtml(subNote)}</div>` : ''}
             </div>
           `;
         }).join('');
@@ -2311,7 +2969,8 @@
         lines.push('  (空手 / 無持股)');
       } else {
         st.rows.forEach(r => {
-          lines.push(`  • ${r.symbol} (${r.name}): ${fmtMoney(r.shares)}股 | 均價 ${fmtPrice(r.avgCost)} | 現價 ${fmtPrice(r.curPrice)} | 損平 ${fmtPrice(r.breakEven)} | 未實現 ${fmtSignedMoney(r.unrealized, 0)} (${fmtSignedPct(r.unrealizedPct)})`);
+          const dispSym = formatDisplaySymbol(r.symbol);
+          lines.push(`  • ${dispSym} (${r.name}): ${fmtMoney(r.shares)}股 | 均價 ${fmtPrice(r.avgCost)} | 現價 ${fmtPrice(r.curPrice)} | 損平 ${fmtPrice(r.breakEven)} | 未實現 ${fmtSignedMoney(r.unrealized, 0)} (${fmtSignedPct(r.unrealizedPct)})`);
         });
       }
       lines.push(`--- 近期交易與充值紀錄 (最多近 15 筆) ---`);
@@ -2323,9 +2982,10 @@
           if (t.side === 'DEPOSIT') {
             lines.push(`  • [${d}] 帳戶充值 +${fmtMoney(t.netAmount, 0)} (不計入交易損益)`);
           } else {
+            const dispSym = formatDisplaySymbol(t.symbol);
             const sideTxt = t.side === 'BUY' ? '買進' : '賣出';
             const pnlPart = t.realizedPnl != null ? ` | 已實現 ${fmtSignedMoney(t.realizedPnl, 0)}` : '';
-            lines.push(`  • [${d}] ${sideTxt} ${t.symbol} ${fmtMoney(t.shares)}股 @ ${fmtPrice(t.price)} (費${t.fee}/稅${t.tax})${pnlPart} | 理由:${t.reason || '未填寫'}${t.note ? ' - ' + t.note : ''}`);
+            lines.push(`  • [${d}] ${sideTxt} ${dispSym} ${fmtMoney(t.shares)}股 @ ${fmtPrice(t.price)} (費${t.fee}/稅${t.tax})${pnlPart} | 理由:${t.reason || '未填寫'}${t.note ? ' - ' + t.note : ''}`);
           }
         });
       }
@@ -2363,7 +3023,7 @@
     }
 
     /* ========================================================================
-       6. 分頁二：盤面分析 (週/月K 彙整、技術指標數學引擎、單一圖表渲染)
+       6. 分頁二：盤面分析 (週/月K 彙整、技術指標數學引擎、貼邊單一圖表渲染)
        ======================================================================== */
     function getIsoWeekKey(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
@@ -2534,7 +3194,7 @@
       const sym = normalizeSymbol(symbol);
       if (!sym) return;
       appState.activeChartSymbol = sym;
-      document.getElementById('chartSymbolInput').value = sym;
+      document.getElementById('chartSymbolInput').value = formatDisplaySymbol(sym);
       saveState();
       renderWatchlistChips();
 
@@ -2542,7 +3202,7 @@
         currentChartData = await getMarketData(sym, forceRefresh);
         if (currentChartData.symbol && currentChartData.symbol !== sym) {
           appState.activeChartSymbol = currentChartData.symbol;
-          document.getElementById('chartSymbolInput').value = currentChartData.symbol;
+          document.getElementById('chartSymbolInput').value = formatDisplaySymbol(currentChartData.symbol);
           saveState();
           renderWatchlistChips();
         }
@@ -2559,7 +3219,7 @@
         showToast('請輸入股票代號', 'error');
         return;
       }
-      loadChartSymbol(val, false);
+      loadChartSymbol(val, true);
     }
 
     function jumpToChart(symbol) {
@@ -2587,33 +3247,33 @@
       const diff = d.price - d.prevClose;
       const pct = d.prevClose > 0 ? (diff / d.prevClose) * 100 : 0;
 
-      document.getElementById('chartHeaderSymbol').textContent = d.symbol;
+      document.getElementById('chartHeaderSymbol').textContent = formatDisplaySymbol(d.symbol);
       document.getElementById('chartHeaderName').textContent = d.name;
       document.getElementById('chartSourceTag').textContent =
-        d.source === 'LIVE' ? `即時源：${d.sourceLabel || 'LIVE'}` : '離線模擬數據';
+        d.source === 'LIVE' ? (d.sourceLabel || 'LIVE') : 'OFFLINE SIM';
 
       const pEl = document.getElementById('chartHeaderPrice');
       pEl.textContent = fmtPrice(d.price);
-      pEl.className = `text-[18px] font-bold mono ${getPnlClass(diff)}`;
+      pEl.className = `text-[22px] font-bold num leading-snug ${getPnlClass(diff)}`;
 
       const cEl = document.getElementById('chartHeaderChange');
       cEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${fmtSignedPct(pct)})`;
-      cEl.className = `text-[12px] mono ml-1.5 ${getPnlClass(diff)}`;
+      cEl.className = `text-[12px] num leading-tight ${getPnlClass(diff)}`;
     }
 
     function updateChartControlsUI() {
       document.querySelectorAll('.tf-btn').forEach(btn => {
         const active = btn.dataset.tf === appState.activeTimeframe;
         btn.className = active
-          ? 'tf-btn btn-term px-3 py-1 text-[12px] font-bold mono border border-[#FF9900] text-black bg-[#FF9900]'
-          : 'tf-btn btn-term px-3 py-1 text-[12px] font-semibold mono border border-[#262E3D] text-[#8B95A5] bg-[#0A0C0F]';
+          ? 'tf-btn tap-btn px-3 py-1 text-[12px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900]'
+          : 'tf-btn tap-btn px-3 py-1 text-[12px] font-medium rounded-[6px] text-[#8A94A6]';
       });
 
       document.querySelectorAll('.mode-btn').forEach(btn => {
         const active = btn.dataset.mode === appState.activeChartMode;
         btn.className = active
-          ? 'mode-btn btn-term py-1.5 text-[11px] font-bold border border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.14)] text-center'
-          : 'mode-btn btn-term py-1.5 text-[11px] font-semibold border border-[#262E3D] text-[#8B95A5] bg-[#0A0C0F] text-center';
+          ? 'mode-btn tap-btn py-1 text-[11px] font-bold rounded-[6px] bg-[#1F2633] text-[#F4F6F9] text-center'
+          : 'mode-btn tap-btn py-1 text-[11px] font-medium rounded-[6px] text-[#8A94A6] text-center';
       });
 
       const maRow = document.getElementById('maToggleRow');
@@ -2632,7 +3292,7 @@
       document.getElementById('guideTitle').textContent = guide.title;
       document.getElementById('guideContent').textContent = guide.text;
       document.getElementById('guideContent').classList.toggle('hidden', !appState.guideExpanded);
-      document.getElementById('guideChevron').textContent = appState.guideExpanded ? '[收合 ▲]' : '[展開 ▼]';
+      document.getElementById('guideChevron').textContent = appState.guideExpanded ? '收合 ▲' : '展開 ▼';
     }
 
     function toggleGuideBox() {
@@ -2643,11 +3303,13 @@
 
     function renderWatchlistChips() {
       const container = document.getElementById('watchlistChips');
+      const activeClean = formatDisplaySymbol(appState.activeChartSymbol);
       container.innerHTML = appState.settings.watchlist.map(sym => {
-        const active = sym === appState.activeChartSymbol;
-        return `<button onclick="loadChartSymbol('${escapeHtml(sym)}')" class="btn-term px-2.5 py-1 text-[11px] mono font-semibold shrink-0 border ${
-          active ? 'border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.14)]' : 'border-[#262E3D] text-[#D1D5DB] bg-[#0A0C0F]'
-        }">${escapeHtml(sym)}</button>`;
+        const dispSym = formatDisplaySymbol(sym);
+        const active = sym === appState.activeChartSymbol || dispSym === activeClean;
+        return `<button onclick="loadChartSymbol('${escapeHtml(sym)}')" class="tap-btn px-3 py-1 text-[12px] num font-semibold shrink-0 rounded-full ${
+          active ? 'bg-[rgba(255,153,0,0.16)] text-[#FF9900]' : 'bg-[#141923] text-[#8A94A6]'
+        }">${escapeHtml(dispSym)}</button>`;
       }).join('');
     }
 
@@ -2666,15 +3328,15 @@
         return;
       }
 
-      document.getElementById('chartEngineTag').textContent = 'LWC v4';
+      document.getElementById('chartEngineTag').textContent = 'LWC';
       const chart = window.LightweightCharts.createChart(viewport, {
         width: viewport.clientWidth || 340,
-        height: viewport.clientHeight || 340,
+        height: viewport.clientHeight || 360,
         layout: {
           background: { type: 'solid', color: colors.bg },
           textColor: colors.text,
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 11
+          fontFamily: "'Inter', 'JetBrains Mono', sans-serif",
+          fontSize: 10
         },
         grid: {
           vertLines: { color: colors.grid },
@@ -2685,8 +3347,8 @@
           vertLine: { color: '#FF9900', width: 1, style: 2, labelBackgroundColor: '#FF9900' },
           horzLine: { color: '#FF9900', width: 1, style: 2, labelBackgroundColor: '#FF9900' }
         },
-        rightPriceScale: { borderColor: '#262E3D' },
-        timeScale: { borderColor: '#262E3D', timeVisible: false }
+        rightPriceScale: { borderColor: '#1C222D' },
+        timeScale: { borderColor: '#1C222D', timeVisible: false }
       });
 
       lwcChart = chart;
@@ -2740,8 +3402,8 @@
         const dLine = chart.addLineSeries({ color: '#38BDF8', lineWidth: 1.5, title: '%D' });
         kLine.setData(kSeries);
         dLine.setData(dSeries);
-        kLine.createPriceLine({ price: 80, color: '#FF3B30', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '80 超買' });
-        kLine.createPriceLine({ price: 20, color: '#00C853', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '20 超賣' });
+        kLine.createPriceLine({ price: 80, color: '#FF3B30', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '80' });
+        kLine.createPriceLine({ price: 20, color: '#00C853', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '20' });
         seriesRefs.k = kLine;
         seriesRefs.d = dLine;
       } else if (mode === 'RSI') {
@@ -2865,7 +3527,7 @@
       const slice = bars.slice(-65);
       const dpr = window.devicePixelRatio || 1;
       const w = viewport.clientWidth || 340;
-      const h = viewport.clientHeight || 340;
+      const h = viewport.clientHeight || 360;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext('2d');
@@ -2882,7 +3544,7 @@
         ctx.strokeStyle = colors.grid;
         ctx.lineWidth = 1;
         ctx.fillStyle = colors.text;
-        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.font = '10px Inter, sans-serif';
         for (let i = 0; i <= 4; i++) {
           const y = pad.top + (ch * i) / 4;
           const val = maxV - ((maxV - minV) * i) / 4;
@@ -2979,41 +3641,31 @@
       const chartSec = document.getElementById('tab-chart');
       const btnSim = document.getElementById('navBtnSim');
       const btnChart = document.getElementById('navBtnChart');
+      const indSim = document.getElementById('navIndSim');
+      const indChart = document.getElementById('navIndChart');
 
       if (tab === 'sim') {
         simSec.classList.remove('hidden');
         chartSec.classList.add('hidden');
-        btnSim.className = 'flex items-center justify-center border-t-2 border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.06)]';
-        btnChart.className = 'flex items-center justify-center border-t-2 border-transparent text-[#8B95A5]';
+        btnSim.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#F4F6F9]';
+        btnChart.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#586274]';
+        indSim.classList.remove('hidden');
+        indChart.classList.add('hidden');
         renderSimTab();
       } else {
         simSec.classList.add('hidden');
         chartSec.classList.remove('hidden');
-        btnChart.className = 'flex items-center justify-center border-t-2 border-[#FF9900] text-[#FF9900] bg-[rgba(255,153,0,0.06)]';
-        btnSim.className = 'flex items-center justify-center border-t-2 border-transparent text-[#8B95A5]';
+        btnChart.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#F4F6F9]';
+        btnSim.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#586274]';
+        indChart.classList.remove('hidden');
+        indSim.classList.add('hidden');
         updateChartControlsUI();
         renderWatchlistChips();
-        if (!currentChartData || currentChartData.symbol !== appState.activeChartSymbol) {
-          loadChartSymbol(appState.activeChartSymbol, false);
+        if (!currentChartData || currentChartData.symbol !== appState.activeChartSymbol || currentChartData.source !== 'LIVE') {
+          loadChartSymbol(appState.activeChartSymbol, currentChartData && currentChartData.source !== 'LIVE');
         } else {
           renderActiveChart();
         }
-      }
-    }
-
-    async function forceRefreshCurrentContext() {
-      if (appState.activeTab === 'chart') {
-        await loadChartSymbol(appState.activeChartSymbol, true);
-        showToast(`已強制重新抓取 ${appState.activeChartSymbol} 行情`, 'success');
-      } else {
-        const orderSym = document.getElementById('orderSymbol').value.trim();
-        if (orderSym) {
-          const data = await getMarketData(orderSym, true);
-          document.getElementById('orderPrice').value = data.price;
-          document.getElementById('orderQuoteName').textContent = `${data.symbol} ${data.name}`;
-          updateOrderPreview();
-        }
-        await refreshAccountHoldingsPrices();
       }
     }
 
@@ -3049,21 +3701,25 @@
     function updateColorModeButtons() {
       const isTW = appState.settings.colorMode === 'TW';
       document.getElementById('setColorTW').className = isTW
-        ? 'btn-term py-2 border border-[#FF9900] bg-[rgba(255,153,0,0.14)] text-[#FF9900] font-bold'
-        : 'btn-term py-2 border border-[#262E3D] bg-[#0A0C0F] text-[#8B95A5] font-semibold';
+        ? 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[rgba(255,153,0,0.16)] text-[#FF9900] font-bold'
+        : 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[#171C26] text-[#8A94A6] font-semibold';
       document.getElementById('setColorUS').className = !isTW
-        ? 'btn-term py-2 border border-[#FF9900] bg-[rgba(255,153,0,0.14)] text-[#FF9900] font-bold'
-        : 'btn-term py-2 border border-[#262E3D] bg-[#0A0C0F] text-[#8B95A5] font-semibold';
+        ? 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[rgba(255,153,0,0.16)] text-[#FF9900] font-bold'
+        : 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[#171C26] text-[#8A94A6] font-semibold';
     }
 
     function renderSettingsWatchlist() {
       const el = document.getElementById('settingsWatchlist');
-      el.innerHTML = appState.settings.watchlist.map(sym => `
-        <span class="inline-flex items-center gap-1.5 px-2 py-1 bg-[#0A0C0F] border border-[#262E3D] rounded-[2px] text-[12px] mono">
-          ${escapeHtml(sym)}
-          <button onclick="removeWatchlistSymbol('${escapeHtml(sym)}')" class="text-[#FF3B30] font-bold px-0.5">✕</button>
-        </span>
-      `).join('');
+      el.innerHTML = appState.settings.watchlist.map(sym => {
+        const dispSym = escapeHtml(formatDisplaySymbol(sym));
+        const rawSym = escapeHtml(sym);
+        return `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#171C26] rounded-full text-[12px] num text-[#F4F6F9]">
+            ${dispSym}
+            <button onclick="removeWatchlistSymbol('${rawSym}')" class="text-[#FF3B30] font-bold px-0.5">✕</button>
+          </span>
+        `;
+      }).join('');
     }
 
     function addWatchlistSymbol() {
@@ -3120,7 +3776,7 @@
       updateOrderPreview();
       updateChartControlsUI();
       if (appState.activeTab === 'chart') renderActiveChart();
-      showToast('終端機設定已儲存並套用', 'success');
+      showToast('系統設定已儲存並套用', 'success');
     }
 
     function exportJsonBackup() {
@@ -3136,7 +3792,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `bbg_sim_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `stock_lab_backup_${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3213,33 +3869,73 @@
     }
 
     /* ========================================================================
-       8. 系統啟動初始化 (BOOT)
+       8. 系統啟動初始化與自動喚醒重連監聽器 (BOOT & AUTO-RECONNECT)
        ======================================================================== */
     function updateClock() {
       const now = new Date();
-      document.getElementById('headerClock').textContent =
-        now.toLocaleDateString('zh-TW') + ' ' + now.toTimeString().slice(0, 8);
+      document.getElementById('headerClock').textContent = now.toTimeString().slice(0, 8);
+    }
+
+    function setupConnectionLifecycleListeners() {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          const idleMs = Date.now() - (connState.lastSuccessAt || 0);
+          if (connState.status === 'OFFLINE' || connState.status === 'LOADING' || idleMs > 60000) {
+            hardResetReconnect(true);
+          }
+        }
+      });
+
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted || connState.status === 'OFFLINE' || connState.status === 'LOADING') {
+          hardResetReconnect(true);
+        }
+      });
+
+      window.addEventListener('online', () => {
+        showToast('偵測到網路已恢復，正在自動重新連線...', 'info');
+        hardResetReconnect(false);
+      });
+
+      window.addEventListener('offline', () => {
+        updateStatusBadge('OFFLINE');
+        showToast('裝置已離線，目前切換為離線模擬模式', 'warn');
+      });
+
+      setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
+        const ttl = Number(appState.settings.cacheTtlMs);
+        const now = Date.now();
+        if (connState.status === 'OFFLINE' && (now - connState.lastAttemptAt) >= 15000) {
+          hardResetReconnect(true);
+        } else if (ttl > 0 && (now - connState.lastSuccessAt) >= ttl) {
+          hardResetReconnect(true);
+        }
+      }, HEARTBEAT_INTERVAL_MS);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       applyColorTheme();
       updateClock();
       setInterval(updateClock, 1000);
+      setupConnectionLifecycleListeners();
 
       setOrderSide('BUY');
       setOrderUnitMode('LOT');
-      document.getElementById('orderSymbol').value = '2330.TW';
+      document.getElementById('orderSymbol').value = '2330';
 
       switchMainTab(appState.activeTab || 'sim');
 
       getMarketData('2330.TW', false).then(data => {
         if (!document.getElementById('orderPrice').value) {
           document.getElementById('orderPrice').value = data.price;
-          document.getElementById('orderQuoteName').textContent = `${data.symbol} ${data.name}`;
+          document.getElementById('orderQuoteName').textContent = `${formatDisplaySymbol(data.symbol)} ${data.name} · ${fmtPrice(data.price)}`;
           updateOrderPreview();
         }
         renderSimTab();
       }).catch(() => {});
+
+      refreshAccountHoldingsPrices(false);
     });
   </script>
 </body>
