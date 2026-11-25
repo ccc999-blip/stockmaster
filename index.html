@@ -4122,53 +4122,66 @@
     function computeAccountStats(acc) {
       let holdingsMarketValueTwd = 0;
       let holdingsCostTotalTwd = 0;
+      let unrealizedTotalTwd = 0;
       const rows = [];
       const accSettings = acc.settings || createDefaultAccountSettings();
       const currentUsdTwd = Number(accSettings.usdTwdRate) > 0 ? Number(accSettings.usdTwdRate) : DEFAULT_USD_TWD_RATE;
 
       Object.values(acc.holdings).forEach(h => {
-        const currency = h.currency || getSymbolCurrency(h.symbol);
-        const fxRate = currency === 'USD' ? currentUsdTwd : 1;
-        const rawEntry = appState.marketCache[h.symbol] || connState.offlineMemoryMap.get(h.symbol);
-        const maskedEntry = rawEntry ? applyTimeMaskToMarketData(rawEntry, acc) : null;
-        const curPrice = (maskedEntry && Number.isFinite(maskedEntry.price)) ? maskedEntry.price : h.avgCost;
+        const symbolKey = h.symbol;
+        const shares = Number(h.shares) || 0;
+        if (shares <= 0) return;
 
-        const marketValNative = curPrice * h.shares;
+        const currency = h.currency || getSymbolCurrency(symbolKey);
+        const fxRate = currency === 'USD' ? currentUsdTwd : 1;
+        const rawEntry = getKnownCachedMarketEntry(symbolKey);
+        const maskedEntry = rawEntry ? applyTimeMaskToMarketData(rawEntry, acc) : null;
+        const curPrice = (maskedEntry && Number.isFinite(Number(maskedEntry.price)) && Number(maskedEntry.price) > 0)
+          ? Number(maskedEntry.price)
+          : Number(h.avgCost);
+
+        const nativeCostBasis = Number.isFinite(Number(h.totalCost)) && Number(h.totalCost) > 0
+          ? Number(h.totalCost)
+          : (Number(h.avgCost) * shares);
+        const avgCostNative = nativeCostBasis / shares;
+
+        // 先計算原幣未實現損益，再依當前匯率折合台幣，避免匯率變動造成美金虧損、台幣卻顯示獲利的矛盾
+        const unrealizedNative = (curPrice - avgCostNative) * shares;
+        const unrealizedTwd = unrealizedNative * fxRate;
+        const unrealizedPct = nativeCostBasis > 0 ? (unrealizedNative / nativeCostBasis) * 100 : 0;
+
+        const marketValNative = curPrice * shares;
         const marketValTwd = marketValNative * fxRate;
-        const costTwd = Number.isFinite(h.totalCostTwd) && h.totalCostTwd > 0
-          ? h.totalCostTwd
-          : (h.totalCost * fxRate);
-        const unrealizedNative = marketValNative - h.totalCost;
-        const unrealizedTwd = marketValTwd - costTwd;
-        const unrealizedPct = costTwd > 0 ? (unrealizedTwd / costTwd) * 100 : 0;
-        const breakEven = calculateBreakEvenPrice(h.avgCost, h.shares, h.isEtf, currency);
+        const currentCostTwd = nativeCostBasis * fxRate;
+        const breakEven = calculateBreakEvenPrice(avgCostNative, shares, h.isEtf, currency);
 
         const rawBatches = Array.isArray(h.batches) && h.batches.length > 0
           ? h.batches
           : [{
-              id: 'lot_single_' + h.symbol,
+              id: 'lot_single_' + symbolKey,
               simDate: acc.currentSimDate,
               time: new Date().toISOString(),
-              price: h.avgCost,
-              remainingShares: h.shares,
-              origShares: h.shares,
-              costNative: h.totalCost,
-              costTwd,
+              price: avgCostNative,
+              remainingShares: shares,
+              origShares: shares,
+              costNative: nativeCostBasis,
+              costTwd: currentCostTwd,
               currency,
               fxRate: h.fxRateAtBuy || fxRate
             }];
 
         const batchRows = rawBatches.map((b, idx) => {
           const bShares = Number(b.remainingShares) || 0;
-          const bPrice = Number(b.price) || h.avgCost;
-          const bCostNative = Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (bPrice * bShares);
-          const bCostTwd = Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (bCostNative * (b.fxRate || fxRate));
+          const bPrice = Number(b.price) || avgCostNative;
+          const bCostNative = Number.isFinite(Number(b.costNative)) && Number(b.costNative) > 0
+            ? Number(b.costNative)
+            : (bPrice * bShares);
+          const bCostTwd = bCostNative * fxRate;
           const bValNative = curPrice * bShares;
-          const bValTwd = bValNative * fxRate;
           const bPnlNative = bValNative - bCostNative;
-          const bPnlTwd = bValTwd - bCostTwd;
+          const bPnlTwd = bPnlNative * fxRate;
           const bPerShareDiff = curPrice - bPrice;
-          const bPct = bCostTwd > 0 ? (bPnlTwd / bCostTwd) * 100 : 0;
+          const bPct = bCostNative > 0 ? (bPnlNative / bCostNative) * 100 : 0;
           return {
             index: idx + 1,
             simDate: b.simDate || (typeof b.time === 'string' ? b.time.slice(0, 10) : acc.currentSimDate),
@@ -4186,15 +4199,21 @@
         });
 
         holdingsMarketValueTwd += marketValTwd;
-        holdingsCostTotalTwd += costTwd;
+        holdingsCostTotalTwd += currentCostTwd;
+        unrealizedTotalTwd += unrealizedTwd;
+
         rows.push({
           ...h,
+          symbol: symbolKey,
+          shares,
+          avgCost: avgCostNative,
+          totalCost: nativeCostBasis,
           currency,
           fxRate,
           curPrice,
           marketValNative,
           marketValTwd,
-          costTwd,
+          costTwd: currentCostTwd,
           unrealizedNative,
           unrealizedTwd,
           unrealizedPct,
@@ -4221,8 +4240,7 @@
       compoundedFactor *= (1 + currentSegReturn);
 
       const twrRoiPct = (compoundedFactor - 1) * 100;
-      const unrealizedTotal = holdingsMarketValueTwd - holdingsCostTotalTwd;
-      const unrealizedPctTotal = holdingsCostTotalTwd > 0 ? (unrealizedTotal / holdingsCostTotalTwd) * 100 : 0;
+      const unrealizedPctTotal = holdingsCostTotalTwd > 0 ? (unrealizedTotalTwd / holdingsCostTotalTwd) * 100 : 0;
 
       return {
         totalAssets,
@@ -4230,7 +4248,7 @@
         twrRoiPct,
         holdingsMarketValueTwd,
         holdingsCostTotalTwd,
-        unrealizedTotal,
+        unrealizedTotal: unrealizedTotalTwd,
         unrealizedPctTotal,
         rows
       };
@@ -4259,7 +4277,7 @@
                 每股 ${diffSign}${fmtPrice(b.perShareDiff)} ${b.currency}
               </div>
             </div>
-            <div class="text-right shrink-0 ${getPnlClass(b.pnlTwd)}">
+            <div class="text-right shrink-0 ${getPnlClass(b.pnlNative)}">
               <div class="font-semibold">${pnlStr}</div>
               <div>${fmtSignedPct(b.pct)}</div>
             </div>
