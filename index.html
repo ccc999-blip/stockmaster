@@ -6,9 +6,9 @@
   <!-- iOS Safari Web App 全螢幕設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="stockmaster📉">
+  <meta name="apple-mobile-web-app-title" content="股市策略實驗室">
   <meta name="theme-color" content="#000000">
-  <title>stockmaster📉</title>
+  <title>股市策略實驗室</title>
 
   <!-- 載入 Tailwind CSS 與清晰無襯線/等寬數字字體 -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -74,18 +74,15 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* 確保所有 Flex / Grid 子容器不會撐破外層螢幕寬度 */
     .min-w-0 {
       min-width: 0;
     }
 
-    /* 純數值套用等寬數字對齊 */
     .num {
       font-family: 'Inter', 'JetBrains Mono', -apple-system, sans-serif;
       font-variant-numeric: tabular-nums;
     }
 
-    /* 髮絲水平分隔線 */
     .hairline-b {
       border-bottom: 1px solid var(--hairline);
     }
@@ -93,7 +90,6 @@
       border-top: 1px solid var(--hairline);
     }
 
-    /* 無框扁平輸入框（>=16px 防止 iOS Safari 自動縮放） */
     input[type="text"],
     input[type="url"],
     input[type="number"],
@@ -119,7 +115,6 @@
       background-color: #161B26;
     }
 
-    /* 自訂深色質感核取方塊 */
     input[type="checkbox"] {
       -webkit-appearance: none;
       appearance: none;
@@ -151,7 +146,6 @@
       transform: scale(1);
     }
 
-    /* 漲跌顏色與膠囊標籤 */
     .txt-up { color: var(--up-color); }
     .txt-down { color: var(--down-color); }
     .pill-up { background-color: var(--up-bg); color: var(--up-color); }
@@ -160,7 +154,6 @@
     .btn-buy-solid { background-color: var(--up-color); color: #FFFFFF; }
     .btn-sell-solid { background-color: var(--down-color); color: #FFFFFF; }
 
-    /* 頂部精簡純黑狀態列 */
     .top-bar {
       position: sticky;
       top: 0;
@@ -175,12 +168,10 @@
       padding-top: var(--safe-top);
     }
 
-    /* Toast 通知列動態避開頂部狀態列 */
     #toastContainer {
       top: calc(var(--safe-top) + 52px);
     }
 
-    /* 底部 iOS 原生毛玻璃純黑雙分頁導覽列 */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -197,7 +188,6 @@
       padding-bottom: var(--safe-bottom);
     }
 
-    /* 主內容區 */
     .main-container {
       width: 100%;
       max-width: 100vw;
@@ -207,33 +197,31 @@
       background-color: var(--bg-surface);
     }
 
-    /* 盤面分析單一螢幕完整鎖定（不下滑、不溢位） */
-    body.chart-single-screen {
-      height: 100dvh;
-      max-height: 100dvh;
-      overflow: hidden;
-    }
-    body.chart-single-screen .main-container {
-      height: calc(100dvh - var(--header-total-h) - var(--bottom-total-h));
-      min-height: 0;
-      max-height: calc(100dvh - var(--header-total-h) - var(--bottom-total-h));
-      padding-bottom: 0;
-      overflow: hidden;
-    }
-    body.chart-single-screen .main-inner-wrap {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
     #tab-chart {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      width: 100%;
     }
     #tab-chart.hidden {
       display: none !important;
+    }
+
+    /* 全屏圖表檢視器 Modal */
+    #fullChartModal {
+      align-items: stretch;
+      padding: 0;
+      background-color: #090B0E;
+      z-index: 65;
+    }
+    #fullChartModal .full-chart-panel {
+      width: 100%;
+      max-width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      background-color: #090B0E;
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      overflow: hidden;
     }
     #chartViewport {
       touch-action: none;
@@ -252,7 +240,6 @@
       animation: pulseDot 2s infinite;
     }
 
-    /* 彈出 Modal 遮罩 */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -283,7 +270,6 @@
       overflow: hidden;
     }
 
-    /* 切換帳戶與新增/編輯帳戶彈窗垂直置中顯示 */
     #accountSwitchModal,
     #accountModal {
       align-items: center;
@@ -291,7 +277,6 @@
       padding-bottom: max(20px, var(--safe-bottom));
     }
 
-    /* 確認類彈窗層級置頂 */
     #confirmModal,
     #orderConfirmModal {
       z-index: 70;
@@ -300,7 +285,6 @@
       padding-bottom: max(20px, var(--safe-bottom));
     }
 
-    /* 設定頁面全螢幕佔滿樣式 */
     #settingsModal {
       align-items: stretch;
       padding: 0;
@@ -320,7 +304,6 @@
       padding-bottom: var(--safe-bottom);
     }
 
-    /* 觸控點擊微幅回饋 */
     .tap-btn {
       transition: opacity 0.12s ease, transform 0.08s ease, background-color 0.12s ease;
       user-select: none;
@@ -343,14 +326,12 @@
       </div>
 
       <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-        <!-- 行情來源狀態與一鍵重連膠囊 -->
         <button id="statusBadgeBtn" onclick="hardResetReconnect(false)" title="點擊清除快取與失敗狀態並強制重新連線"
           class="tap-btn flex items-center gap-1 px-2 py-1 text-[10px] sm:text-[11px] font-medium bg-[#141923] rounded-full whitespace-nowrap max-w-[125px] sm:max-w-none">
           <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-[#FF9900] shrink-0"></span>
           <span id="statusText" class="text-[#FF9900] truncate">連線中</span>
         </button>
 
-        <!-- 右上角設定齒輪圖示 -->
         <button onclick="openSettingsModal()" aria-label="設定" title="設定"
           class="tap-btn w-8 h-8 flex items-center justify-center rounded-full text-[#8A94A6] hover:text-[#F4F6F9] active:bg-[#171C26] shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -369,20 +350,20 @@
     <div class="main-inner-wrap w-full max-w-3xl mx-auto overflow-x-hidden">
 
       <!-- ====================================================================
-           分頁一：模擬股票（由上而下：帳戶列 -> 交易股票 -> 持有股票 -> 總額(資產) -> 歷史紀錄）
+           分頁一：模擬股票（持有股票 -> 交易股票 -> 總額 -> 歷史紀錄）
            ==================================================================== -->
-      <section id="tab-sim" class="w-full overflow-x-hidden">
+      <section id="tab-sim" class="w-full">
 
-        <!-- 帳戶切換、模擬時間膠囊與管理列 -->
-        <div class="px-4 py-3 hairline-b space-y-2">
-          <div class="flex items-center justify-between gap-2">
+        <!-- 1. 帳戶切換與管理列 -->
+        <div class="px-3.5 sm:px-4 py-3 hairline-b space-y-2">
+          <div class="flex items-center justify-between gap-2 min-w-0">
             <button onclick="openAccountSwitchModal()" title="點擊切換帳戶"
-              class="tap-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#141923] text-[#F4F6F9] text-[13px] font-semibold min-w-0 flex-1 max-w-[230px] sm:max-w-[300px]">
+              class="tap-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#141923] text-[#F4F6F9] text-[13px] font-semibold min-w-0 max-w-[60%]">
               <span id="accountDisplayName" class="truncate">帳戶 1</span>
               <span class="text-[11px] text-[#8A94A6] shrink-0">▾</span>
             </button>
 
-            <div class="flex items-center gap-1 shrink-0">
+            <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
               <button onclick="openAccountModal('create')" title="新增帳戶" aria-label="新增帳戶"
                 class="tap-btn w-8 h-8 flex items-center justify-center text-[17px] font-semibold text-[#FF9900] rounded-full active:bg-[#171C26]">+</button>
               <button onclick="openAccountModal('edit')" title="編輯帳戶" aria-label="編輯帳戶"
@@ -395,38 +376,44 @@
           </div>
 
           <div class="flex items-center justify-between gap-2 min-w-0">
-            <span id="simTimelineBadge" class="inline-flex items-center px-2.5 py-0.5 text-[11px] num font-medium rounded-full bg-[#141923] text-[#8A94A6] whitespace-nowrap shrink-0">
-              已同步今日
-            </span>
-            <span id="accountStrategyTag" class="hidden text-[12px] text-[#8A94A6] truncate text-right"></span>
+            <span id="simTimelineBadge" class="inline-flex items-center px-2.5 py-0.5 text-[11px] num font-medium rounded-full bg-[#141923] text-[#8A94A6] whitespace-nowrap shrink-0">已同步今日</span>
+            <span id="accountStrategyTag" class="hidden text-[11px] text-[#8A94A6] truncate text-right"></span>
           </div>
         </div>
 
-        <!-- 單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示，到達今日自動消失） -->
-        <div id="simTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
+        <!-- 1B. 單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時出現） -->
+        <div id="simTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[36px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
           <div class="flex items-center gap-1 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap min-w-0 truncate">
             <span class="shrink-0">📅</span>
             <span id="simWarpDateLabel" class="truncate">2024/01/01</span>
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <button type="button" onclick="fastForwardAccountDays(1)"
-              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
+              class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
             <button type="button" onclick="fastForwardAccountDays(5)"
-              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
+              class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
             <button type="button" onclick="fastForwardAccountDays(20)"
-              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
+              class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
             <div class="relative inline-flex items-center shrink-0">
               <button type="button" onclick="openSimJumpDatePicker()"
-                class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
+                class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
               <input id="simWarpDateInput" type="date" onchange="jumpAccountToDate(this.value)"
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇快轉目標日期">
             </div>
           </div>
         </div>
 
-        <!-- 1. 交易股票（委託下單區） -->
-        <div id="simOrderSection" class="px-4 py-5 hairline-b space-y-3.5">
-          <!-- 買進 / 賣出 Segmented Control -->
+        <!-- 2. 持有股票（台股部位 / 美股部位分區 + 批次明細展開） -->
+        <div class="pt-4 hairline-b">
+          <div class="px-3.5 sm:px-4 pb-2.5 flex items-center justify-between">
+            <span class="text-[13px] font-bold text-[#F4F6F9]">目前持股</span>
+            <span id="holdingsCount" class="text-[12px] num text-[#8A94A6]">0 檔</span>
+          </div>
+          <div id="holdingsList"></div>
+        </div>
+
+        <!-- 3. 交易股票（委託下單區） -->
+        <div id="simOrderSection" class="px-3.5 sm:px-4 py-4 hairline-b space-y-3.5">
           <div class="grid grid-cols-2 p-1 bg-[#12161F] rounded-[9px]">
             <button id="btnSideBuy" onclick="setOrderSide('BUY')"
               class="tap-btn py-1.5 text-[13px] font-bold rounded-[7px] transition-colors">
@@ -438,7 +425,6 @@
             </button>
           </div>
 
-          <!-- 代號輸入框 -->
           <div class="relative flex items-center">
             <input id="orderSymbol" type="text" placeholder="輸入代號如 2330 或 AAPL" autocomplete="off"
               oninput="handleOrderSymbolInput()"
@@ -449,7 +435,6 @@
             </button>
           </div>
 
-          <!-- 標的名稱 + 整股/零股與 ETF 切換 -->
           <div class="flex flex-wrap items-center justify-between gap-2 text-[12px]">
             <span id="orderQuoteName" class="text-[#8A94A6] font-medium truncate max-w-[205px]">請點擊查詢或輸入單價</span>
 
@@ -472,21 +457,19 @@
             </div>
           </div>
 
-          <!-- 單價與數量並排 -->
           <div class="grid grid-cols-2 gap-3">
             <div class="min-w-0">
               <label id="orderPriceLabel" class="block text-[11px] text-[#8A94A6] mb-1 truncate">委託單價（TWD）</label>
               <input id="orderPrice" type="number" step="any" min="0" placeholder="0.00"
-                oninput="updateOrderPreview()" class="w-full min-w-0 px-3 py-2 num">
+                oninput="updateOrderPreview()" class="w-full px-3 py-2 num">
             </div>
             <div class="min-w-0">
               <label id="orderQtyLabel" class="block text-[11px] text-[#8A94A6] mb-1 truncate">數量（張）</label>
               <input id="orderQty" type="number" step="any" min="0" placeholder="0"
-                oninput="updateOrderPreview()" class="w-full min-w-0 px-3 py-2 num">
+                oninput="updateOrderPreview()" class="w-full px-3 py-2 num">
             </div>
           </div>
 
-          <!-- 精簡為 3 個實用快捷按鈕：1張(或100股) / 半倉 / 全倉 -->
           <div class="grid grid-cols-3 gap-2">
             <button id="btnQuickBaseQty" type="button" onclick="applyQuickQty('BASE')"
               class="tap-btn py-1.5 text-[12px] font-medium text-[#8A94A6] bg-[#12161F] rounded-[6px]">1張</button>
@@ -496,7 +479,6 @@
               class="tap-btn py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[#12161F] rounded-[6px]">全倉</button>
           </div>
 
-          <!-- 可折疊交易理由與筆記抽屜（預設收合） -->
           <div>
             <button type="button" onclick="toggleOrderExtraDrawer()"
               class="tap-btn flex items-center justify-between w-full py-1 text-[12px] text-[#8A94A6] hover:text-[#F4F6F9]">
@@ -517,7 +499,6 @@
             </div>
           </div>
 
-          <!-- 試算明細（美股自動顯示原幣與匯率換算列） -->
           <div class="pt-1.5 space-y-1.5 text-[12px]">
             <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[#8A94A6] num leading-normal">
               <span id="prevGross">0 股 · 成交 $0</span>
@@ -533,38 +514,28 @@
             </div>
           </div>
 
-          <!-- 確認下單按鈕 -->
           <button id="btnSubmitOrder" onclick="submitOrder()"
             class="tap-btn w-full py-3 text-[14px] font-bold tracking-wide rounded-[8px] btn-buy-solid">
             買進
           </button>
         </div>
 
-        <!-- 2. 持有股票（台股部位 / 美股部位分區 + 批次明細展開） -->
-        <div class="pt-5 hairline-b">
-          <div class="px-4 pb-2.5 flex items-center justify-between">
-            <span class="text-[13px] font-bold text-[#F4F6F9]">目前持股</span>
-            <span id="holdingsCount" class="text-[12px] num text-[#8A94A6]">0 檔</span>
-          </div>
-          <div id="holdingsList"></div>
-        </div>
-
-        <!-- 3. 總額（資產總覽主視覺區：累積總損益金額 ＋ 分段資金加權真實報酬率 TWR 並陳） -->
-        <div class="px-4 py-5 hairline-b space-y-4">
-          <div class="flex items-start justify-between gap-2.5 min-w-0">
+        <!-- 4. 總額（資產總覽主視覺區） -->
+        <div class="px-3.5 sm:px-4 py-5 hairline-b space-y-4">
+          <div class="flex items-start justify-between gap-2 min-w-0">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-[12px] text-[#8A94A6] font-medium">總資產淨值（TWD）</span>
+                <span class="text-[12px] text-[#8A94A6] font-medium whitespace-nowrap">總資產淨值（TWD）</span>
                 <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral whitespace-nowrap" title="分段資金加權真實報酬率 (TWR)">真實報酬 0.00%</span>
               </div>
-              <div id="ovTotalAssets" class="text-[28px] sm:text-[36px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5 truncate">0</div>
+              <div id="ovTotalAssets" class="text-[28px] sm:text-[34px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5 truncate">0</div>
               <div class="flex items-center gap-1.5 mt-1 text-[12px] num min-w-0">
                 <span class="text-[#8A94A6] shrink-0">累積總損益</span>
                 <span id="ovTotalPnl" class="font-bold text-[#8A94A6] truncate">0 TWD</span>
               </div>
             </div>
 
-            <div class="shrink-0 pt-1">
+            <div class="shrink-0 pt-0.5">
               <button onclick="openDepositModal()"
                 class="tap-btn px-3 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full whitespace-nowrap">
                 + 充值
@@ -573,36 +544,36 @@
           </div>
 
           <div class="grid grid-cols-3 divide-x divide-[#1C222D] pt-1">
-            <div class="pr-2.5 min-w-0">
-              <div class="text-[11px] text-[#8A94A6]">可用現金</div>
+            <div class="pr-2 min-w-0">
+              <div class="text-[11px] text-[#8A94A6] truncate">可用現金</div>
               <div id="ovCash" class="text-[14px] sm:text-[15px] font-bold num text-[#F4F6F9] mt-1 truncate">0</div>
-              <div id="ovInitial" class="text-[11px] num text-[#586274] mt-0.5 truncate">本金 0</div>
+              <div id="ovInitial" class="text-[10px] sm:text-[11px] num text-[#586274] mt-0.5 truncate">本金 0</div>
             </div>
-            <div class="px-2.5 min-w-0">
-              <div class="text-[11px] text-[#8A94A6]">未實現損益</div>
+            <div class="px-2 min-w-0">
+              <div class="text-[11px] text-[#8A94A6] truncate">未實現損益</div>
               <div id="ovUnrealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
-              <div id="ovUnrealizedPct" class="text-[11px] num mt-0.5 truncate">0.00%</div>
+              <div id="ovUnrealizedPct" class="text-[10px] sm:text-[11px] num mt-0.5 truncate">0.00%</div>
             </div>
-            <div class="pl-2.5 min-w-0">
-              <div class="text-[11px] text-[#8A94A6]">已實現損益</div>
+            <div class="pl-2 min-w-0">
+              <div class="text-[11px] text-[#8A94A6] truncate">已實現損益</div>
               <div id="ovRealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
-              <div id="ovHoldingsVal" class="text-[11px] num text-[#586274] mt-0.5 truncate">現值 0</div>
+              <div id="ovHoldingsVal" class="text-[10px] sm:text-[11px] num text-[#586274] mt-0.5 truncate">現值 0</div>
             </div>
           </div>
 
-          <div class="flex items-center justify-between gap-2 text-[12px] text-[#8A94A6] pt-0.5">
-            <div class="flex items-center gap-2.5">
-              <button onclick="exportReport('current')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出此帳戶報告</button>
-              <span class="text-[#2A3343]">·</span>
-              <button onclick="exportReport('all')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出全部帳戶報告</button>
+          <div class="flex items-center justify-between gap-2 text-[11px] sm:text-[12px] text-[#8A94A6] pt-0.5 min-w-0">
+            <div class="flex items-center gap-2 min-w-0 truncate">
+              <button onclick="exportReport('current')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4 truncate">匯出此帳戶報告</button>
+              <span class="text-[#2A3343] shrink-0">·</span>
+              <button onclick="exportReport('all')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4 truncate">匯出全部報告</button>
             </div>
             <span id="ovFxHint" class="text-[11px] num text-[#586274] shrink-0">USD/TWD 32.50</span>
           </div>
         </div>
 
-        <!-- 4. 歷史紀錄（交易紀錄） -->
-        <div class="pt-5">
-          <div class="px-4 pb-2.5 flex items-center justify-between">
+        <!-- 5. 歷史紀錄（交易與充值紀錄） -->
+        <div class="pt-4">
+          <div class="px-3.5 sm:px-4 pb-2.5 flex items-center justify-between">
             <span class="text-[13px] font-bold text-[#F4F6F9]">交易紀錄</span>
             <span id="tradesCount" class="text-[12px] num text-[#8A94A6]">0 筆</span>
           </div>
@@ -611,16 +582,16 @@
       </section>
 
       <!-- ====================================================================
-           分頁二：盤面分析（完整貼合手機單一螢幕高度、無下方說明區、底部日期刻度永駐）
+           分頁二：盤面分析（極簡券商風格排版：選股 ＋ 前日漲跌/開高低收/選日期 ＋ 髮絲線圖表設定列）
            ==================================================================== -->
-      <section id="tab-chart" class="hidden w-full overflow-hidden">
-        <!-- 1. 搜尋列與自選股 Chips（緊湊單屏間距） -->
-        <div class="px-3.5 py-2 hairline-b space-y-2 shrink-0">
+      <section id="tab-chart" class="hidden w-full">
+        <!-- 1. 搜尋列與自選股 Chips -->
+        <div class="px-3.5 sm:px-4 py-3 hairline-b space-y-2.5">
           <div class="relative flex items-center">
             <input id="chartSymbolInput" type="text" placeholder="搜尋台股/美股代號如 2330 或 AAPL" autocomplete="off"
-              class="w-full pl-3 pr-14 py-1.5 num uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
+              class="w-full pl-3.5 pr-16 py-2.5 num uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
             <button onclick="loadChartSymbolFromInput()"
-              class="tap-btn absolute right-1.5 px-2.5 py-0.5 text-[12px] font-semibold text-[#FF9900] rounded-[6px] active:bg-[#1C222D]">
+              class="tap-btn absolute right-2 px-3 py-1 text-[12px] font-semibold text-[#FF9900] rounded-[6px] active:bg-[#1C222D]">
               載入
             </button>
           </div>
@@ -628,7 +599,7 @@
         </div>
 
         <!-- 1B. 盤面分析單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示） -->
-        <div id="chartTimeWarpBar" class="hidden px-3.5 h-[34px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0 shrink-0">
+        <div id="chartTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[36px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
           <div class="flex items-center gap-1 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap min-w-0 truncate">
             <span class="shrink-0">📅</span>
             <span id="chartWarpDateLabel" class="truncate">2024/01/01</span>
@@ -649,87 +620,111 @@
           </div>
         </div>
 
-        <!-- 2. 報價標題與週期/單圖控制列（精簡緊湊版面） -->
-        <div class="px-3.5 py-2 hairline-b space-y-2 shrink-0">
-          <div class="flex items-center justify-between gap-2">
-            <div class="min-w-0 flex items-baseline gap-1.5">
-              <span id="chartHeaderSymbol" class="text-[17px] font-bold num text-[#F4F6F9] shrink-0">--</span>
-              <span id="chartHeaderName" class="text-[12px] text-[#8A94A6] truncate">--</span>
-            </div>
-            <div class="text-right shrink-0 flex items-baseline gap-1.5">
-              <span id="chartHeaderCurrency" class="px-1.5 py-0.5 text-[9px] font-semibold num rounded bg-[#171C26] text-[#8A94A6]">TWD</span>
-              <span id="chartHeaderPrice" class="text-[18px] font-bold num leading-none">--</span>
-              <span id="chartHeaderChange" class="text-[11px] num leading-none">--</span>
-            </div>
-          </div>
-
-          <!-- 時間週期切換 (日K / 週K / 月K)、日期跳轉與資料來源 -->
-          <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-2 py-0.5 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">日K</button>
-              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-2 py-0.5 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">週K</button>
-              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-2 py-0.5 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">月K</button>
-
-              <!-- 選擇歷史過去日期並聚焦跳轉至該日盤面 -->
-              <div class="relative inline-flex items-center shrink-0">
-                <button type="button" onclick="openChartDatePicker()" title="選擇歷史日期並定位圖表"
-                  class="tap-btn inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium num bg-[#141923] text-[#D1D5DB] rounded-[6px] whitespace-nowrap shrink-0">
-                  <span id="chartDateBtnText" class="whitespace-nowrap">選日期</span>
-                  <span class="text-[9px] text-[#8A94A6]">▾</span>
-                </button>
-                <input id="chartDateInput" type="date" onchange="jumpChartToSelectedDate(this.value)"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇圖表日期">
+        <!-- 2. 上方股票報價區塊：前一日到當日漲跌 ＋ 開高低收 ＋ 選日期定位（完整不截斷） -->
+        <div class="px-3.5 sm:px-4 py-3.5 hairline-b space-y-2.5">
+          <div class="flex items-start justify-between gap-2 min-w-0">
+            <div class="min-w-0">
+              <div class="flex items-baseline gap-2 min-w-0">
+                <span id="chartHeaderSymbol" class="text-[20px] font-bold num text-[#F4F6F9] shrink-0">--</span>
+                <span id="chartHeaderName" class="text-[13px] text-[#8A94A6] truncate">--</span>
+              </div>
+              <div class="text-[11px] num text-[#586274] mt-0.5">
+                <span id="chartSourceTag">--</span>
               </div>
             </div>
-            <div class="flex items-center gap-1 text-[10px] num text-[#586274] whitespace-nowrap shrink-0">
-              <span id="chartSourceTag" class="whitespace-nowrap">--</span>
-              <span>·</span>
-              <span id="chartEngineTag" class="whitespace-nowrap">LWC</span>
+
+            <div class="text-right shrink-0">
+              <div class="flex items-baseline justify-end gap-1.5">
+                <span id="chartHeaderCurrency" class="px-1.5 py-0.5 text-[10px] font-semibold num rounded bg-[#141923] text-[#8A94A6]">TWD</span>
+                <span id="chartHeaderPrice" class="text-[22px] font-bold num leading-tight">--</span>
+              </div>
+              <div id="chartHeaderChange" class="text-[12px] num leading-tight mt-0.5">--</div>
             </div>
           </div>
 
-          <!-- 單一指標圖表互斥切換列 -->
-          <div class="grid grid-cols-5 p-0.5 bg-[#12161F] rounded-[7px]">
-            <button data-mode="CANDLE_MA" onclick="setChartMode('CANDLE_MA')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">K線+MA</button>
-            <button data-mode="VOL" onclick="setChartMode('VOL')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">成交量</button>
-            <button data-mode="KD" onclick="setChartMode('KD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">KD</button>
-            <button data-mode="RSI" onclick="setChartMode('RSI')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">RSI</button>
-            <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">MACD</button>
-          </div>
-
-          <!-- 均線顯示開關與快捷時間區間切換 -->
-          <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num overflow-x-auto no-scrollbar">
-            <div class="flex items-center gap-2.5 shrink-0">
-              <label class="flex items-center gap-1 cursor-pointer whitespace-nowrap">
-                <input id="toggleMa0" type="checkbox" onchange="renderActiveChart()">
-                <span id="labelMa0" class="text-[#F59E0B]">MA5</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer whitespace-nowrap">
-                <input id="toggleMa1" type="checkbox" onchange="renderActiveChart()">
-                <span id="labelMa1" class="text-[#38BDF8]">MA20</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer whitespace-nowrap">
-                <input id="toggleMa2" type="checkbox" onchange="renderActiveChart()">
-                <span id="labelMa2" class="text-[#C084FC]">MA60</span>
-              </label>
+          <!-- 開 / 高 / 低 / 收 ＋ 選日期定位器（各自完整呈現不截斷） -->
+          <div class="pt-2 hairline-t flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+            <div id="chartHeaderOhlc" class="text-[11px] sm:text-[12px] num text-[#D1D5DB] flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+              <span>開 --</span>
+              <span>高 --</span>
+              <span>低 --</span>
+              <span>收 --</span>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button onclick="zoomChartBars(22)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1M</button>
-              <button onclick="zoomChartBars(66)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">3M</button>
-              <button onclick="zoomChartBars(250)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1Y</button>
-              <button onclick="fitFullHistoryRange()" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#FF9900] font-semibold">全歷史</button>
-              <button onclick="openSettingsModal()" class="text-[#8A94A6] hover:text-[#F4F6F9] pl-0.5">⚙</button>
-            </div>
-          </div>
 
-          <!-- 十字準星精確數值讀數列（含當日漲跌幅 %） -->
-          <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2 gap-y-0.5 min-h-[18px] items-center">
-            滑動或點擊 K 棒查看詳細數值...
+            <div class="relative inline-flex items-center shrink-0 ml-auto">
+              <button type="button" onclick="openChartDatePicker()" title="選擇日期定位盤面"
+                class="tap-btn inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium num bg-[#141923] text-[#D1D5DB] rounded-[6px] whitespace-nowrap shrink-0">
+                <span id="mainChartDateBtnText" class="whitespace-nowrap">選日期</span>
+                <span class="text-[9px] text-[#8A94A6]">▾</span>
+              </button>
+              <input id="mainChartDateInput" type="date" onchange="jumpChartToSelectedDate(this.value)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇盤面日期">
+            </div>
           </div>
         </div>
 
-        <!-- 3. 貼合剩餘視窗高度的單一純淨圖表畫布容器（底部日期刻度永駐可見） -->
-        <div id="chartViewport" class="w-full flex-1 min-h-[180px] bg-[#090B0E] relative overflow-hidden"></div>
+        <!-- 3. 極簡券商風格髮絲線分隔圖表設定列（共 2 組） -->
+        <div class="divide-y divide-[#1C222D] hairline-b">
+          <!-- 列 1：價格與成交量主圖 -->
+          <div class="px-3.5 sm:px-4 py-4 flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1 space-y-2">
+              <div class="text-[14px] font-bold text-[#F4F6F9]">價格與成交量主圖</div>
+              <div class="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[12px] num text-[#D1D5DB]">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkPriceMa0" type="checkbox" onchange="saveChartCustomOptions()">
+                  <span id="lblPriceMa0" class="text-[#F59E0B]">MA5</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkPriceMa1" type="checkbox" onchange="saveChartCustomOptions()">
+                  <span id="lblPriceMa1" class="text-[#38BDF8]">MA20</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkPriceMa2" type="checkbox" onchange="saveChartCustomOptions()">
+                  <span id="lblPriceMa2" class="text-[#C084FC]">MA60</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkPriceBoll" type="checkbox" onchange="saveChartCustomOptions()">
+                  <span class="text-[#10B981]">布林通道 (20, 2)</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkPriceVol" type="checkbox" checked onchange="saveChartCustomOptions()">
+                  <span class="text-[#D1D5DB]">底部成交量</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="button" onclick="openFullChartModal('PRICE_VOL')"
+              class="tap-btn px-3.5 py-2 bg-[#171C26] text-[#FF9900] text-[12px] font-semibold rounded-[7px] whitespace-nowrap shrink-0">
+              展開圖表
+            </button>
+          </div>
+
+          <!-- 列 2：動能指標 -->
+          <div class="px-3.5 sm:px-4 py-4 flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1 space-y-2">
+              <div class="text-[14px] font-bold text-[#F4F6F9]">動能指標</div>
+              <div class="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[12px] num text-[#D1D5DB]">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkMomKd" type="checkbox" checked onchange="handleMomentumCheckboxChange('KD')">
+                  <span class="text-[#FF9900]">KD (9,3,3)</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkMomRsi" type="checkbox" onchange="handleMomentumCheckboxChange('RSI')">
+                  <span class="text-[#C084FC]">RSI (14)</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                  <input id="chkMomMacd" type="checkbox" onchange="handleMomentumCheckboxChange('MACD')">
+                  <span class="text-[#38BDF8]">MACD (12,26,9)</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="button" onclick="openFullChartModal('MOMENTUM')"
+              class="tap-btn px-3.5 py-2 bg-[#171C26] text-[#FF9900] text-[12px] font-semibold rounded-[7px] whitespace-nowrap shrink-0">
+              展開圖表
+            </button>
+          </div>
+        </div>
       </section>
 
     </div>
@@ -754,7 +749,7 @@
   </nav>
 
   <!-- ========================================================================
-       MODAL 1：新增 / 編輯帳戶視窗 (accountModal - 含獨立起始日期與跳假日設定)
+       MODAL 1：新增 / 編輯帳戶視窗 (accountModal - 含獨立起始日期與假日跳過設定)
        ======================================================================== -->
   <div id="accountModal" class="modal-backdrop hidden">
     <div class="modal-panel">
@@ -765,14 +760,14 @@
       <div class="p-4 space-y-3.5 overflow-y-auto">
         <div>
           <label class="block text-[11px] text-[#8A94A6] mb-1">帳戶名稱</label>
-          <input id="accNameInput" type="text" placeholder="例如：2023多頭回測練習戶" class="w-full px-3 py-2">
+          <input id="accNameInput" type="text" placeholder="例如：波段突破策略戶" class="w-full px-3 py-2">
         </div>
         <div id="accCapitalGroup">
           <label class="block text-[11px] text-[#8A94A6] mb-1">初始本金（TWD 新台幣，最低 1,000）</label>
           <input id="accCapitalInput" type="number" min="1000" step="1000" value="1000000" class="w-full px-3 py-2 num">
         </div>
         <div id="accStartDateGroup">
-          <label class="block text-[11px] text-[#8A94A6] mb-1">帳戶起始日期</label>
+          <label class="block text-[11px] text-[#8A94A6] mb-1">帳戶起始日期（預設為今日，不可超過今日）</label>
           <input id="accStartDateInput" type="date" class="w-full px-3 py-2 num">
           <p class="text-[11px] text-[#586274] mt-1 leading-relaxed">
             選擇過去日期可開啟獨立時間軸練習看盤，快轉至今日後自動與現實同步。
@@ -781,12 +776,12 @@
         <div>
           <label class="inline-flex items-center gap-2 text-[12px] text-[#D1D5DB] cursor-pointer select-none">
             <input id="accSkipNonTradingInput" type="checkbox" checked>
-            <span>快轉 +1日 時自動跳過非交易日 / 假日</span>
+            <span>快轉 +1 日時自動跳過非交易日 / 假日</span>
           </label>
         </div>
         <div>
           <label class="block text-[11px] text-[#8A94A6] mb-1">策略說明與紀律備註（選填）</label>
-          <textarea id="accStrategyInput" rows="2" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-3 py-2"></textarea>
+          <textarea id="accStrategyInput" rows="3" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-3 py-2"></textarea>
         </div>
         <div class="grid grid-cols-2 gap-2.5 pt-1">
           <button onclick="closeModal('accountModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
@@ -838,7 +833,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 3：全螢幕系統設定視窗 (settingsModal - 獨立於目前使用帳戶)
+       MODAL 3：全螢幕系統設定視窗 (settingsModal)
        ======================================================================== -->
   <div id="settingsModal" class="modal-backdrop hidden">
     <div class="settings-full-panel">
@@ -854,7 +849,6 @@
 
       <div class="flex-1 overflow-y-auto">
         <div class="max-w-3xl mx-auto px-4 py-4 space-y-5">
-          <!-- 漲跌配色模式 -->
           <div class="space-y-2 pb-4 hairline-b">
             <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶盤面漲跌配色模式</label>
             <div class="grid grid-cols-2 gap-2">
@@ -863,7 +857,6 @@
             </div>
           </div>
 
-          <!-- 美元兌新台幣匯率設定 (USD/TWD) -->
           <div class="space-y-2.5 pb-4 hairline-b">
             <div class="flex items-center justify-between gap-2">
               <label class="text-[12px] font-semibold text-[#8A94A6]">美股匯率設定（USD / TWD）</label>
@@ -885,7 +878,6 @@
             </div>
           </div>
 
-          <!-- 專屬 Cloudflare Worker 中繼網址設定 -->
           <div class="space-y-2.5 pb-4 hairline-b">
             <div class="flex items-center justify-between gap-2">
               <label class="text-[12px] font-semibold text-[#8A94A6]">專屬 Cloudflare Worker 行情中繼網址</label>
@@ -899,7 +891,6 @@
             </p>
           </div>
 
-          <!-- 交易手續費與證交稅率 -->
           <div class="space-y-2.5 pb-4 hairline-b">
             <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶交易成本與稅率設定</label>
             <div class="grid grid-cols-3 gap-2">
@@ -928,7 +919,6 @@
             </div>
           </div>
 
-          <!-- 均線週期與行情快取 -->
           <div class="space-y-2.5 pb-4 hairline-b">
             <label class="block text-[12px] font-semibold text-[#8A94A6]">技術指標與全歷史行情快取</label>
             <div class="grid grid-cols-3 gap-2">
@@ -956,7 +946,6 @@
             </div>
           </div>
 
-          <!-- 此帳戶獨立自選股快捷管理 -->
           <div class="space-y-2.5 pb-4 hairline-b">
             <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶自選股快捷列表</label>
             <div id="settingsWatchlist" class="flex flex-wrap gap-2"></div>
@@ -967,7 +956,6 @@
             </div>
           </div>
 
-          <!-- 時間維度 JSON 備份與多模式還原 -->
           <div class="space-y-3 pb-4">
             <label class="block text-[12px] font-semibold text-[#8A94A6]">時間軸與帳戶資料備份 / 還原 (JSON)</label>
             <div class="grid grid-cols-2 gap-2">
@@ -1035,7 +1023,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 5：切換帳戶視窗 (accountSwitchModal - 顯示各戶頭時間軸進度)
+       MODAL 5：切換帳戶視窗 (accountSwitchModal)
        ======================================================================== -->
   <div id="accountSwitchModal" class="modal-backdrop hidden">
     <div class="modal-panel">
@@ -1057,7 +1045,7 @@
         <button onclick="closeModal('confirmModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1">關閉 ✕</button>
       </div>
       <div class="p-4 space-y-4 overflow-y-auto">
-        <p id="confirmMessage" class="text-[13px] text-[#D1D5DB] leading-relaxed"></p>
+        <p id="confirmMessage" class="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line"></p>
         <div class="grid grid-cols-2 gap-2.5">
           <button onclick="closeModal('confirmModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
           <button id="confirmOkBtn" class="tap-btn py-2.5 bg-[#FF3B30] text-white font-bold rounded-[8px]">確定執行</button>
@@ -1133,6 +1121,72 @@
   </div>
 
   <!-- ========================================================================
+       MODAL 8：全屏圖表檢視器 (fullChartModal - 無十字準星、無點選K棒跳轉、右上角「關閉 ✕」退出)
+       ======================================================================== -->
+  <div id="fullChartModal" class="modal-backdrop hidden">
+    <div class="full-chart-panel">
+      <!-- 頂部標的標題與右上角「關閉 ✕」按鈕 -->
+      <div class="px-3.5 py-2 hairline-b bg-[#000000] flex items-center justify-between gap-2 shrink-0">
+        <div class="min-w-0 flex items-center gap-2">
+          <span id="fcTitleBadge" class="text-[12px] font-semibold text-[#FF9900] shrink-0">價格主圖</span>
+          <span class="text-[#2A3343] shrink-0">·</span>
+          <span id="fcSymbol" class="text-[16px] font-bold num text-[#F4F6F9] shrink-0">--</span>
+          <span id="fcName" class="text-[12px] text-[#8A94A6] truncate">--</span>
+        </div>
+        <button type="button" onclick="closeFullChartModal()"
+          class="tap-btn px-3 py-1.5 text-[12px] font-bold text-[#F4F6F9] bg-[#171C26] rounded-full whitespace-nowrap shrink-0">
+          關閉 ✕
+        </button>
+      </div>
+
+      <!-- 週期切換 (日K / 週K / 月K)、選日期跳轉、快捷視窗與報價摘要 -->
+      <div class="px-3.5 py-2 hairline-b bg-[#090B0E] space-y-1.5 shrink-0">
+        <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-2.5 py-1 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">日K</button>
+            <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-2.5 py-1 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">週K</button>
+            <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-2.5 py-1 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">月K</button>
+
+            <div class="relative inline-flex items-center shrink-0">
+              <button type="button" onclick="openChartDatePicker()" title="選擇歷史日期並跳轉"
+                class="tap-btn inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium num bg-[#141923] text-[#D1D5DB] rounded-[6px] whitespace-nowrap shrink-0">
+                <span id="chartDateBtnText" class="whitespace-nowrap">選日期</span>
+                <span class="text-[9px] text-[#8A94A6]">▾</span>
+              </button>
+              <input id="chartDateInput" type="date" onchange="jumpChartToSelectedDate(this.value)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇圖表日期">
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 shrink-0 text-[11px] num">
+            <button onclick="zoomChartBars(22)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1M</button>
+            <button onclick="zoomChartBars(66)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">3M</button>
+            <button onclick="zoomChartBars(250)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1Y</button>
+            <button onclick="fitFullHistoryRange()" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#FF9900] font-semibold">全歷史</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 text-[11px] num">
+          <div class="flex items-center gap-1.5">
+            <span id="fcCurrency" class="px-1.5 py-0.2 text-[9px] font-semibold rounded bg-[#141923] text-[#8A94A6]">TWD</span>
+            <span id="fcPrice" class="text-[14px] font-bold">--</span>
+            <span id="fcChange">--</span>
+          </div>
+          <span id="chartEngineTag" class="text-[10px] text-[#586274]">LWC</span>
+        </div>
+
+        <!-- 數值摘要列 -->
+        <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2 gap-y-0.5 min-h-[18px] items-center">
+          左右滑動或雙指縮放檢視走勢，雙擊回到最新區間
+        </div>
+      </div>
+
+      <!-- 全屏單一圖表畫布容器（底部日期刻度永駐顯示） -->
+      <div id="chartViewport" class="w-full flex-1 min-h-[220px] bg-[#090B0E] relative overflow-hidden"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
        TOAST 通知列 (支援上滑與右滑手勢快速關閉)
        ======================================================================== -->
   <div id="toastContainer" class="fixed left-1/2 -translate-x-1/2 z-[80] w-[92%] max-w-md pointer-events-none space-y-2"></div>
@@ -1197,7 +1251,19 @@
       return {
         activeChartSymbol: '2330.TW',
         activeTimeframe: '1D',
-        activeChartMode: 'CANDLE_MA'
+        activeChartMode: 'PRICE_VOL',
+        priceOptions: {
+          ma0: false,
+          ma1: false,
+          ma2: false,
+          boll: false,
+          vol: true
+        },
+        momentumOptions: {
+          kd: true,
+          rsi: false,
+          macd: false
+        }
       };
     }
 
@@ -1213,6 +1279,15 @@
       const mergedSettings = { ...createDefaultAccountSettings(), ...(options.settings || {}) };
       mergedSettings.workerBaseUrl = sanitizeWorkerUrl(mergedSettings.workerBaseUrl);
 
+      const defaultChart = createDefaultChartState();
+      const rawChart = options.chartState || {};
+      const mergedChartState = {
+        ...defaultChart,
+        ...rawChart,
+        priceOptions: { ...defaultChart.priceOptions, ...(rawChart.priceOptions || {}) },
+        momentumOptions: { ...defaultChart.momentumOptions, ...(rawChart.momentumOptions || {}) }
+      };
+
       return {
         id: options.id || ('acc_' + Date.now() + '_' + Math.floor(Math.random() * 1000)),
         name: String(options.name || '帳戶 1').trim() || '帳戶 1',
@@ -1222,7 +1297,7 @@
         lastRealSyncDate: realToday,
         skipNonTradingDays: options.skipNonTradingDays !== undefined ? Boolean(options.skipNonTradingDays) : true,
         settings: mergedSettings,
-        chartState: { ...createDefaultChartState(), ...(options.chartState || {}) },
+        chartState: mergedChartState,
         initialCapital: cap,
         totalDeposited: 0,
         cash: cap,
@@ -1350,6 +1425,12 @@
     function getActiveChartState() {
       const acc = getActiveAccount();
       if (!acc.chartState) acc.chartState = createDefaultChartState();
+      if (!acc.chartState.priceOptions) {
+        acc.chartState.priceOptions = { ma0: false, ma1: false, ma2: false, boll: false, vol: true };
+      }
+      if (!acc.chartState.momentumOptions) {
+        acc.chartState.momentumOptions = { kd: true, rsi: false, macd: false };
+      }
       return acc.chartState;
     }
 
@@ -1415,7 +1496,9 @@
             renderSimTimelineUI();
             if (currentChartData) {
               updateChartHeader();
-              renderActiveChart();
+              if (isFullChartModalOpen()) {
+                renderActiveChart();
+              }
             }
           }
         }
@@ -1443,31 +1526,56 @@
 
       const defChart = createDefaultChartState();
       const rawChart = { ...defChart, ...(fallbackChartState || {}), ...(rawAcc.chartState || {}) };
+      const rawPriceOpt = rawChart.priceOptions && typeof rawChart.priceOptions === 'object' ? rawChart.priceOptions : {};
+      const rawMomOpt = rawChart.momentumOptions && typeof rawChart.momentumOptions === 'object' ? rawChart.momentumOptions : {};
       const cleanChartState = {
         activeChartSymbol: normalizeSymbol(rawChart.activeChartSymbol) || '2330.TW',
         activeTimeframe: ['1D', '1W', '1M'].includes(rawChart.activeTimeframe) ? rawChart.activeTimeframe : '1D',
-        activeChartMode: ['CANDLE_MA', 'VOL', 'KD', 'RSI', 'MACD'].includes(rawChart.activeChartMode) ? rawChart.activeChartMode : 'CANDLE_MA'
+        activeChartMode: ['PRICE_VOL', 'MOMENTUM'].includes(rawChart.activeChartMode) ? rawChart.activeChartMode : 'PRICE_VOL',
+        priceOptions: {
+          ma0: Boolean(rawPriceOpt.ma0),
+          ma1: Boolean(rawPriceOpt.ma1),
+          ma2: Boolean(rawPriceOpt.ma2),
+          boll: Boolean(rawPriceOpt.boll),
+          vol: rawPriceOpt.vol !== undefined ? Boolean(rawPriceOpt.vol) : true
+        },
+        momentumOptions: {
+          kd: rawMomOpt.kd !== undefined ? Boolean(rawMomOpt.kd) : true,
+          rsi: Boolean(rawMomOpt.rsi),
+          macd: Boolean(rawMomOpt.macd)
+        }
       };
+      if (!cleanChartState.momentumOptions.kd && !cleanChartState.momentumOptions.rsi && !cleanChartState.momentumOptions.macd) {
+        cleanChartState.momentumOptions.kd = true;
+      }
 
-      let startDate = isValidIsoDate(rawAcc.startDate) ? rawAcc.startDate : realToday;
-      if (startDate > realToday) startDate = realToday;
-
+      const startDate = isValidIsoDate(rawAcc.startDate) && rawAcc.startDate <= realToday
+        ? rawAcc.startDate
+        : realToday;
       let currentSimDate = isValidIsoDate(rawAcc.currentSimDate) ? rawAcc.currentSimDate : startDate;
       if (currentSimDate < startDate) currentSimDate = startDate;
       if (currentSimDate > realToday) currentSimDate = realToday;
 
-      let lastRealSyncDate = isValidIsoDate(rawAcc.lastRealSyncDate) ? rawAcc.lastRealSyncDate : realToday;
-      if (lastRealSyncDate > realToday) lastRealSyncDate = realToday;
+      const lastRealSyncDate = isValidIsoDate(rawAcc.lastRealSyncDate) && rawAcc.lastRealSyncDate <= realToday
+        ? rawAcc.lastRealSyncDate
+        : realToday;
 
       const cleanHoldings = {};
       if (rawAcc.holdings && typeof rawAcc.holdings === 'object') {
         for (const [sym, h] of Object.entries(rawAcc.holdings)) {
-          if (!h || !Number.isFinite(h.shares) || h.shares <= 0) continue;
+          if (!h || !Number.isFinite(Number(h.shares)) || Number(h.shares) <= 0) continue;
+          const shares = Number(h.shares);
           const cur = h.currency || getSymbolCurrency(sym);
           const fxAtBuy = Number(h.fxRateAtBuy) > 0 ? Number(h.fxRateAtBuy) : (cur === 'USD' ? cleanSettings.usdTwdRate : 1);
-          const totalCostTwd = Number.isFinite(h.totalCostTwd) && h.totalCostTwd > 0
-            ? h.totalCostTwd
-            : (cur === 'USD' ? h.totalCost * fxAtBuy : h.totalCost);
+          const totalCost = Number.isFinite(Number(h.totalCost)) && Number(h.totalCost) > 0
+            ? Number(h.totalCost)
+            : (shares * (Number(h.avgCost) || 0));
+          const avgCost = Number.isFinite(Number(h.avgCost)) && Number(h.avgCost) > 0
+            ? Number(h.avgCost)
+            : (totalCost / shares);
+          const totalCostTwd = Number.isFinite(Number(h.totalCostTwd)) && Number(h.totalCostTwd) > 0
+            ? Number(h.totalCostTwd)
+            : (cur === 'USD' ? totalCost * fxAtBuy : totalCost);
 
           let batches = [];
           if (Array.isArray(h.batches) && h.batches.length > 0) {
@@ -1475,26 +1583,27 @@
               .filter(b => b && Number.isFinite(Number(b.remainingShares)) && Number(b.remainingShares) > 0)
               .map((b, idx) => ({
                 id: b.id || `lot_${sym}_${idx}_${Date.now()}`,
-                simDate: isValidIsoDate(b.simDate) ? b.simDate : currentSimDate,
+                simDate: isValidIsoDate(b.simDate) ? b.simDate : (typeof b.time === 'string' && isValidIsoDate(b.time.slice(0, 10)) ? b.time.slice(0, 10) : currentSimDate),
                 time: b.time || new Date().toISOString(),
-                price: Number(b.price) || h.avgCost,
+                price: Number(b.price) || avgCost,
                 remainingShares: Number(b.remainingShares),
                 origShares: Number(b.origShares) || Number(b.remainingShares),
-                costNative: Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost)),
-                costTwd: Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost) * fxAtBuy),
+                costNative: Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (Number(b.remainingShares) * (Number(b.price) || avgCost)),
+                costTwd: Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (Number(b.remainingShares) * (Number(b.price) || avgCost) * fxAtBuy),
                 currency: b.currency || cur,
                 fxRate: Number(b.fxRate) > 0 ? Number(b.fxRate) : fxAtBuy
               }));
           }
+
           if (batches.length === 0) {
             batches = [{
               id: `lot_legacy_${sym}_${Date.now()}`,
               simDate: currentSimDate,
               time: new Date().toISOString(),
-              price: h.avgCost,
-              remainingShares: h.shares,
-              origShares: h.shares,
-              costNative: h.totalCost,
+              price: avgCost,
+              remainingShares: shares,
+              origShares: shares,
+              costNative: totalCost,
               costTwd: totalCostTwd,
               currency: cur,
               fxRate: fxAtBuy
@@ -1503,6 +1612,11 @@
 
           cleanHoldings[sym] = {
             ...h,
+            symbol: sym,
+            name: h.name || formatDisplaySymbol(sym),
+            shares,
+            avgCost,
+            totalCost,
             currency: cur,
             fxRateAtBuy: fxAtBuy,
             totalCostTwd,
@@ -1654,6 +1768,7 @@
 
     function showToast(msg, type = 'info') {
       const container = document.getElementById('toastContainer');
+      if (!container) return;
       const el = document.createElement('div');
       const borderColor = type === 'error' ? '#FF3B30' : (type === 'success' ? '#00C853' : '#FF9900');
       el.className = 'px-3.5 py-2.5 bg-[#141923] text-[#F4F6F9] text-[12px] font-medium shadow-xl rounded-[10px] pointer-events-auto select-none cursor-grab';
@@ -1735,10 +1850,12 @@
     }
 
     function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
     }
     function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
     }
 
     function showConfirmDialog(title, message, onConfirm, options = {}) {
@@ -1881,7 +1998,15 @@
       const simDate = acc && isValidIsoDate(acc.currentSimDate) ? acc.currentSimDate : realToday;
 
       if (simDate >= realToday) {
-        return rawData;
+        const lastBar = rawData.bars[rawData.bars.length - 1];
+        const prevBar = rawData.bars.length >= 2 ? rawData.bars[rawData.bars.length - 2] : lastBar;
+        return {
+          ...rawData,
+          price: Number.isFinite(Number(rawData.price)) && Number(rawData.price) > 0
+            ? Number(rawData.price)
+            : lastBar.close,
+          prevClose: prevBar.close
+        };
       }
 
       const maskedBars = rawData.bars.filter(b => b.time <= simDate);
@@ -2121,7 +2246,9 @@
         currentChartData = await getAccountMarketData(chartSym, false, { silentError: true }, acc);
         if (appState.activeTab === 'chart') {
           updateChartHeader();
-          renderActiveChart();
+          if (isFullChartModalOpen()) {
+            renderActiveChart();
+          }
         }
       }
     }
@@ -2183,10 +2310,6 @@
     function getActiveUsdTwdRate() {
       const r = Number(getActiveSettings().usdTwdRate);
       return Number.isFinite(r) && r > 0 ? r : DEFAULT_USD_TWD_RATE;
-    }
-
-    function getSymbolFxToTwd(symbol) {
-      return getSymbolCurrency(symbol) === 'USD' ? getActiveUsdTwdRate() : 1;
     }
 
     function extractTaiwanCode(sym) {
@@ -2372,9 +2495,8 @@
       const livePrice = (Number.isFinite(expectedMarketPrice) && expectedMarketPrice > 0)
         ? Number(expectedMarketPrice.toFixed(2))
         : lastBar.close;
-      const prevClose = (Number.isFinite(Number(meta.chartPreviousClose)) && Number(meta.chartPreviousClose) > 0)
-        ? Number(Number(meta.chartPreviousClose).toFixed(2))
-        : prevBar.close;
+      // 永遠優先使用前一根日 K 收盤價計算前一日到當日漲跌
+      const prevClose = prevBar.close;
 
       return {
         symbol,
@@ -3626,6 +3748,20 @@
       return { valid: validNum && !errMsg && Boolean(sym), errMsg, metrics: m, sym, price, shares, isEtf };
     }
 
+    function getKnownCachedMarketEntry(sym) {
+      if (!sym) return null;
+      const direct = appState.marketCache[sym] || connState.offlineMemoryMap.get(sym);
+      if (direct) return direct;
+      if (isTaiwanSymbol(sym)) {
+        const code = extractTaiwanCode(sym);
+        const tw = appState.marketCache[`${code}.TW`] || connState.offlineMemoryMap.get(`${code}.TW`);
+        if (tw) return tw;
+        const two = appState.marketCache[`${code}.TWO`] || connState.offlineMemoryMap.get(`${code}.TWO`);
+        if (two) return two;
+      }
+      return null;
+    }
+
     function openOrderConfirmationModal(check) {
       const acc = getActiveAccount();
       const s = getActiveSettings();
@@ -3696,20 +3832,6 @@
       confirmBtn.textContent = isBuy ? '確認下單並扣款' : '確認下單並賣出';
 
       openModal('orderConfirmModal');
-    }
-
-    function getKnownCachedMarketEntry(sym) {
-      if (!sym) return null;
-      const direct = appState.marketCache[sym] || connState.offlineMemoryMap.get(sym);
-      if (direct) return direct;
-      if (isTaiwanSymbol(sym)) {
-        const code = extractTaiwanCode(sym);
-        const tw = appState.marketCache[`${code}.TW`] || connState.offlineMemoryMap.get(`${code}.TW`);
-        if (tw) return tw;
-        const two = appState.marketCache[`${code}.TWO`] || connState.offlineMemoryMap.get(`${code}.TWO`);
-        if (two) return two;
-      }
-      return null;
     }
 
     function submitOrder() {
@@ -4146,7 +4268,7 @@
       }).join('');
 
       return `
-        <div onclick="toggleHoldingRowActions('${rawSym}')" class="px-4 py-3.5 cursor-pointer active:bg-[#12161F] transition-colors">
+        <div onclick="toggleHoldingRowActions('${rawSym}')" class="px-3.5 sm:px-4 py-3.5 cursor-pointer active:bg-[#12161F] transition-colors">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5 flex-wrap">
@@ -4239,15 +4361,15 @@
 
       const unEl = document.getElementById('ovUnrealized');
       unEl.textContent = fmtSignedMoney(st.unrealizedTotal, 0);
-      unEl.className = `text-[15px] font-bold num mt-1 truncate ${getPnlClass(st.unrealizedTotal)}`;
+      unEl.className = `text-[14px] sm:text-[15px] font-bold num mt-1 truncate ${getPnlClass(st.unrealizedTotal)}`;
 
       const unPctEl = document.getElementById('ovUnrealizedPct');
       unPctEl.textContent = fmtSignedPct(st.unrealizedPctTotal);
-      unPctEl.className = `text-[11px] num mt-0.5 truncate ${getPnlClass(st.unrealizedPctTotal)}`;
+      unPctEl.className = `text-[10px] sm:text-[11px] num mt-0.5 truncate ${getPnlClass(st.unrealizedPctTotal)}`;
 
       const reEl = document.getElementById('ovRealized');
       reEl.textContent = fmtSignedMoney(acc.realizedPnl, 0);
-      reEl.className = `text-[15px] font-bold num mt-1 truncate ${getPnlClass(acc.realizedPnl)}`;
+      reEl.className = `text-[14px] sm:text-[15px] font-bold num mt-1 truncate ${getPnlClass(acc.realizedPnl)}`;
       document.getElementById('ovHoldingsVal').textContent = `現值 ${fmtMoney(st.holdingsMarketValueTwd, 0)}`;
 
       const twRows = st.rows.filter(r => r.currency !== 'USD');
@@ -4264,7 +4386,7 @@
           const twSubVal = twRows.reduce((sum, r) => sum + r.marketValTwd, 0);
           sectionsHtml += `
             <div>
-              <div class="px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px]">
+              <div class="px-3.5 sm:px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px]">
                 <span class="font-semibold text-[#8A94A6]">台股部位（TWD）</span>
                 <span class="num text-[#586274]">${twRows.length} 檔 · 市值 $${fmtMoney(twSubVal, 0)}</span>
               </div>
@@ -4280,7 +4402,7 @@
           const usSubValUsd = usRows.reduce((sum, r) => sum + r.marketValNative, 0);
           sectionsHtml += `
             <div>
-              <div class="px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px] gap-2">
+              <div class="px-3.5 sm:px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px] gap-2">
                 <span class="font-semibold text-[#8A94A6]">美股部位（USD / TWD）</span>
                 <span class="num text-[#586274] truncate">${usRows.length} 檔 · $${fmtMoney(usSubValUsd, 2)} USD ($${fmtMoney(usSubValTwd, 0)})</span>
               </div>
@@ -4311,7 +4433,7 @@
 
           if (t.side === 'DEPOSIT') {
             return `
-              <div class="px-4 py-3 flex items-center justify-between gap-2 text-[12px]">
+              <div class="px-3.5 sm:px-4 py-3 flex items-center justify-between gap-2 text-[12px]">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[rgba(255,153,0,0.14)] text-[#FF9900] shrink-0">充值</span>
                   <span class="font-bold num text-[#F4F6F9]">+${fmtMoney(t.netAmount, 0)} TWD</span>
@@ -4337,7 +4459,7 @@
           const metaParts = [fxNote, reasonLabel, t.note, timeStampLabel].filter(Boolean).join(' · ');
 
           return `
-            <div class="px-4 py-3 text-[12px] space-y-1">
+            <div class="px-3.5 sm:px-4 py-3 text-[12px] space-y-1">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 min-w-0">
                   ${sideTag}
@@ -4439,8 +4561,116 @@
     }
 
     /* ========================================================================
-       7. 分頁二：盤面分析 (單屏鎖定 + 底部日期刻度永駐 + 雙擊復位 + 單日漲跌%)
+       7. 分頁二：盤面分析 (前日到當日漲跌、開高低收與選日期連動、無十字準星全屏圖表)
        ======================================================================== */
+    function isFullChartModalOpen() {
+      const modal = document.getElementById('fullChartModal');
+      return Boolean(modal && !modal.classList.contains('hidden'));
+    }
+
+    function openFullChartModal(chartType) {
+      const cs = getActiveChartState();
+      if (chartType === 'MOMENTUM') {
+        const mo = cs.momentumOptions;
+        if (!mo.kd && !mo.rsi && !mo.macd) {
+          mo.kd = true;
+          saveState();
+          updateChartControlsUI();
+        }
+        cs.activeChartMode = 'MOMENTUM';
+      } else {
+        cs.activeChartMode = 'PRICE_VOL';
+      }
+      saveState();
+      updateChartControlsUI();
+      updateChartHeader();
+      openModal('fullChartModal');
+
+      if (!currentChartData || currentChartData.symbol !== cs.activeChartSymbol) {
+        loadChartSymbol(cs.activeChartSymbol, false);
+      } else {
+        requestAnimationFrame(() => renderActiveChart());
+      }
+    }
+
+    function closeFullChartModal() {
+      closeModal('fullChartModal');
+      destroyActiveChart();
+    }
+
+    function saveChartCustomOptions() {
+      const cs = getActiveChartState();
+      cs.priceOptions = {
+        ma0: Boolean(document.getElementById('chkPriceMa0')?.checked),
+        ma1: Boolean(document.getElementById('chkPriceMa1')?.checked),
+        ma2: Boolean(document.getElementById('chkPriceMa2')?.checked),
+        boll: Boolean(document.getElementById('chkPriceBoll')?.checked),
+        vol: Boolean(document.getElementById('chkPriceVol')?.checked)
+      };
+      saveState();
+    }
+
+    function handleMomentumCheckboxChange(selectedKey) {
+      const cs = getActiveChartState();
+      const kdEl = document.getElementById('chkMomKd');
+      const rsiEl = document.getElementById('chkMomRsi');
+      const macdEl = document.getElementById('chkMomMacd');
+
+      if (selectedKey === 'KD' && kdEl.checked) {
+        rsiEl.checked = false;
+        macdEl.checked = false;
+      } else if (selectedKey === 'RSI' && rsiEl.checked) {
+        kdEl.checked = false;
+        macdEl.checked = false;
+      } else if (selectedKey === 'MACD' && macdEl.checked) {
+        kdEl.checked = false;
+        rsiEl.checked = false;
+      }
+
+      if (!kdEl.checked && !rsiEl.checked && !macdEl.checked) {
+        kdEl.checked = true;
+      }
+
+      cs.momentumOptions = {
+        kd: Boolean(kdEl.checked),
+        rsi: Boolean(rsiEl.checked),
+        macd: Boolean(macdEl.checked)
+      };
+      saveState();
+    }
+
+    function getActiveMomentumIndicatorType() {
+      const mo = getActiveChartState().momentumOptions || { kd: true, rsi: false, macd: false };
+      if (mo.rsi) return 'RSI';
+      if (mo.macd) return 'MACD';
+      return 'KD';
+    }
+
+    function calcBollingerBands(bars, period = 20, mult = 2) {
+      const mid = [];
+      const upper = [];
+      const lower = [];
+      if (!Array.isArray(bars) || bars.length < period) return { mid, upper, lower };
+
+      for (let i = period - 1; i < bars.length; i++) {
+        let sum = 0;
+        for (let j = i - period + 1; j <= i; j++) {
+          sum += bars[j].close;
+        }
+        const mean = sum / period;
+        let sqSum = 0;
+        for (let j = i - period + 1; j <= i; j++) {
+          const diff = bars[j].close - mean;
+          sqSum += diff * diff;
+        }
+        const std = Math.sqrt(sqSum / period);
+        mid.push({ time: bars[i].time, value: Number(mean.toFixed(2)) });
+        upper.push({ time: bars[i].time, value: Number((mean + mult * std).toFixed(2)) });
+        lower.push({ time: bars[i].time, value: Number((mean - mult * std).toFixed(2)) });
+      }
+      return { mid, upper, lower };
+    }
+
     function getIsoWeekKey(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
       const dt = new Date(Date.UTC(y, m - 1, d));
@@ -4604,7 +4834,8 @@
         lwcChart.remove();
         lwcChart = null;
       }
-      document.getElementById('chartViewport').innerHTML = '';
+      const vp = document.getElementById('chartViewport');
+      if (vp) vp.innerHTML = '';
     }
 
     async function loadChartSymbol(symbol, forceRefresh = false) {
@@ -4626,10 +4857,15 @@
           saveState();
           renderWatchlistChips();
         }
+        if (Array.isArray(currentChartData.bars)) {
+          syncChartDatePickerBounds(currentChartData.bars);
+        }
         updateChartHeader();
-        renderActiveChart();
+        if (isFullChartModalOpen()) {
+          renderActiveChart();
+        }
       } catch (e) {
-        showToast('載入圖表失敗：' + e.message, 'error');
+        showToast('載入標的失敗：' + e.message, 'error');
       }
     }
 
@@ -4657,19 +4893,14 @@
       cs.activeTimeframe = tf;
       saveState();
       updateChartControlsUI();
-      renderActiveChart();
-    }
-
-    function setChartMode(mode) {
-      const cs = getActiveChartState();
-      cs.activeChartMode = mode;
-      saveState();
-      updateChartControlsUI();
-      renderActiveChart();
+      if (isFullChartModalOpen()) {
+        renderActiveChart();
+      }
     }
 
     function openChartDatePicker() {
-      const input = document.getElementById('chartDateInput');
+      const targetId = isFullChartModalOpen() ? 'chartDateInput' : 'mainChartDateInput';
+      const input = document.getElementById(targetId) || document.getElementById('chartDateInput');
       if (!input) return;
       try {
         if (typeof input.showPicker === 'function') {
@@ -4685,24 +4916,83 @@
     }
 
     function syncChartDatePickerBounds(bars) {
-      const input = document.getElementById('chartDateInput');
-      const btnText = document.getElementById('chartDateBtnText');
-      if (!input || !btnText || !Array.isArray(bars) || bars.length === 0) return;
-
+      if (!Array.isArray(bars) || bars.length === 0) return;
       const minDate = bars[0].time;
       const maxDate = bars[bars.length - 1].time;
-      input.min = minDate;
-      input.max = maxDate;
-      input.value = maxDate;
-      btnText.textContent = maxDate;
+
+      const pairs = [
+        { inId: 'chartDateInput', btnId: 'chartDateBtnText' },
+        { inId: 'mainChartDateInput', btnId: 'mainChartDateBtnText' }
+      ];
+      pairs.forEach(({ inId, btnId }) => {
+        const input = document.getElementById(inId);
+        const btnText = document.getElementById(btnId);
+        if (input) {
+          input.min = minDate;
+          input.max = maxDate;
+          input.value = maxDate;
+        }
+        if (btnText) {
+          btnText.textContent = maxDate;
+        }
+      });
+    }
+
+    function updateTopQuoteDisplayForBar(bars, idx) {
+      if (!currentChartData || !Array.isArray(bars) || bars.length === 0) return;
+      const safeIdx = Math.max(0, Math.min(bars.length - 1, idx));
+      const bar = bars[safeIdx];
+      const prevClose = safeIdx > 0 ? bars[safeIdx - 1].close : bar.open;
+      const isLatestBar = safeIdx === bars.length - 1;
+      const displayClose = (isLatestBar && Number.isFinite(Number(currentChartData.price)) && Number(currentChartData.price) > 0)
+        ? Number(currentChartData.price)
+        : bar.close;
+
+      const diff = displayClose - prevClose;
+      const pct = prevClose > 0 ? (diff / prevClose) * 100 : 0;
+
+      const pEl = document.getElementById('chartHeaderPrice');
+      const cEl = document.getElementById('chartHeaderChange');
+      const ohlcEl = document.getElementById('chartHeaderOhlc');
+
+      if (pEl) {
+        pEl.textContent = fmtPrice(displayClose);
+        pEl.className = `text-[22px] font-bold num leading-tight ${getPnlClass(diff)}`;
+      }
+      if (cEl) {
+        cEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${fmtSignedPct(pct)})`;
+        cEl.className = `text-[12px] num leading-tight mt-0.5 ${getPnlClass(diff)}`;
+      }
+      if (ohlcEl) {
+        ohlcEl.innerHTML = [
+          `<span class="whitespace-nowrap">開 ${fmtPrice(bar.open)}</span>`,
+          `<span class="whitespace-nowrap">高 ${fmtPrice(bar.high)}</span>`,
+          `<span class="whitespace-nowrap">低 ${fmtPrice(bar.low)}</span>`,
+          `<span class="whitespace-nowrap">收 ${fmtPrice(displayClose)}</span>`
+        ].join('');
+      }
+
+      const fcPrice = document.getElementById('fcPrice');
+      const fcChange = document.getElementById('fcChange');
+      if (fcPrice) {
+        fcPrice.textContent = fmtPrice(displayClose);
+        fcPrice.className = `text-[14px] font-bold ${getPnlClass(diff)}`;
+      }
+      if (fcChange) {
+        fcChange.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${fmtSignedPct(pct)})`;
+        fcChange.className = getPnlClass(diff);
+      }
     }
 
     function jumpChartToSelectedDate(targetDate, options = {}) {
       const { showNotice = true } = options;
-      if (!targetDate || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+      const sourceBars = (Array.isArray(currentRenderedBars) && currentRenderedBars.length > 0 && isFullChartModalOpen())
+        ? currentRenderedBars
+        : (currentChartData && Array.isArray(currentChartData.bars) ? currentChartData.bars : []);
+      if (!targetDate || sourceBars.length === 0) return;
 
       const acc = getActiveAccount();
-      const maxAllowedDate = currentRenderedBars[currentRenderedBars.length - 1].time;
+      const maxAllowedDate = sourceBars[sourceBars.length - 1].time;
       if (targetDate > acc.currentSimDate || targetDate > maxAllowedDate) {
         showToast(`不可查看 ${acc.currentSimDate} 之後的未來盤面`, 'warn');
         return;
@@ -4710,29 +5000,35 @@
 
       let bestIdx = 0;
       let exactMatch = false;
-      for (let i = 0; i < currentRenderedBars.length; i++) {
-        if (currentRenderedBars[i].time === targetDate) {
+      for (let i = 0; i < sourceBars.length; i++) {
+        if (sourceBars[i].time === targetDate) {
           bestIdx = i;
           exactMatch = true;
           break;
         }
-        if (currentRenderedBars[i].time < targetDate) {
+        if (sourceBars[i].time < targetDate) {
           bestIdx = i;
         } else {
           break;
         }
       }
 
-      const matchedBar = currentRenderedBars[bestIdx];
-      const input = document.getElementById('chartDateInput');
-      const btnText = document.getElementById('chartDateBtnText');
-      if (input) input.value = matchedBar.time;
-      if (btnText) btnText.textContent = matchedBar.time;
+      const matchedBar = sourceBars[bestIdx];
+      ['chartDateInput', 'mainChartDateInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = matchedBar.time;
+      });
+      ['chartDateBtnText', 'mainChartDateBtnText'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = matchedBar.time;
+      });
 
-      if (lwcChart) {
+      updateTopQuoteDisplayForBar(sourceBars, bestIdx);
+
+      if (lwcChart && isFullChartModalOpen()) {
         const halfWindow = 22;
         const fromIdx = Math.max(0, bestIdx - halfWindow);
-        const toIdx = Math.min(currentRenderedBars.length - 1, bestIdx + halfWindow);
+        const toIdx = Math.min(sourceBars.length - 1, bestIdx + halfWindow);
         try {
           lwcChart.timeScale().setVisibleLogicalRange({
             from: fromIdx - 0.5,
@@ -4741,7 +5037,9 @@
         } catch (_) {}
       }
 
-      updateCrosshairReadoutAtIndex(currentRenderedBars, bestIdx, getActiveChartState().activeChartMode);
+      if (isFullChartModalOpen()) {
+        updateCrosshairReadoutAtIndex(sourceBars, bestIdx, getActiveChartState().activeChartMode);
+      }
 
       if (showNotice) {
         if (!exactMatch && matchedBar.time !== targetDate) {
@@ -4757,10 +5055,16 @@
       const lastIdx = currentRenderedBars.length - 1;
       const latestBar = currentRenderedBars[lastIdx];
 
-      const input = document.getElementById('chartDateInput');
-      const btnText = document.getElementById('chartDateBtnText');
-      if (input) input.value = latestBar.time;
-      if (btnText) btnText.textContent = latestBar.time;
+      ['chartDateInput', 'mainChartDateInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = latestBar.time;
+      });
+      ['chartDateBtnText', 'mainChartDateBtnText'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = latestBar.time;
+      });
+
+      updateTopQuoteDisplayForBar(currentRenderedBars, lastIdx);
 
       if (lwcChart) {
         try {
@@ -4806,11 +5110,10 @@
       if (!currentChartData) return;
       const d = currentChartData;
       const acc = getActiveAccount();
-      const diff = d.price - d.prevClose;
-      const pct = d.prevClose > 0 ? (diff / d.prevClose) * 100 : 0;
       const currency = getSymbolCurrency(d.symbol);
+      const dispSym = formatDisplaySymbol(d.symbol);
 
-      document.getElementById('chartHeaderSymbol').textContent = formatDisplaySymbol(d.symbol);
+      document.getElementById('chartHeaderSymbol').textContent = dispSym;
       document.getElementById('chartHeaderName').textContent = d.name;
       document.getElementById('chartHeaderCurrency').textContent = currency;
 
@@ -4821,13 +5124,16 @@
       document.getElementById('chartSourceTag').textContent =
         startYear ? `${srcBase} · ${startYear}~${endLabel}` : srcBase;
 
-      const pEl = document.getElementById('chartHeaderPrice');
-      pEl.textContent = fmtPrice(d.price);
-      pEl.className = `text-[18px] font-bold num leading-none ${getPnlClass(diff)}`;
+      const fcSym = document.getElementById('fcSymbol');
+      const fcName = document.getElementById('fcName');
+      const fcCur = document.getElementById('fcCurrency');
+      if (fcSym) fcSym.textContent = dispSym;
+      if (fcName) fcName.textContent = d.name;
+      if (fcCur) fcCur.textContent = currency;
 
-      const cEl = document.getElementById('chartHeaderChange');
-      cEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${fmtSignedPct(pct)})`;
-      cEl.className = `text-[11px] num leading-none ${getPnlClass(diff)}`;
+      if (totalBars > 0) {
+        updateTopQuoteDisplayForBar(d.bars, totalBars - 1);
+      }
     }
 
     function updateChartControlsUI() {
@@ -4837,32 +5143,53 @@
       document.querySelectorAll('.tf-btn').forEach(btn => {
         const active = btn.dataset.tf === cs.activeTimeframe;
         btn.className = active
-          ? 'tf-btn tap-btn px-2 py-0.5 text-[11px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900] whitespace-nowrap shrink-0'
-          : 'tf-btn tap-btn px-2 py-0.5 text-[11px] font-medium rounded-[6px] text-[#8A94A6] whitespace-nowrap shrink-0';
+          ? 'tf-btn tap-btn px-2.5 py-1 text-[11px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900] whitespace-nowrap shrink-0'
+          : 'tf-btn tap-btn px-2.5 py-1 text-[11px] font-medium rounded-[6px] text-[#8A94A6] whitespace-nowrap shrink-0';
       });
-
-      document.querySelectorAll('.mode-btn').forEach(btn => {
-        const active = btn.dataset.mode === cs.activeChartMode;
-        btn.className = active
-          ? 'mode-btn tap-btn py-1 text-[11px] font-bold rounded-[5px] bg-[#1F2633] text-[#F4F6F9] text-center'
-          : 'mode-btn tap-btn py-1 text-[11px] font-medium rounded-[5px] text-[#8A94A6] text-center';
-      });
-
-      const maRow = document.getElementById('maToggleRow');
-      if (cs.activeChartMode === 'CANDLE_MA') {
-        maRow.classList.remove('hidden');
-      } else {
-        maRow.classList.add('hidden');
-      }
 
       const periods = s.maPeriods;
-      document.getElementById('labelMa0').textContent = `MA${periods[0]}`;
-      document.getElementById('labelMa1').textContent = `MA${periods[1]}`;
-      document.getElementById('labelMa2').textContent = `MA${periods[2]}`;
+      const l0 = document.getElementById('lblPriceMa0');
+      const l1 = document.getElementById('lblPriceMa1');
+      const l2 = document.getElementById('lblPriceMa2');
+      if (l0) l0.textContent = `MA${periods[0]}`;
+      if (l1) l1.textContent = `MA${periods[1]}`;
+      if (l2) l2.textContent = `MA${periods[2]}`;
+
+      const po = cs.priceOptions || { ma0: false, ma1: false, ma2: false, boll: false, vol: true };
+      const c0 = document.getElementById('chkPriceMa0');
+      const c1 = document.getElementById('chkPriceMa1');
+      const c2 = document.getElementById('chkPriceMa2');
+      const cBoll = document.getElementById('chkPriceBoll');
+      const cVol = document.getElementById('chkPriceVol');
+      if (c0) c0.checked = Boolean(po.ma0);
+      if (c1) c1.checked = Boolean(po.ma1);
+      if (c2) c2.checked = Boolean(po.ma2);
+      if (cBoll) cBoll.checked = Boolean(po.boll);
+      if (cVol) cVol.checked = Boolean(po.vol);
+
+      const mo = cs.momentumOptions || { kd: true, rsi: false, macd: false };
+      const cKd = document.getElementById('chkMomKd');
+      const cRsi = document.getElementById('chkMomRsi');
+      const cMacd = document.getElementById('chkMomMacd');
+      if (cKd) cKd.checked = Boolean(mo.kd);
+      if (cRsi) cRsi.checked = Boolean(mo.rsi);
+      if (cMacd) cMacd.checked = Boolean(mo.macd);
+
+      const fcBadge = document.getElementById('fcTitleBadge');
+      if (fcBadge) {
+        if (cs.activeChartMode === 'MOMENTUM') {
+          const momType = getActiveMomentumIndicatorType();
+          const momLabel = momType === 'RSI' ? 'RSI (14)' : (momType === 'MACD' ? 'MACD (12,26,9)' : 'KD (9,3,3)');
+          fcBadge.textContent = `動能指標 · ${momLabel}`;
+        } else {
+          fcBadge.textContent = '價格與成交量主圖';
+        }
+      }
     }
 
     function renderWatchlistChips() {
       const container = document.getElementById('watchlistChips');
+      if (!container) return;
       const cs = getActiveChartState();
       const s = getActiveSettings();
       const activeClean = formatDisplaySymbol(cs.activeChartSymbol);
@@ -4887,19 +5214,19 @@
 
     function renderActiveChart() {
       if (!currentChartData || !currentChartData.bars || currentChartData.bars.length === 0) return;
+      if (!isFullChartModalOpen()) return;
       destroyActiveChart();
 
       const cs = getActiveChartState();
       const s = getActiveSettings();
+      const po = cs.priceOptions || { ma0: false, ma1: false, ma2: false, boll: false, vol: true };
       const bars = aggregateBars(currentChartData.bars, cs.activeTimeframe);
       currentRenderedBars = bars;
       syncChartDatePickerBounds(bars);
 
-      const barIndexByTime = new Map();
-      bars.forEach((b, idx) => barIndexByTime.set(b.time, idx));
-
       const viewport = document.getElementById('chartViewport');
-      const mode = cs.activeChartMode;
+      const mode = cs.activeChartMode === 'MOMENTUM' ? 'MOMENTUM' : 'PRICE_VOL';
+      const momType = getActiveMomentumIndicatorType();
       const colors = getThemeColors();
 
       if (typeof window.LightweightCharts === 'undefined' || !window.LightweightCharts.createChart) {
@@ -4910,7 +5237,7 @@
 
       document.getElementById('chartEngineTag').textContent = 'LWC';
       const initW = Math.max(280, viewport.clientWidth || window.innerWidth || 340);
-      const initH = Math.max(200, viewport.clientHeight || 260);
+      const initH = Math.max(220, viewport.clientHeight || 360);
 
       const chart = window.LightweightCharts.createChart(viewport, {
         width: initW,
@@ -4926,12 +5253,15 @@
           horzLines: { color: colors.grid }
         },
         crosshair: {
-          mode: window.LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: '#FF9900', width: 1, style: 2, labelBackgroundColor: '#FF9900' },
-          horzLine: { color: '#FF9900', width: 1, style: 2, labelBackgroundColor: '#FF9900' }
+          mode: window.LightweightCharts.CrosshairMode.Hidden,
+          vertLine: { visible: false, labelVisible: false },
+          horzLine: { visible: false, labelVisible: false }
         },
         rightPriceScale: {
-          borderColor: '#1C222D'
+          borderColor: '#1C222D',
+          scaleMargins: mode === 'PRICE_VOL' && po.vol
+            ? { top: 0.06, bottom: 0.24 }
+            : { top: 0.08, bottom: 0.08 }
         },
         timeScale: {
           visible: true,
@@ -4945,9 +5275,8 @@
       });
 
       lwcChart = chart;
-      const seriesRefs = {};
 
-      if (mode === 'CANDLE_MA') {
+      if (mode === 'PRICE_VOL') {
         const candle = chart.addCandlestickSeries({
           upColor: colors.up,
           downColor: colors.down,
@@ -4957,12 +5286,11 @@
           wickDownColor: colors.down
         });
         candle.setData(bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close })));
-        seriesRefs.candle = candle;
 
         const maColors = ['#F59E0B', '#38BDF8', '#C084FC'];
+        const maFlags = [po.ma0, po.ma1, po.ma2];
         s.maPeriods.forEach((p, idx) => {
-          const checked = document.getElementById(`toggleMa${idx}`).checked;
-          if (checked && bars.length >= p) {
+          if (maFlags[idx] && bars.length >= p) {
             const line = chart.addLineSeries({
               color: maColors[idx],
               lineWidth: 1.5,
@@ -4970,29 +5298,56 @@
               lastValueVisible: false
             });
             line.setData(calcSMA(bars, p, 'close'));
-            seriesRefs[`ma${idx}`] = { series: line, period: p, color: maColors[idx] };
           }
         });
-      } else if (mode === 'VOL') {
-        const volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' } });
-        volSeries.setData(bars.map(b => ({
-          time: b.time,
-          value: b.volume,
-          color: b.close >= b.open ? colors.up : colors.down
-        })));
-        seriesRefs.vol = volSeries;
 
-        if (bars.length >= 5) {
-          const vma5 = chart.addLineSeries({ color: '#F59E0B', lineWidth: 1.5, priceLineVisible: false });
-          vma5.setData(calcSMA(bars, 5, 'volume'));
-          seriesRefs.vma5 = vma5;
+        if (po.boll && bars.length >= 20) {
+          const bollData = calcBollingerBands(bars, 20, 2);
+          const upperLine = chart.addLineSeries({
+            color: '#10B981',
+            lineWidth: 1.2,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false
+          });
+          const midLine = chart.addLineSeries({
+            color: '#34D399',
+            lineWidth: 1.2,
+            priceLineVisible: false,
+            lastValueVisible: false
+          });
+          const lowerLine = chart.addLineSeries({
+            color: '#10B981',
+            lineWidth: 1.2,
+            lineStyle: 2,
+            priceLineVisible: false,
+            lastValueVisible: false
+          });
+          upperLine.setData(bollData.upper);
+          midLine.setData(bollData.mid);
+          lowerLine.setData(bollData.lower);
         }
-        if (bars.length >= 20) {
-          const vma20 = chart.addLineSeries({ color: '#38BDF8', lineWidth: 1.5, priceLineVisible: false });
-          vma20.setData(calcSMA(bars, 20, 'volume'));
-          seriesRefs.vma20 = vma20;
+
+        if (po.vol) {
+          const volSeries = chart.addHistogramSeries({
+            priceFormat: { type: 'volume' },
+            priceScaleId: 'volume_overlay',
+            priceLineVisible: false,
+            lastValueVisible: false
+          });
+          chart.priceScale('volume_overlay').applyOptions({
+            scaleMargins: { top: 0.78, bottom: 0 }
+          });
+          const isUsTheme = s.colorMode === 'US';
+          volSeries.setData(bars.map(b => ({
+            time: b.time,
+            value: b.volume,
+            color: b.close >= b.open
+              ? (isUsTheme ? 'rgba(0, 200, 83, 0.42)' : 'rgba(255, 59, 48, 0.42)')
+              : (isUsTheme ? 'rgba(255, 59, 48, 0.42)' : 'rgba(0, 200, 83, 0.42)')
+          })));
         }
-      } else if (mode === 'KD') {
+      } else if (momType === 'KD') {
         const { kSeries, dSeries } = calcKD(bars, 9);
         const kLine = chart.addLineSeries({ color: '#FF9900', lineWidth: 2, title: '%K' });
         const dLine = chart.addLineSeries({ color: '#38BDF8', lineWidth: 1.5, title: '%D' });
@@ -5000,16 +5355,13 @@
         dLine.setData(dSeries);
         kLine.createPriceLine({ price: 80, color: '#FF3B30', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '80' });
         kLine.createPriceLine({ price: 20, color: '#00C853', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '20' });
-        seriesRefs.k = kLine;
-        seriesRefs.d = dLine;
-      } else if (mode === 'RSI') {
+      } else if (momType === 'RSI') {
         const rsiData = calcRSI(bars, 14);
         const rsiLine = chart.addLineSeries({ color: '#C084FC', lineWidth: 2, title: 'RSI(14)' });
         rsiLine.setData(rsiData);
         rsiLine.createPriceLine({ price: 70, color: '#FF3B30', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '70' });
         rsiLine.createPriceLine({ price: 30, color: '#00C853', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '30' });
-        seriesRefs.rsi = rsiLine;
-      } else if (mode === 'MACD') {
+      } else if (momType === 'MACD') {
         const { difSeries, macdSeries, oscSeries } = calcMACD(bars, 12, 26, 9);
         const oscHist = chart.addHistogramSeries({ priceLineVisible: false });
         const difLine = chart.addLineSeries({ color: '#FF9900', lineWidth: 1.8, title: 'DIF' });
@@ -5017,9 +5369,6 @@
         oscHist.setData(oscSeries);
         difLine.setData(difSeries);
         sigLine.setData(macdSeries);
-        seriesRefs.dif = difLine;
-        seriesRefs.sig = sigLine;
-        seriesRefs.osc = oscHist;
       }
 
       if (bars.length > 120) {
@@ -5036,69 +5385,11 @@
       }
       updateCrosshairReadoutFromLast(bars, mode);
 
-      chart.subscribeCrosshairMove(param => {
-        if (!param || !param.time) {
-          updateCrosshairReadoutFromLast(bars, mode);
-          return;
-        }
-        const barEl = document.getElementById('chartCrosshairBar');
-        const dateStr = String(param.time);
-        const barIdx = barIndexByTime.has(dateStr) ? barIndexByTime.get(dateStr) : -1;
-        const pctHtml = barIdx >= 0 ? getBarDailyChangeBadgeHtml(bars, barIdx) : '';
-
-        if (mode === 'CANDLE_MA' && seriesRefs.candle) {
-          const c = param.seriesData.get(seriesRefs.candle);
-          if (!c) return;
-          let maHtml = '';
-          [0, 1, 2].forEach(idx => {
-            const ref = seriesRefs[`ma${idx}`];
-            if (ref) {
-              const v = param.seriesData.get(ref.series);
-              if (v && v.value != null) {
-                maHtml += `<span style="color:${ref.color}">MA${ref.period}:${v.value.toFixed(2)}</span>`;
-              }
-            }
-          });
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>
-            <span>開:${c.open}</span><span>高:${c.high}</span><span>低:${c.low}</span><span>收:${c.close}</span>${pctHtml}${maHtml}`;
-        } else if (mode === 'VOL' && seriesRefs.vol) {
-          const v = param.seriesData.get(seriesRefs.vol);
-          const m5 = seriesRefs.vma5 ? param.seriesData.get(seriesRefs.vma5) : null;
-          const m20 = seriesRefs.vma20 ? param.seriesData.get(seriesRefs.vma20) : null;
-          if (!v) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
-            <span>量:${fmtMoney(v.value)}</span>
-            ${m5 ? `<span class="text-[#F59E0B]">VMA5:${fmtMoney(Math.round(m5.value))}</span>` : ''}
-            ${m20 ? `<span class="text-[#38BDF8]">VMA20:${fmtMoney(Math.round(m20.value))}</span>` : ''}`;
-        } else if (mode === 'KD' && seriesRefs.k) {
-          const kv = param.seriesData.get(seriesRefs.k);
-          const dv = param.seriesData.get(seriesRefs.d);
-          if (!kv) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
-            <span class="text-[#FF9900]">%K:${kv.value.toFixed(2)}</span>
-            ${dv ? `<span class="text-[#38BDF8]">%D:${dv.value.toFixed(2)}</span>` : ''}`;
-        } else if (mode === 'RSI' && seriesRefs.rsi) {
-          const rv = param.seriesData.get(seriesRefs.rsi);
-          if (!rv) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
-            <span class="text-[#C084FC]">RSI(14):${rv.value.toFixed(2)}</span>`;
-        } else if (mode === 'MACD' && seriesRefs.dif) {
-          const df = param.seriesData.get(seriesRefs.dif);
-          const sg = param.seriesData.get(seriesRefs.sig);
-          const os = param.seriesData.get(seriesRefs.osc);
-          if (!df) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
-            <span class="text-[#FF9900]">DIF:${df.value.toFixed(2)}</span>
-            ${sg ? `<span class="text-[#38BDF8]">MACD:${sg.value.toFixed(2)}</span>` : ''}
-            ${os ? `<span>OSC:${os.value.toFixed(2)}</span>` : ''}`;
-        }
-      });
-
       viewport.onpointerdown = (ev) => {
         chartPointerDownPos = { x: ev.clientX, y: ev.clientY, time: Date.now() };
       };
       viewport.onpointerup = (ev) => {
-        if (!chartPointerDownPos || !lwcChart || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+        if (!chartPointerDownPos) return;
         const now = Date.now();
         const dx = Math.abs(ev.clientX - chartPointerDownPos.x);
         const dy = Math.abs(ev.clientY - chartPointerDownPos.y);
@@ -5112,17 +5403,6 @@
             return;
           }
           chartLastTapTime = now;
-
-          const rect = viewport.getBoundingClientRect();
-          const localX = ev.clientX - rect.left;
-          const logicalIdx = lwcChart.timeScale().coordinateToLogical(localX);
-          if (logicalIdx !== null && Number.isFinite(logicalIdx)) {
-            const clampedIdx = Math.max(0, Math.min(currentRenderedBars.length - 1, Math.round(logicalIdx)));
-            const clickedBar = currentRenderedBars[clampedIdx];
-            if (clickedBar && clickedBar.time) {
-              jumpChartToSelectedDate(clickedBar.time, { showNotice: true });
-            }
-          }
         }
       };
 
@@ -5154,34 +5434,50 @@
     function updateCrosshairReadoutAtIndex(bars, idx, mode) {
       const barEl = document.getElementById('chartCrosshairBar');
       const s = getActiveSettings();
+      const cs = getActiveChartState();
+      const po = cs.priceOptions || { ma0: false, ma1: false, ma2: false, boll: false, vol: true };
+      const momType = getActiveMomentumIndicatorType();
       if (!bars || bars.length === 0 || idx < 0 || idx >= bars.length) return;
       const bar = bars[idx];
       const pctHtml = getBarDailyChangeBadgeHtml(bars, idx);
 
-      if (mode === 'CANDLE_MA') {
+      if (mode === 'PRICE_VOL') {
         const maColors = ['#F59E0B', '#38BDF8', '#C084FC'];
-        let maHtml = '';
+        const maFlags = [po.ma0, po.ma1, po.ma2];
+        let extraHtml = '';
         s.maPeriods.forEach((p, mIdx) => {
-          const toggle = document.getElementById(`toggleMa${mIdx}`);
-          if (toggle && toggle.checked && idx >= p - 1 && bars.length >= p) {
+          if (maFlags[mIdx] && idx >= p - 1 && bars.length >= p) {
             let sum = 0;
             for (let k = idx - p + 1; k <= idx; k++) sum += bars[k].close;
-            maHtml += `<span style="color:${maColors[mIdx]}">MA${p}:${(sum / p).toFixed(2)}</span>`;
+            extraHtml += `<span style="color:${maColors[mIdx]}">MA${p}:${(sum / p).toFixed(2)}</span>`;
           }
         });
-        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span><span>開:${bar.open}</span><span>高:${bar.high}</span><span>低:${bar.low}</span><span>收:${bar.close}</span>${pctHtml}${maHtml}`;
-      } else if (mode === 'VOL') {
-        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span>${pctHtml}<span>成交量:${fmtMoney(bar.volume)}</span>`;
-      } else if (mode === 'KD') {
+        if (po.boll && idx >= 19 && bars.length >= 20) {
+          let sum = 0;
+          for (let k = idx - 19; k <= idx; k++) sum += bars[k].close;
+          const mean = sum / 20;
+          let sq = 0;
+          for (let k = idx - 19; k <= idx; k++) {
+            const d = bars[k].close - mean;
+            sq += d * d;
+          }
+          const std = Math.sqrt(sq / 20);
+          extraHtml += `<span class="text-[#10B981]">BOLL:${(mean - 2 * std).toFixed(1)}~${(mean + 2 * std).toFixed(1)}</span>`;
+        }
+        if (po.vol) {
+          extraHtml += `<span>量:${fmtMoney(bar.volume)}</span>`;
+        }
+        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span><span>開:${bar.open}</span><span>高:${bar.high}</span><span>低:${bar.low}</span><span>收:${bar.close}</span>${pctHtml}${extraHtml}`;
+      } else if (momType === 'KD') {
         const { kSeries, dSeries } = calcKD(bars, 9);
         const kItem = kSeries.find(x => x.time === bar.time) || kSeries[kSeries.length - 1];
         const dItem = dSeries.find(x => x.time === bar.time) || dSeries[dSeries.length - 1];
         barEl.innerHTML = kItem ? `<span class="text-[#FF9900]">${kItem.time}</span>${pctHtml}<span class="text-[#FF9900]">%K:${kItem.value}</span><span class="text-[#38BDF8]">%D:${dItem.value}</span>` : '目前週期筆數不足計算 KD(9)';
-      } else if (mode === 'RSI') {
+      } else if (momType === 'RSI') {
         const r = calcRSI(bars, 14);
         const rItem = r.find(x => x.time === bar.time) || r[r.length - 1];
         barEl.innerHTML = rItem ? `<span class="text-[#FF9900]">${rItem.time}</span>${pctHtml}<span class="text-[#C084FC]">RSI(14):${rItem.value}</span>` : '目前週期筆數不足計算 RSI(14)';
-      } else if (mode === 'MACD') {
+      } else if (momType === 'MACD') {
         const { difSeries, macdSeries, oscSeries } = calcMACD(bars, 12, 26, 9);
         const dItem = difSeries.find(x => x.time === bar.time) || difSeries[difSeries.length - 1];
         const mItem = macdSeries.find(x => x.time === bar.time) || macdSeries[macdSeries.length - 1];
@@ -5201,10 +5497,12 @@
       canvas.style.display = 'block';
       viewport.appendChild(canvas);
 
+      const po = getActiveChartState().priceOptions || { vol: true };
+      const momType = getActiveMomentumIndicatorType();
       const slice = bars.slice(-65);
       const dpr = window.devicePixelRatio || 1;
       const w = viewport.clientWidth || 340;
-      const h = viewport.clientHeight || 260;
+      const h = viewport.clientHeight || 360;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext('2d');
@@ -5242,15 +5540,29 @@
 
       const xFor = i => pad.left + ((i + 0.5) / Math.max(1, slice.length)) * cw;
 
-      if (mode === 'CANDLE_MA') {
+      if (mode === 'PRICE_VOL') {
         let minP = Infinity, maxP = -Infinity;
         slice.forEach(b => { minP = Math.min(minP, b.low); maxP = Math.max(maxP, b.high); });
         const span = Math.max(0.01, maxP - minP);
-        minP -= span * 0.06; maxP += span * 0.06;
-        const yFor = p => pad.top + ((maxP - p) / (maxP - minP)) * ch;
+        minP -= span * (po.boll ? 0.14 : 0.06);
+        maxP += span * (po.boll ? 0.14 : 0.06);
+        const priceCh = po.vol ? ch * 0.76 : ch;
+        const yFor = p => pad.top + ((maxP - p) / (maxP - minP)) * priceCh;
         drawGrid(minP, maxP);
 
         const barW = Math.max(2, (cw / slice.length) * 0.65);
+        if (po.vol) {
+          let maxV = 1;
+          slice.forEach(b => { maxV = Math.max(maxV, b.volume); });
+          const volHMax = ch * 0.22;
+          slice.forEach((b, i) => {
+            const x = xFor(i);
+            const hBar = (b.volume / maxV) * volHMax;
+            ctx.fillStyle = b.close >= b.open ? 'rgba(255,59,48,0.4)' : 'rgba(0,200,83,0.4)';
+            ctx.fillRect(x - barW / 2, pad.top + ch - hBar, barW, hBar);
+          });
+        }
+
         slice.forEach((b, i) => {
           const x = xFor(i);
           const col = b.close >= b.open ? colors.up : colors.down;
@@ -5264,18 +5576,7 @@
           const botY = yFor(Math.min(b.open, b.close));
           ctx.fillRect(x - barW / 2, topY, barW, Math.max(1.5, botY - topY));
         });
-      } else if (mode === 'VOL') {
-        let maxV = 1;
-        slice.forEach(b => { maxV = Math.max(maxV, b.volume); });
-        drawGrid(0, maxV);
-        const barW = Math.max(2, (cw / slice.length) * 0.65);
-        slice.forEach((b, i) => {
-          const x = xFor(i);
-          const hBar = (b.volume / maxV) * ch;
-          ctx.fillStyle = b.close >= b.open ? colors.up : colors.down;
-          ctx.fillRect(x - barW / 2, pad.top + ch - hBar, barW, hBar);
-        });
-      } else if (mode === 'KD' || mode === 'RSI') {
+      } else if (momType === 'KD' || momType === 'RSI') {
         drawGrid(0, 100);
         const yFor = v => pad.top + ((100 - v) / 100) * ch;
         const drawLine = (pts, col) => {
@@ -5288,14 +5589,14 @@
           });
           ctx.stroke();
         };
-        if (mode === 'KD') {
+        if (momType === 'KD') {
           const { kSeries, dSeries } = calcKD(bars, 9);
           drawLine(kSeries.slice(-65), '#FF9900');
           drawLine(dSeries.slice(-65), '#38BDF8');
         } else {
           drawLine(calcRSI(bars, 14).slice(-65), '#C084FC');
         }
-      } else if (mode === 'MACD') {
+      } else if (momType === 'MACD') {
         const { difSeries, macdSeries, oscSeries } = calcMACD(bars, 12, 26, 9);
         const dSub = difSeries.slice(-65), mSub = macdSeries.slice(-65), oSub = oscSeries.slice(-65);
         if (oSub.length === 0) {
@@ -5355,7 +5656,9 @@
       const cs = getActiveChartState();
 
       if (tab === 'sim') {
-        document.body.classList.remove('chart-single-screen');
+        if (isFullChartModalOpen()) {
+          closeFullChartModal();
+        }
         simSec.classList.remove('hidden');
         chartSec.classList.add('hidden');
         btnSim.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#F4F6F9]';
@@ -5369,7 +5672,6 @@
           window.scrollTo({ top: targetScrollY, behavior: 'auto' });
         });
       } else {
-        document.body.classList.add('chart-single-screen');
         simSec.classList.add('hidden');
         chartSec.classList.remove('hidden');
         btnChart.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#F4F6F9]';
@@ -5389,8 +5691,13 @@
             appState.marketCache[cs.activeChartSymbol] || connState.offlineMemoryMap.get(cs.activeChartSymbol) || currentChartData,
             getActiveAccount()
           );
+          if (Array.isArray(currentChartData.bars)) {
+            syncChartDatePickerBounds(currentChartData.bars);
+          }
           updateChartHeader();
-          renderActiveChart();
+          if (isFullChartModalOpen()) {
+            renderActiveChart();
+          }
         }
       }
     }
@@ -5423,7 +5730,7 @@
       updateSettingsFxDisplay();
       renderSimTab();
       updateOrderPreview();
-      if (getActiveSettings().usdTwdUpdatedAt > 0) {
+      if (s.usdTwdUpdatedAt > 0) {
         showToast(`已更新美元匯率：1 USD = ${rate.toFixed(2)} TWD`, 'success');
       } else {
         s.useManualFx = prevManual;
@@ -5468,7 +5775,7 @@
       renderSimTab();
       if (appState.activeTab === 'chart') {
         updateChartHeader();
-        renderActiveChart();
+        if (isFullChartModalOpen()) renderActiveChart();
       }
     }
 
@@ -5563,7 +5870,7 @@
       renderSimTab();
       updateOrderPreview();
       updateChartControlsUI();
-      if (appState.activeTab === 'chart') renderActiveChart();
+      if (appState.activeTab === 'chart' && isFullChartModalOpen()) renderActiveChart();
       showToast(`「${getAccountDisplayName(getActiveAccount())}」設定已儲存並套用`, 'success');
     }
 
@@ -5679,99 +5986,79 @@
           }
         }
 
-        const legacyRootSettings = parsed.settings || {};
-        const legacyRootChart = {
+        const legacyFallbackSet = parsed.settings || {};
+        const legacyFallbackChart = {
           activeChartSymbol: parsed.activeChartSymbol,
           activeTimeframe: parsed.activeTimeframe,
           activeChartMode: parsed.activeChartMode
         };
 
-        const normalizedAccounts = rawAccountsList.map(a =>
-          normalizeAccountRecord(a, legacyRootSettings, legacyRootChart)
-        );
-
-        for (let i = 0; i < normalizedAccounts.length; i++) {
-          const acc = normalizedAccounts[i];
-          acc._rawSourceId = rawAccountsList[i].id || '';
-          if (acc.startDate > realToday) acc.startDate = realToday;
-          if (acc.currentSimDate > realToday) acc.currentSimDate = realToday;
-          acc.lastRealSyncDate = realToday;
-          acc.settings.workerBaseUrl = sanitizeWorkerUrl(acc.settings.workerBaseUrl);
-        }
+        let dateClampedNotice = false;
+        const normalizedAccounts = rawAccountsList.map((rawAcc, idx) => {
+          if (rawAcc.currentSimDate && rawAcc.currentSimDate > realToday) {
+            dateClampedNotice = true;
+          }
+          const norm = normalizeAccountRecord(rawAcc, legacyFallbackSet, legacyFallbackChart);
+          if (importMode === 'import_as_new') {
+            norm.sourceOriginId = rawAcc.id || '';
+            norm.id = `acc_imp_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`;
+            norm.name = `${norm.name} (匯入)`;
+          }
+          return norm;
+        });
 
         if (importMode === 'import_as_new') {
-          const uniqueToAdd = [];
+          const uniqueToImport = [];
           const skippedNames = [];
-
-          for (const acc of normalizedAccounts) {
-            if (isDuplicateAccountInSystem(acc, acc._rawSourceId)) {
-              skippedNames.push(getAccountDisplayName(acc));
+          normalizedAccounts.forEach((cand, idx) => {
+            const origId = rawAccountsList[idx]?.id || '';
+            if (isDuplicateAccountInSystem(cand, origId)) {
+              skippedNames.push(getAccountDisplayName(rawAccountsList[idx]));
             } else {
-              uniqueToAdd.push(acc);
+              uniqueToImport.push(cand);
             }
-          }
+          });
 
-          if (uniqueToAdd.length === 0) {
-            document.getElementById('importJsonText').value = '';
+          if (uniqueToImport.length === 0) {
             showToast(
-              `偵測到重複匯入：「${skippedNames.join('、')}」已存在於系統中，未重複建立`,
+              `偵測到重複帳戶「${skippedNames.join('、')}」已存在於系統中，未重複匯入`,
               'warn'
             );
             return;
           }
 
-          closeModal('settingsModal');
-          document.getElementById('importJsonText').value = '';
-
-          let lastImportedId = appState.activeAccountId;
-          uniqueToAdd.forEach((acc, idx) => {
-            const originId = acc._rawSourceId;
-            delete acc._rawSourceId;
-            const freshId = `acc_imp_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`;
-            acc.id = freshId;
-            if (originId) acc.sourceOriginId = originId;
-            acc.name = `${acc.name} (匯入)`;
-            appState.accounts.push(acc);
-            lastImportedId = freshId;
-          });
+          appState.accounts.push(...uniqueToImport);
           saveState();
-          await switchAccount(lastImportedId);
-
-          if (skippedNames.length > 0) {
-            showToast(
-              `已匯入 ${uniqueToAdd.length} 個新戶頭；略過 ${skippedNames.length} 個已存在帳戶（${skippedNames.join('、')}）`,
-              'success'
-            );
-          } else {
-            showToast(`已成功匯入 ${uniqueToAdd.length} 個新戶頭（模擬日 ${getActiveAccount().currentSimDate}）`, 'success');
-          }
-        } else {
-          const isAllSame =
-            normalizedAccounts.length === appState.accounts.length &&
-            normalizedAccounts.every(acc => isDuplicateAccountInSystem(acc, acc._rawSourceId));
-
-          normalizedAccounts.forEach(acc => { delete acc._rawSourceId; });
-
-          if (isAllSame) {
-            closeModal('settingsModal');
-            document.getElementById('importJsonText').value = '';
-            showToast('匯入內容與目前系統帳戶完全相同（資料已存在），無需重複覆蓋', 'warn');
-            return;
-          }
-
           closeModal('settingsModal');
-          document.getElementById('importJsonText').value = '';
-          appState.accounts = normalizedAccounts;
-          const targetId = normalizedAccounts.some(a => a.id === parsed.activeAccountId)
+          await switchAccount(uniqueToImport[0].id);
+          const skipMsg = skippedNames.length > 0 ? `（已略過重複帳戶：${skippedNames.join('、')}）` : '';
+          showToast(
+            `已匯入 ${uniqueToImport.length} 個新戶頭${skipMsg}${dateClampedNotice ? '（超過今日之日期已自動校正為今日）' : ''}`,
+            'success'
+          );
+        } else {
+          const targetActiveId = normalizedAccounts.some(a => a.id === parsed.activeAccountId)
             ? parsed.activeAccountId
             : normalizedAccounts[0].id;
+
+          appState = {
+            version: 2,
+            activeTab: parsed.activeTab === 'chart' ? 'chart' : 'sim',
+            activeAccountId: targetActiveId,
+            accounts: normalizedAccounts,
+            marketCache: appState.marketCache || {}
+          };
           saveState();
-          await switchAccount(targetId);
-          switchMainTab(parsed.activeTab || 'sim');
-          showToast(`已覆蓋還原整份系統（共 ${normalizedAccounts.length} 個戶頭）`, 'success');
+          closeModal('settingsModal');
+          await switchAccount(targetActiveId);
+          switchMainTab(appState.activeTab);
+          showToast(
+            `系統已完整覆蓋還原（共 ${normalizedAccounts.length} 個戶頭）${dateClampedNotice ? '，超過今日之日期已校正為今日' : ''}`,
+            'success'
+          );
         }
       } catch (e) {
-        showToast('還原失敗（格式驗證未過）：' + e.message, 'error');
+        showToast('匯入失敗（格式驗證未過）：' + e.message, 'error');
       }
     }
 
