@@ -216,18 +216,27 @@
     .modal-panel {
       width: 100%;
       max-width: 520px;
-      max-height: calc(100dvh - var(--safe-top) - 24px);
+      max-height: 86vh;
       background-color: #0F131A;
       border: 1px solid #2A3343;
       border-radius: 14px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
     }
 
-    /* 切換帳戶彈窗垂直置中顯示 */
-    #accountSwitchModal {
+    /* 切換帳戶與新增/編輯帳戶彈窗垂直置中顯示 */
+    #accountSwitchModal,
+    #accountModal {
+      align-items: center;
+      padding-top: var(--safe-top);
+      padding-bottom: max(20px, var(--safe-bottom));
+    }
+
+    /* 確認類彈窗層級置頂 */
+    #confirmModal,
+    #orderConfirmModal {
+      z-index: 70;
       align-items: center;
       padding-top: var(--safe-top);
       padding-bottom: max(20px, var(--safe-bottom));
@@ -578,19 +587,19 @@
             <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">MACD</button>
           </div>
 
-          <!-- 均線顯示開關 (僅在 K線+MA 模式顯示) -->
+          <!-- 均線顯示開關 (僅在 K線+MA 模式顯示，預設未勾選) -->
           <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num pt-0.5">
             <div class="flex items-center gap-3.5 flex-wrap">
               <label class="flex items-center gap-1.5 cursor-pointer">
-                <input id="toggleMa0" type="checkbox" checked onchange="renderActiveChart()">
+                <input id="toggleMa0" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa0" class="text-[#F59E0B]">MA5</span>
               </label>
               <label class="flex items-center gap-1.5 cursor-pointer">
-                <input id="toggleMa1" type="checkbox" checked onchange="renderActiveChart()">
+                <input id="toggleMa1" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa1" class="text-[#38BDF8]">MA20</span>
               </label>
               <label class="flex items-center gap-1.5 cursor-pointer">
-                <input id="toggleMa2" type="checkbox" checked onchange="renderActiveChart()">
+                <input id="toggleMa2" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa2" class="text-[#C084FC]">MA60</span>
               </label>
             </div>
@@ -950,7 +959,7 @@
             <span id="ocFeeAmount" class="text-[#F4F6F9]">$0</span>
           </div>
           <div class="flex items-center justify-between num">
-            <span class="text-[#8A94A6]">證券交易稅</span>
+            <span id="ocTaxLabel" class="text-[#8A94A6]">證券交易稅</span>
             <span id="ocTaxAmount" class="text-[#F4F6F9]">$0</span>
           </div>
           <div id="ocFxDetailBox" class="hidden pt-2 hairline-t space-y-1.5 text-[12px] num">
@@ -2827,205 +2836,214 @@
     }
 
     function submitOrder() {
-      const check = updateOrderPreview();
-      if (!check.sym) {
-        showToast('請輸入股票代號', 'error');
-        return;
+      try {
+        const check = updateOrderPreview();
+        if (!check.sym) {
+          showToast('請輸入股票代號', 'error');
+          return;
+        }
+        if (!Number.isFinite(check.price) || check.price <= 0) {
+          showToast('請輸入大於 0 的有效單價', 'error');
+          return;
+        }
+        if (!Number.isFinite(check.shares) || check.shares <= 0) {
+          showToast('請輸入大於 0 的有效股數/張數', 'error');
+          return;
+        }
+        if (!check.valid) {
+          showToast(check.errMsg || '下單條件檢核未通過', 'error');
+          return;
+        }
+
+        const acc = getActiveAccount();
+        const { sym, price, shares, isEtf, metrics } = check;
+        const dispSym = formatDisplaySymbol(sym);
+        const rawReason = document.getElementById('orderReason').value;
+        const reason = rawReason ? rawReason : '未填寫';
+        const note = document.getElementById('orderNote').value.trim();
+        const cached = appState.marketCache[sym] || connState.offlineMemoryMap.get(sym);
+        const stockName = cached ? cached.name : dispSym;
+
+        pendingOrderPayload = {
+          side: orderSide,
+          sym,
+          dispSym,
+          stockName,
+          price,
+          shares,
+          isEtf,
+          metrics,
+          reason,
+          note
+        };
+
+        const isBuy = orderSide === 'BUY';
+        const isUsd = metrics.currency === 'USD';
+        const dec = isUsd ? 2 : 0;
+        const badge = document.getElementById('ocSideBadge');
+        badge.textContent = isBuy ? '買進委託' : '賣出委託';
+        badge.className = `px-2 py-0.5 text-[11px] font-bold rounded ${isBuy ? 'pill-up' : 'pill-down'}`;
+
+        document.getElementById('ocSymbolName').textContent =
+          `${stockName && stockName !== dispSym ? `${dispSym} ${stockName}` : dispSym} (${metrics.currency})`;
+        const lotNote = shares >= 1000 && shares % 1000 === 0 ? ` (${shares / 1000}張)` : '';
+        document.getElementById('ocPriceShares').textContent = `${fmtPrice(price)} ${metrics.currency} × ${fmtMoney(shares)} 股${lotNote}`;
+        document.getElementById('ocGrossAmount').textContent = `$${fmtMoney(metrics.grossAmount, dec)} ${metrics.currency}`;
+        document.getElementById('ocFeeAmount').textContent = `$${fmtMoney(metrics.fee, dec)} ${metrics.currency}`;
+
+        const fxBox = document.getElementById('ocFxDetailBox');
+        if (isUsd) {
+          fxBox.classList.remove('hidden');
+          document.getElementById('ocNativeTotal').textContent = `$${fmtMoney(metrics.netNative, 2)} USD`;
+          document.getElementById('ocFxRateText').textContent = `1 USD = ${metrics.fxRate.toFixed(2)} TWD`;
+        } else {
+          fxBox.classList.add('hidden');
+        }
+
+        if (isBuy) {
+          document.getElementById('ocTaxLabel').textContent = '證券交易稅（買進免稅）';
+          document.getElementById('ocTaxAmount').textContent = `$0 ${metrics.currency}`;
+          document.getElementById('ocNetLabel').textContent = '折合新台幣實際扣款（TWD）';
+          document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netTwd, 0)}`;
+          document.getElementById('ocAfterCash').textContent = `$${fmtMoney(Math.max(0, acc.cash - metrics.netTwd), 0)}`;
+        } else {
+          const taxPct = ((isEtf ? appState.settings.etfTaxRate : appState.settings.stockTaxRate) * 100)
+            .toFixed(2)
+            .replace(/\.?0+$/, '');
+          document.getElementById('ocTaxLabel').textContent = `證券交易稅（${isEtf ? 'ETF ' : ''}${taxPct}%）`;
+          document.getElementById('ocTaxAmount').textContent = `$${fmtMoney(metrics.tax, dec)} ${metrics.currency}`;
+          document.getElementById('ocNetLabel').textContent = '折合新台幣實際淨得（TWD）';
+          document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netTwd, 0)}`;
+          document.getElementById('ocAfterCash').textContent = `$${fmtMoney(acc.cash + metrics.netTwd, 0)}`;
+        }
+
+        const confirmBtn = document.getElementById('ocConfirmBtn');
+        confirmBtn.className = `tap-btn py-2.5 font-bold rounded-[8px] ${isBuy ? 'btn-buy-solid' : 'btn-sell-solid'}`;
+        confirmBtn.textContent = isBuy ? '確認下單並扣款' : '確認下單並賣出';
+
+        openModal('orderConfirmModal');
+      } catch (err) {
+        showToast('委託試算發生異常：' + (err && err.message ? err.message : '請重新輸入'), 'error');
       }
-      if (!Number.isFinite(check.price) || check.price <= 0) {
-        showToast('請輸入大於 0 的有效單價', 'error');
-        return;
-      }
-      if (!Number.isFinite(check.shares) || check.shares <= 0) {
-        showToast('請輸入大於 0 的有效股數/張數', 'error');
-        return;
-      }
-      if (!check.valid) {
-        showToast(check.errMsg || '下單條件檢核未通過', 'error');
-        return;
-      }
-
-      const acc = getActiveAccount();
-      const { sym, price, shares, isEtf, metrics } = check;
-      const dispSym = formatDisplaySymbol(sym);
-      const rawReason = document.getElementById('orderReason').value;
-      const reason = rawReason ? rawReason : '未填寫';
-      const note = document.getElementById('orderNote').value.trim();
-      const cached = appState.marketCache[sym] || connState.offlineMemoryMap.get(sym);
-      const stockName = cached ? cached.name : dispSym;
-
-      pendingOrderPayload = {
-        side: orderSide,
-        sym,
-        dispSym,
-        stockName,
-        price,
-        shares,
-        isEtf,
-        metrics,
-        reason,
-        note
-      };
-
-      const isBuy = orderSide === 'BUY';
-      const isUsd = metrics.currency === 'USD';
-      const dec = isUsd ? 2 : 0;
-      const badge = document.getElementById('ocSideBadge');
-      badge.textContent = isBuy ? '買進委託' : '賣出委託';
-      badge.className = `px-2 py-0.5 text-[11px] font-bold rounded ${isBuy ? 'pill-up' : 'pill-down'}`;
-
-      document.getElementById('ocSymbolName').textContent =
-        `${stockName && stockName !== dispSym ? `${dispSym} ${stockName}` : dispSym} (${metrics.currency})`;
-      const lotNote = shares >= 1000 && shares % 1000 === 0 ? ` (${shares / 1000}張)` : '';
-      document.getElementById('ocPriceShares').textContent = `${fmtPrice(price)} ${metrics.currency} × ${fmtMoney(shares)} 股${lotNote}`;
-      document.getElementById('ocGrossAmount').textContent = `$${fmtMoney(metrics.grossAmount, dec)} ${metrics.currency}`;
-      document.getElementById('ocFeeAmount').textContent = `$${fmtMoney(metrics.fee, dec)} ${metrics.currency}`;
-
-      const fxBox = document.getElementById('ocFxDetailBox');
-      if (isUsd) {
-        fxBox.classList.remove('hidden');
-        document.getElementById('ocNativeTotal').textContent = `$${fmtMoney(metrics.netNative, 2)} USD`;
-        document.getElementById('ocFxRateText').textContent = `1 USD = ${metrics.fxRate.toFixed(2)} TWD`;
-      } else {
-        fxBox.classList.add('hidden');
-      }
-
-      if (isBuy) {
-        document.getElementById('ocTaxLabel').textContent = '證券交易稅（買進免稅）';
-        document.getElementById('ocTaxAmount').textContent = `$0 ${metrics.currency}`;
-        document.getElementById('ocNetLabel').textContent = '折合新台幣實際扣款（TWD）';
-        document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netTwd, 0)}`;
-        document.getElementById('ocAfterCash').textContent = `$${fmtMoney(Math.max(0, acc.cash - metrics.netTwd), 0)}`;
-      } else {
-        const taxPct = ((isEtf ? appState.settings.etfTaxRate : appState.settings.stockTaxRate) * 100)
-          .toFixed(2)
-          .replace(/\.?0+$/, '');
-        document.getElementById('ocTaxLabel').textContent = `證券交易稅（${isEtf ? 'ETF ' : ''}${taxPct}%）`;
-        document.getElementById('ocTaxAmount').textContent = `$${fmtMoney(metrics.tax, dec)} ${metrics.currency}`;
-        document.getElementById('ocNetLabel').textContent = '折合新台幣實際淨得（TWD）';
-        document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netTwd, 0)}`;
-        document.getElementById('ocAfterCash').textContent = `$${fmtMoney(acc.cash + metrics.netTwd, 0)}`;
-      }
-
-      const confirmBtn = document.getElementById('ocConfirmBtn');
-      confirmBtn.className = `tap-btn py-2.5 font-bold rounded-[8px] ${isBuy ? 'btn-buy-solid' : 'btn-sell-solid'}`;
-      confirmBtn.textContent = isBuy ? '確認下單並扣款' : '確認下單並賣出';
-
-      openModal('orderConfirmModal');
     }
 
     function executeConfirmedOrder() {
-      if (!pendingOrderPayload) {
-        closeModal('orderConfirmModal');
-        return;
-      }
-
-      const { side, sym, dispSym, stockName, price, shares, isEtf, metrics, reason, note } = pendingOrderPayload;
-      const acc = getActiveAccount();
-
-      if (side === 'BUY' && acc.cash < metrics.netTwd) {
-        closeModal('orderConfirmModal');
-        pendingOrderPayload = null;
-        showToast(`帳戶可用台幣餘額不足（短缺 $${fmtMoney(Math.ceil(metrics.netTwd - acc.cash))} TWD）`, 'error');
-        return;
-      }
-      if (side === 'SELL') {
-        const held = acc.holdings[sym] ? acc.holdings[sym].shares : 0;
-        if (held < shares) {
+      try {
+        if (!pendingOrderPayload) {
           closeModal('orderConfirmModal');
-          pendingOrderPayload = null;
-          showToast(`持股庫存不足（目前持有 ${dispSym} ${fmtMoney(held)} 股）`, 'error');
           return;
         }
-      }
 
-      let realizedPnlTwdThisTrade = null;
+        const { side, sym, dispSym, stockName, price, shares, isEtf, metrics, reason, note } = pendingOrderPayload;
+        const acc = getActiveAccount();
 
-      if (side === 'BUY') {
-        acc.cash = Number((acc.cash - metrics.netTwd).toFixed(2));
-        const existing = acc.holdings[sym];
-        if (existing) {
-          const newShares = existing.shares + shares;
-          const newTotalCostNative = existing.totalCost + metrics.grossAmount + metrics.fee;
+        if (side === 'BUY' && acc.cash < metrics.netTwd) {
+          closeModal('orderConfirmModal');
+          pendingOrderPayload = null;
+          showToast(`帳戶可用台幣餘額不足（短缺 $${fmtMoney(Math.ceil(metrics.netTwd - acc.cash))} TWD）`, 'error');
+          return;
+        }
+        if (side === 'SELL') {
+          const held = acc.holdings[sym] ? acc.holdings[sym].shares : 0;
+          if (held < shares) {
+            closeModal('orderConfirmModal');
+            pendingOrderPayload = null;
+            showToast(`持股庫存不足（目前持有 ${dispSym} ${fmtMoney(held)} 股）`, 'error');
+            return;
+          }
+        }
+
+        let realizedPnlTwdThisTrade = null;
+
+        if (side === 'BUY') {
+          acc.cash = Number((acc.cash - metrics.netTwd).toFixed(2));
+          const existing = acc.holdings[sym];
+          if (existing) {
+            const newShares = existing.shares + shares;
+            const newTotalCostNative = existing.totalCost + metrics.grossAmount + metrics.fee;
+            const prevCostTwd = Number.isFinite(existing.totalCostTwd)
+              ? existing.totalCostTwd
+              : (existing.totalCost * (metrics.currency === 'USD' ? metrics.fxRate : 1));
+            const newTotalCostTwd = prevCostTwd + metrics.netTwd;
+
+            existing.shares = newShares;
+            existing.totalCost = newTotalCostNative;
+            existing.avgCost = newTotalCostNative / newShares;
+            existing.totalCostTwd = newTotalCostTwd;
+            existing.currency = metrics.currency;
+            existing.fxRateAtBuy = metrics.currency === 'USD' ? (newTotalCostTwd / newTotalCostNative) : 1;
+            existing.isEtf = isEtf;
+            existing.name = stockName;
+          } else {
+            const totalCostNative = metrics.grossAmount + metrics.fee;
+            acc.holdings[sym] = {
+              symbol: sym,
+              name: stockName,
+              currency: metrics.currency,
+              fxRateAtBuy: metrics.fxRate,
+              shares,
+              totalCost: totalCostNative,
+              avgCost: totalCostNative / shares,
+              totalCostTwd: metrics.netTwd,
+              isEtf
+            };
+          }
+        } else {
+          const existing = acc.holdings[sym];
           const prevCostTwd = Number.isFinite(existing.totalCostTwd)
             ? existing.totalCostTwd
             : (existing.totalCost * (metrics.currency === 'USD' ? metrics.fxRate : 1));
-          const newTotalCostTwd = prevCostTwd + metrics.netTwd;
+          const sellRatio = shares / existing.shares;
+          const costBasisTwd = prevCostTwd * sellRatio;
+          realizedPnlTwdThisTrade = Math.round(metrics.netTwd - costBasisTwd);
 
-          existing.shares = newShares;
-          existing.totalCost = newTotalCostNative;
-          existing.avgCost = newTotalCostNative / newShares;
-          existing.totalCostTwd = newTotalCostTwd;
-          existing.currency = metrics.currency;
-          existing.fxRateAtBuy = metrics.currency === 'USD' ? (newTotalCostTwd / newTotalCostNative) : 1;
-          existing.isEtf = isEtf;
-          existing.name = stockName;
-        } else {
-          const totalCostNative = metrics.grossAmount + metrics.fee;
-          acc.holdings[sym] = {
-            symbol: sym,
-            name: stockName,
-            currency: metrics.currency,
-            fxRateAtBuy: metrics.fxRate,
-            shares,
-            totalCost: totalCostNative,
-            avgCost: totalCostNative / shares,
-            totalCostTwd: metrics.netTwd,
-            isEtf
-          };
+          acc.cash = Number((acc.cash + metrics.netTwd).toFixed(2));
+          acc.realizedPnl = Number((acc.realizedPnl + realizedPnlTwdThisTrade).toFixed(2));
+
+          const remShares = existing.shares - shares;
+          if (remShares <= 0) {
+            delete acc.holdings[sym];
+          } else {
+            existing.shares = remShares;
+            existing.totalCost = existing.avgCost * remShares;
+            existing.totalCostTwd = Math.max(0, prevCostTwd - costBasisTwd);
+          }
         }
-      } else {
-        const existing = acc.holdings[sym];
-        const prevCostTwd = Number.isFinite(existing.totalCostTwd)
-          ? existing.totalCostTwd
-          : (existing.totalCost * (metrics.currency === 'USD' ? metrics.fxRate : 1));
-        const sellRatio = shares / existing.shares;
-        const costBasisTwd = prevCostTwd * sellRatio;
-        realizedPnlTwdThisTrade = Math.round(metrics.netTwd - costBasisTwd);
 
-        acc.cash = Number((acc.cash + metrics.netTwd).toFixed(2));
-        acc.realizedPnl = Number((acc.realizedPnl + realizedPnlTwdThisTrade).toFixed(2));
+        acc.trades.unshift({
+          id: 'tr_' + Date.now(),
+          time: new Date().toISOString(),
+          side,
+          symbol: sym,
+          name: stockName,
+          currency: metrics.currency,
+          fxRate: metrics.fxRate,
+          price,
+          shares,
+          grossAmount: metrics.grossAmount,
+          fee: metrics.fee,
+          tax: metrics.tax,
+          netAmount: metrics.netNative,
+          netAmountTwd: metrics.netTwd,
+          realizedPnl: realizedPnlTwdThisTrade,
+          reason,
+          note
+        });
 
-        const remShares = existing.shares - shares;
-        if (remShares <= 0) {
-          delete acc.holdings[sym];
-        } else {
-          existing.shares = remShares;
-          existing.totalCost = existing.avgCost * remShares;
-          existing.totalCostTwd = Math.max(0, prevCostTwd - costBasisTwd);
-        }
+        pendingOrderPayload = null;
+        closeModal('orderConfirmModal');
+        document.getElementById('orderNote').value = '';
+        saveState();
+        renderSimTab();
+        updateOrderPreview();
+        showToast(
+          `${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 @ ${fmtPrice(price)} ${metrics.currency}`,
+          'success'
+        );
+      } catch (err) {
+        closeModal('orderConfirmModal');
+        showToast('成交寫入發生異常：' + (err && err.message ? err.message : '請重試'), 'error');
       }
-
-      acc.trades.unshift({
-        id: 'tr_' + Date.now(),
-        time: new Date().toISOString(),
-        side,
-        symbol: sym,
-        name: stockName,
-        currency: metrics.currency,
-        fxRate: metrics.fxRate,
-        price,
-        shares,
-        grossAmount: metrics.grossAmount,
-        fee: metrics.fee,
-        tax: metrics.tax,
-        netAmount: metrics.netNative,
-        netAmountTwd: metrics.netTwd,
-        realizedPnl: realizedPnlTwdThisTrade,
-        reason,
-        note
-      });
-
-      pendingOrderPayload = null;
-      closeModal('orderConfirmModal');
-      document.getElementById('orderNote').value = '';
-      saveState();
-      renderSimTab();
-      updateOrderPreview();
-      showToast(
-        `${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 @ ${fmtPrice(price)} ${metrics.currency}`,
-        'success'
-      );
     }
 
     function toggleHoldingRowActions(symbol) {
@@ -3038,16 +3056,18 @@
       const h = acc.holdings[symbol];
       if (!h) return;
       const dispSym = formatDisplaySymbol(symbol);
-      const cur = h.currency || getSymbolCurrency(symbol);
+      const cur = getSymbolCurrency(symbol);
       const cached = appState.marketCache[symbol] || connState.offlineMemoryMap.get(symbol);
-      const curPrice = (cached && cached.price) || h.avgCost;
+      const curPrice = (cached && Number.isFinite(cached.price)) ? cached.price : h.avgCost;
+
       document.getElementById('orderSymbol').value = dispSym;
       document.getElementById('orderPrice').value = curPrice;
       document.getElementById('orderPriceLabel').textContent = `委託單價（${cur}）`;
       document.getElementById('orderQuoteName').textContent = `${dispSym} ${h.name} · ${fmtPrice(curPrice)} ${cur}`;
       document.getElementById('orderIsEtf').checked = Boolean(h.isEtf);
       setOrderSide(side);
-      if (h.shares >= 1000 && h.shares % 1000 === 0 && cur === 'TWD') {
+
+      if (cur === 'TWD' && h.shares >= 1000 && h.shares % 1000 === 0) {
         setOrderUnitMode('LOT');
         document.getElementById('orderQty').value = h.shares / 1000;
       } else {
@@ -3060,21 +3080,9 @@
 
     async function refreshAccountHoldingsPrices(isManual = false) {
       const acc = getActiveAccount();
-      const syms = Object.keys(acc.holdings);
-      if (syms.length === 0) {
-        if (isManual) {
-          const orderSym = document.getElementById('orderSymbol').value.trim();
-          if (orderSym) {
-            await fetchOrderQuote();
-          } else {
-            showToast('目前帳戶尚無持股需要更新現價', 'info');
-          }
-        }
-        return;
-      }
-      if (isManual) {
-        showToast(`正在更新 ${syms.length} 檔持股即時報價...`, 'info');
-      }
+      const syms = Object.keys(acc.holdings || {});
+      if (syms.length === 0) return;
+
       await Promise.allSettled(syms.map(async (sym) => {
         const data = await getMarketData(sym, isManual, { silentError: !isManual });
         if (data && data.name && acc.holdings[sym]) {
@@ -3083,9 +3091,6 @@
       }));
       saveState();
       renderSimTab();
-      if (isManual) {
-        showToast('持股現價更新完成', 'success');
-      }
     }
 
     function computeAccountStats(acc) {
