@@ -338,20 +338,24 @@
           <div id="accountStrategyTag" class="hidden text-[12px] text-[#8A94A6] truncate pt-2"></div>
         </div>
 
-        <!-- 2. 資產總覽主視覺區 -->
+        <!-- 2. 資產總覽主視覺區（累積總損益金額 ＋ 分段資金加權真實報酬率 TWR 並陳） -->
         <div class="px-4 py-5 hairline-b space-y-4">
           <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-[12px] text-[#8A94A6] font-medium">總資產淨值（TWD）</span>
-                <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral">0.00%</span>
+                <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral whitespace-nowrap" title="分段資金加權真實報酬率 (TWR)">真實報酬 0.00%</span>
               </div>
-              <div id="ovTotalAssets" class="text-[34px] sm:text-[38px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5">0</div>
+              <div id="ovTotalAssets" class="text-[32px] sm:text-[36px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5">0</div>
+              <div class="flex items-center gap-1.5 mt-1 text-[12px] num">
+                <span class="text-[#8A94A6]">累積總損益</span>
+                <span id="ovTotalPnl" class="font-bold text-[#8A94A6]">0 TWD</span>
+              </div>
             </div>
 
             <div class="shrink-0 pt-1">
               <button onclick="openDepositModal()"
-                class="tap-btn px-3.5 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full">
+                class="tap-btn px-3.5 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full whitespace-nowrap">
                 + 充值
               </button>
             </div>
@@ -501,13 +505,13 @@
           </button>
         </div>
 
-        <!-- 4. 目前持股 -->
+        <!-- 4. 目前持股（台股部位 / 美股部位分區 + 批次明細展開） -->
         <div class="pt-5 hairline-b">
           <div class="px-4 pb-2.5 flex items-center justify-between">
             <span class="text-[13px] font-bold text-[#F4F6F9]">目前持股</span>
             <span id="holdingsCount" class="text-[12px] num text-[#8A94A6]">0 檔</span>
           </div>
-          <div id="holdingsList" class="divide-y divide-[#1C222D]"></div>
+          <div id="holdingsList"></div>
         </div>
 
         <!-- 5. 交易紀錄 -->
@@ -587,31 +591,34 @@
             <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">MACD</button>
           </div>
 
-          <!-- 均線顯示開關 (僅在 K線+MA 模式顯示，預設未勾選) -->
-          <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num pt-0.5">
-            <div class="flex items-center gap-3.5 flex-wrap">
-              <label class="flex items-center gap-1.5 cursor-pointer">
+          <!-- 均線顯示開關與快捷時間區間切換 -->
+          <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num pt-0.5 overflow-x-auto no-scrollbar">
+            <div class="flex items-center gap-3 shrink-0">
+              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                 <input id="toggleMa0" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa0" class="text-[#F59E0B]">MA5</span>
               </label>
-              <label class="flex items-center gap-1.5 cursor-pointer">
+              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                 <input id="toggleMa1" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa1" class="text-[#38BDF8]">MA20</span>
               </label>
-              <label class="flex items-center gap-1.5 cursor-pointer">
+              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                 <input id="toggleMa2" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa2" class="text-[#C084FC]">MA60</span>
               </label>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <button onclick="fitFullHistoryRange()" class="text-[#FF9900] hover:underline">全歷史</button>
-              <button onclick="openSettingsModal()" class="text-[#8A94A6] hover:text-[#F4F6F9]">參數 ⚙</button>
+            <div class="flex items-center gap-2 shrink-0">
+              <button onclick="zoomChartBars(22)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1M</button>
+              <button onclick="zoomChartBars(66)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">3M</button>
+              <button onclick="zoomChartBars(250)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1Y</button>
+              <button onclick="fitFullHistoryRange()" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#FF9900] font-semibold">全歷史</button>
+              <button onclick="openSettingsModal()" class="text-[#8A94A6] hover:text-[#F4F6F9] pl-0.5">⚙</button>
             </div>
           </div>
 
           <!-- 十字準星精確數值讀數列 -->
           <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2.5 gap-y-0.5 min-h-[20px] items-center">
-            滑動圖表查看詳細數值...
+            滑動或點擊 K 棒查看詳細數值...
           </div>
         </div>
 
@@ -1082,6 +1089,8 @@
             cash: 1000000,
             holdings: {},
             realizedPnl: 0,
+            segments: [],
+            currentSegmentStartNav: 1000000,
             trades: []
           }
         ],
@@ -1100,6 +1109,7 @@
     let lwcResizeObserver = null;
     let currentChartData = null;
     let currentRenderedBars = [];
+    let chartPointerDownPos = null;
     const tabScrollPositions = { sim: 0, chart: 0 };
 
     /* ========================================================================
@@ -1173,18 +1183,60 @@
               const totalCostTwd = Number.isFinite(h.totalCostTwd) && h.totalCostTwd > 0
                 ? h.totalCostTwd
                 : (cur === 'USD' ? h.totalCost * fxAtBuy : h.totalCost);
+
+              let batches = [];
+              if (Array.isArray(h.batches) && h.batches.length > 0) {
+                batches = h.batches
+                  .filter(b => b && Number.isFinite(Number(b.remainingShares)) && Number(b.remainingShares) > 0)
+                  .map((b, idx) => ({
+                    id: b.id || `lot_${sym}_${idx}_${Date.now()}`,
+                    time: b.time || new Date().toISOString(),
+                    price: Number(b.price) || h.avgCost,
+                    remainingShares: Number(b.remainingShares),
+                    origShares: Number(b.origShares) || Number(b.remainingShares),
+                    costNative: Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost)),
+                    costTwd: Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost) * fxAtBuy),
+                    currency: b.currency || cur,
+                    fxRate: Number(b.fxRate) > 0 ? Number(b.fxRate) : fxAtBuy
+                  }));
+              }
+              if (batches.length === 0) {
+                batches = [{
+                  id: `lot_legacy_${sym}_${Date.now()}`,
+                  time: new Date().toISOString(),
+                  price: h.avgCost,
+                  remainingShares: h.shares,
+                  origShares: h.shares,
+                  costNative: h.totalCost,
+                  costTwd: totalCostTwd,
+                  currency: cur,
+                  fxRate: fxAtBuy
+                }];
+              }
+
               cleanHoldings[sym] = {
                 ...h,
                 currency: cur,
                 fxRateAtBuy: fxAtBuy,
-                totalCostTwd
+                totalCostTwd,
+                batches
               };
             }
           }
+          const initCap = Number(a.initialCapital) || 1000000;
+          const totalDep = typeof a.totalDeposited === 'number' ? a.totalDeposited : 0;
+          const segments = Array.isArray(a.segments) ? a.segments : [];
+          const curSegStart = Number.isFinite(Number(a.currentSegmentStartNav)) && Number(a.currentSegmentStartNav) > 0
+            ? Number(a.currentSegmentStartNav)
+            : initCap;
+
           return {
             ...a,
-            totalDeposited: typeof a.totalDeposited === 'number' ? a.totalDeposited : 0,
-            holdings: cleanHoldings
+            initialCapital: initCap,
+            totalDeposited: totalDep,
+            holdings: cleanHoldings,
+            segments,
+            currentSegmentStartNav: curSegStart
           };
         });
 
@@ -1236,7 +1288,6 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       } catch (e) {
-        // 超出瀏覽器 localStorage 容量限制時，自動依序清理最舊的快取項目並重試儲存
         const sortedKeys = Object.keys(appState.marketCache).sort(
           (a, b) => (appState.marketCache[a].fetchedAt || 0) - (appState.marketCache[b].fetchedAt || 0)
         );
@@ -1505,12 +1556,6 @@
       return /^00\d{2,4}/.test(String(symbol || '').trim());
     }
 
-    /**
-     * 歷史 K 線基本合法性檢查：
-     * 1. 過濾掉日期格式無效或 open/high/low/close 為 null、NaN 或 <= 0 的列
-     * 2. 若某根 K 線的 high < low，自動以 Math.max / Math.min 修正，不整根丟棄
-     * 3. 依日期升冪排序並去除重複日期（完整保留數十年分割與漲幅歷史）
-     */
     function sanitizeAndValidateBars(rawBars, expectedPrice = null) {
       if (!Array.isArray(rawBars) || rawBars.length === 0) return [];
 
@@ -1835,9 +1880,6 @@
       };
     }
 
-    /**
-     * 抓取即時 USD/TWD 匯率（優先 open.er-api.com，備援走專屬 Cloudflare Worker 抓取 TWD=X）
-     */
     async function fetchLiveUsdTwdRate(forceRefresh = false) {
       if (!forceRefresh && appState.settings.useManualFx) {
         return getActiveUsdTwdRate();
@@ -1884,11 +1926,6 @@
       }
     }
 
-    /**
-     * 專屬 Cloudflare Worker 唯一美股通道：
-     * 發送標準 GET `${base}/?symbol=${encodeURIComponent(querySymbol)}&range=max&interval=1d`，
-     * 逾時 15000ms，支援 JSON (`{` 開頭) 與全量 CSV (`Date` 開頭) 雙格式回應
-     */
     async function fetchFromDedicatedWorker(querySymbol, canonicalSymbol, externalSignal = null) {
       const base = getWorkerBaseUrl().replace(/\/+$/, '');
       const url = `${base}/?symbol=${encodeURIComponent(querySymbol)}&range=max&interval=1d`;
@@ -1917,16 +1954,10 @@
       throw new Error(`Worker 回傳非預期格式 (${querySymbol})`);
     }
 
-    /**
-     * 美股（及非台股標的）直接走專屬 Cloudflare Worker 抓取完整歷史資料
-     */
     async function fetchUsFromWorkerFullHistory(normalizedSym, externalSignal = null) {
       return await fetchFromDedicatedWorker(normalizedSym, normalizedSym, externalSignal);
     }
 
-    /**
-     * 台股專屬 Worker 備援通道：先試 {code}.TW，若查無資料則改試 {code}.TWO（上櫃）
-     */
     async function fetchTaiwanFromWorkerWithFallback(normalizedSym, externalSignal = null) {
       const code = extractTaiwanCode(normalizedSym);
       const primarySym = normalizedSym.endsWith('.TWO') ? `${code}.TWO` : `${code}.TW`;
@@ -1954,9 +1985,6 @@
       return result;
     }
 
-    /* ------------------------------------------------------------------------
-       4C. 台股免代理原生直連引擎（FinMind 1990 全歷史 + TWSE / TPEx OpenAPI）
-       ------------------------------------------------------------------------ */
     function getTwStockInfoCache() {
       try {
         const raw = localStorage.getItem(TW_INFO_CACHE_KEY);
@@ -2192,9 +2220,6 @@
       };
     }
 
-    /**
-     * 核心全歷史行情取得管線（台股雙軌並行競速 + 美股唯一專屬 Worker 直連 + 本地全歷史快取）
-     */
     async function getMarketData(rawInput, forceRefresh = false, options = {}) {
       const { silentError = false } = options;
       const sym = normalizeSymbol(rawInput);
@@ -2211,7 +2236,6 @@
         cached.bars.length >= 5
       );
 
-      // 1. 全歷史本地快取加速
       if (!forceRefresh && hasFullHistoryCache) {
         const age = Date.now() - (cached.fetchedAt || 0);
         const isSameDay = getCachedBarsDateKey(cached) === todayStr;
@@ -2221,7 +2245,6 @@
         }
       }
 
-      // 2. 進行中請求去重 (In-Flight Deduplication)
       const myEpoch = connState.requestEpoch;
       const existingReq = connState.inFlightMap.get(sym);
       if (existingReq && existingReq.epoch === myEpoch) {
@@ -2240,7 +2263,6 @@
                 (sig) => fetchTaiwanFromWorkerWithFallback(sym, linkAbortSignals(sig, pipelineSignal))
               ]);
             } else {
-              // 美股及非台股標的：唯一直接透過專屬 Cloudflare Worker 抓取完整歷史資料 (range=max)
               return await fetchUsFromWorkerFullHistory(sym, pipelineSignal);
             }
           }, WORKER_FETCH_TIMEOUT_MS + 1500, `${dispSym} 全歷史連線`);
@@ -2284,9 +2306,6 @@
       return pipelineTask;
     }
 
-    /**
-     * 一鍵硬重置重連 (Hard Reset Reconnect)
-     */
     async function hardResetReconnect(silent = false) {
       connState.requestEpoch += 1;
       connState.inFlightMap.clear();
@@ -2403,7 +2422,7 @@
             </div>
             <div class="text-right shrink-0 num">
               <div class="text-[14px] font-bold text-[#F4F6F9]">${fmtMoney(st.totalAssets, 0)}</div>
-              <div class="text-[11px] ${getPnlClass(st.totalRoi)}">${fmtSignedPct(st.totalRoi)}</div>
+              <div class="text-[11px] ${getPnlClass(st.twrRoiPct)}">${fmtSignedPct(st.twrRoiPct)}</div>
             </div>
           </button>
         `;
@@ -2461,6 +2480,8 @@
           cash: Math.round(cap),
           holdings: {},
           realizedPnl: 0,
+          segments: [],
+          currentSegmentStartNav: Math.round(cap),
           trades: []
         };
         appState.accounts.push(newAcc);
@@ -2499,9 +2520,28 @@
       const depositAmount = Math.round(rawVal);
       const acc = getActiveAccount();
 
+      // 結算充值前一刻的資金分段報酬率（Time-Weighted Return 鏈乘基準）
+      const preStats = computeAccountStats(acc);
+      const preNav = preStats.totalAssets;
+      const segStartNav = Number.isFinite(acc.currentSegmentStartNav) && acc.currentSegmentStartNav > 0
+        ? acc.currentSegmentStartNav
+        : acc.initialCapital;
+      const segReturn = segStartNav > 0 ? (preNav - segStartNav) / segStartNav : 0;
+
+      if (!Array.isArray(acc.segments)) acc.segments = [];
+      acc.segments.push({
+        id: 'seg_' + Date.now(),
+        closedAt: new Date().toISOString(),
+        startNav: segStartNav,
+        endNav: preNav,
+        returnRate: segReturn,
+        depositAdded: depositAmount
+      });
+
       acc.cash = Number((acc.cash + depositAmount).toFixed(2));
       acc.initialCapital = Number((acc.initialCapital + depositAmount).toFixed(2));
       acc.totalDeposited = Number(((acc.totalDeposited || 0) + depositAmount).toFixed(2));
+      acc.currentSegmentStartNav = Number((preNav + depositAmount).toFixed(2));
 
       acc.trades.unshift({
         id: 'dep_' + Date.now(),
@@ -2527,7 +2567,7 @@
       closeModal('depositModal');
       renderSimTab();
       updateOrderPreview();
-      showToast(`已成功充值 $${fmtMoney(depositAmount)} TWD，本金已同步更新`, 'success');
+      showToast(`已成功充值 $${fmtMoney(depositAmount)} TWD，真實報酬率分段已鎖定`, 'success');
     }
 
     function confirmResetAccount() {
@@ -2540,6 +2580,8 @@
           acc.cash = acc.initialCapital;
           acc.holdings = {};
           acc.realizedPnl = 0;
+          acc.segments = [];
+          acc.currentSegmentStartNav = acc.initialCapital;
           acc.trades = [];
           saveState();
           renderSimTab();
@@ -2797,7 +2839,7 @@
       const isUsd = currency === 'USD';
       const dec = isUsd ? 2 : 0;
 
-      document.getElementById('prevGross').textContent = `${fmtMoney(shares)} 股 · 成交 ${isUsd ? '$' : '$'}${fmtMoney(m.grossAmount, dec)} ${currency}`;
+      document.getElementById('prevGross').textContent = `${fmtMoney(shares)} 股 · 成交 $${fmtMoney(m.grossAmount, dec)} ${currency}`;
 
       if (orderSide === 'BUY') {
         document.getElementById('prevFeeTax').textContent = `手續費 $${fmtMoney(m.fee, dec)} · 買進免證交稅`;
@@ -2954,17 +2996,46 @@
         }
 
         let realizedPnlTwdThisTrade = null;
+        const tradeIsoTime = new Date().toISOString();
 
         if (side === 'BUY') {
           acc.cash = Number((acc.cash - metrics.netTwd).toFixed(2));
+          const totalCostNative = metrics.grossAmount + metrics.fee;
+          const newBatch = {
+            id: 'lot_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            time: tradeIsoTime,
+            price,
+            remainingShares: shares,
+            origShares: shares,
+            costNative: totalCostNative,
+            costTwd: metrics.netTwd,
+            currency: metrics.currency,
+            fxRate: metrics.fxRate
+          };
+
           const existing = acc.holdings[sym];
           if (existing) {
             const newShares = existing.shares + shares;
-            const newTotalCostNative = existing.totalCost + metrics.grossAmount + metrics.fee;
+            const newTotalCostNative = existing.totalCost + totalCostNative;
             const prevCostTwd = Number.isFinite(existing.totalCostTwd)
               ? existing.totalCostTwd
               : (existing.totalCost * (metrics.currency === 'USD' ? metrics.fxRate : 1));
             const newTotalCostTwd = prevCostTwd + metrics.netTwd;
+
+            if (!Array.isArray(existing.batches)) {
+              existing.batches = [{
+                id: 'lot_init_' + Date.now(),
+                time: tradeIsoTime,
+                price: existing.avgCost,
+                remainingShares: existing.shares,
+                origShares: existing.shares,
+                costNative: existing.totalCost,
+                costTwd: prevCostTwd,
+                currency: existing.currency || metrics.currency,
+                fxRate: existing.fxRateAtBuy || metrics.fxRate
+              }];
+            }
+            existing.batches.push(newBatch);
 
             existing.shares = newShares;
             existing.totalCost = newTotalCostNative;
@@ -2975,7 +3046,6 @@
             existing.isEtf = isEtf;
             existing.name = stockName;
           } else {
-            const totalCostNative = metrics.grossAmount + metrics.fee;
             acc.holdings[sym] = {
               symbol: sym,
               name: stockName,
@@ -2985,7 +3055,8 @@
               totalCost: totalCostNative,
               avgCost: totalCostNative / shares,
               totalCostTwd: metrics.netTwd,
-              isEtf
+              isEtf,
+              batches: [newBatch]
             };
           }
         } else {
@@ -3000,6 +3071,30 @@
           acc.cash = Number((acc.cash + metrics.netTwd).toFixed(2));
           acc.realizedPnl = Number((acc.realizedPnl + realizedPnlTwdThisTrade).toFixed(2));
 
+          // 依先進先出 (FIFO) 扣減各批次剩餘股數與批次成本
+          if (Array.isArray(existing.batches)) {
+            let sharesToDeduct = shares;
+            const updatedBatches = [];
+            for (const b of existing.batches) {
+              if (sharesToDeduct <= 0) {
+                updatedBatches.push(b);
+                continue;
+              }
+              const rem = Number(b.remainingShares) || 0;
+              if (rem <= sharesToDeduct) {
+                sharesToDeduct -= rem;
+              } else {
+                const keepRatio = (rem - sharesToDeduct) / rem;
+                b.remainingShares = rem - sharesToDeduct;
+                b.costNative = Number((b.costNative * keepRatio).toFixed(4));
+                b.costTwd = Number((b.costTwd * keepRatio).toFixed(2));
+                sharesToDeduct = 0;
+                updatedBatches.push(b);
+              }
+            }
+            existing.batches = updatedBatches;
+          }
+
           const remShares = existing.shares - shares;
           if (remShares <= 0) {
             delete acc.holdings[sym];
@@ -3012,7 +3107,7 @@
 
         acc.trades.unshift({
           id: 'tr_' + Date.now(),
-          time: new Date().toISOString(),
+          time: tradeIsoTime,
           side,
           symbol: sym,
           name: stockName,
@@ -3037,7 +3132,7 @@
         renderSimTab();
         updateOrderPreview();
         showToast(
-          `${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 @ ${fmtPrice(price)} ${metrics.currency}`,
+          `${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 · 單價 ${fmtPrice(price)} ${metrics.currency}`,
           'success'
         );
       } catch (err) {
@@ -3110,9 +3205,50 @@
         const costTwd = Number.isFinite(h.totalCostTwd) && h.totalCostTwd > 0
           ? h.totalCostTwd
           : (h.totalCost * fxRate);
+        const unrealizedNative = marketValNative - h.totalCost;
         const unrealizedTwd = marketValTwd - costTwd;
         const unrealizedPct = costTwd > 0 ? (unrealizedTwd / costTwd) * 100 : 0;
         const breakEven = calculateBreakEvenPrice(h.avgCost, h.shares, h.isEtf, currency);
+
+        const rawBatches = Array.isArray(h.batches) && h.batches.length > 0
+          ? h.batches
+          : [{
+              id: 'lot_single_' + h.symbol,
+              time: new Date().toISOString(),
+              price: h.avgCost,
+              remainingShares: h.shares,
+              origShares: h.shares,
+              costNative: h.totalCost,
+              costTwd,
+              currency,
+              fxRate: h.fxRateAtBuy || fxRate
+            }];
+
+        const batchRows = rawBatches.map((b, idx) => {
+          const bShares = Number(b.remainingShares) || 0;
+          const bPrice = Number(b.price) || h.avgCost;
+          const bCostNative = Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (bPrice * bShares);
+          const bCostTwd = Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (bCostNative * (b.fxRate || fxRate));
+          const bValNative = curPrice * bShares;
+          const bValTwd = bValNative * fxRate;
+          const bPnlNative = bValNative - bCostNative;
+          const bPnlTwd = bValTwd - bCostTwd;
+          const bPerShareDiff = curPrice - bPrice;
+          const bPct = bCostTwd > 0 ? (bPnlTwd / bCostTwd) * 100 : 0;
+          return {
+            index: idx + 1,
+            time: b.time,
+            price: bPrice,
+            shares: bShares,
+            costNative: bCostNative,
+            costTwd: bCostTwd,
+            pnlNative: bPnlNative,
+            pnlTwd: bPnlTwd,
+            perShareDiff: bPerShareDiff,
+            pct: bPct,
+            currency
+          };
+        });
 
         holdingsMarketValueTwd += marketValTwd;
         holdingsCostTotalTwd += costTwd;
@@ -3124,27 +3260,136 @@
           marketValNative,
           marketValTwd,
           costTwd,
+          unrealizedNative,
           unrealizedTwd,
           unrealizedPct,
-          breakEven
+          breakEven,
+          batchRows
         });
       });
 
       const totalAssets = acc.cash + holdingsMarketValueTwd;
       const totalPnl = totalAssets - acc.initialCapital;
-      const totalRoi = acc.initialCapital > 0 ? (totalPnl / acc.initialCapital) * 100 : 0;
+
+      // 分段資金加權真實報酬率 (TWR / 分段鏈乘)
+      let compoundedFactor = 1;
+      const pastSegments = Array.isArray(acc.segments) ? acc.segments : [];
+      for (const seg of pastSegments) {
+        const r = Number(seg.returnRate);
+        if (Number.isFinite(r)) {
+          compoundedFactor *= (1 + r);
+        }
+      }
+      const curStartNav = Number.isFinite(acc.currentSegmentStartNav) && acc.currentSegmentStartNav > 0
+        ? acc.currentSegmentStartNav
+        : acc.initialCapital;
+      const currentSegReturn = curStartNav > 0 ? (totalAssets - curStartNav) / curStartNav : 0;
+      compoundedFactor *= (1 + currentSegReturn);
+
+      const twrRoiPct = (compoundedFactor - 1) * 100;
       const unrealizedTotal = holdingsMarketValueTwd - holdingsCostTotalTwd;
       const unrealizedPctTotal = holdingsCostTotalTwd > 0 ? (unrealizedTotal / holdingsCostTotalTwd) * 100 : 0;
 
       return {
         totalAssets,
+        totalPnl,
+        twrRoiPct,
         holdingsMarketValueTwd,
         holdingsCostTotalTwd,
         unrealizedTotal,
         unrealizedPctTotal,
-        totalRoi,
         rows
       };
+    }
+
+    function renderHoldingCardHtml(r) {
+      const dispSym = escapeHtml(formatDisplaySymbol(r.symbol));
+      const rawSym = escapeHtml(r.symbol);
+      const isExpanded = expandedHoldingSym === r.symbol;
+      const isUsd = r.currency === 'USD';
+      const batchCount = r.batchRows.length;
+
+      const batchesHtml = r.batchRows.map(b => {
+        const dt = new Date(b.time);
+        const dateLabel = !isNaN(dt.getTime())
+          ? `${dt.getMonth() + 1}/${dt.getDate()}`
+          : '--/--';
+        const diffSign = b.perShareDiff > 0 ? '+' : '';
+        const pnlStr = isUsd
+          ? `${fmtSignedMoney(b.pnlTwd, 0)} TWD (${fmtSignedMoney(b.pnlNative, 2)} USD)`
+          : `${fmtSignedMoney(b.pnlTwd, 0)} TWD`;
+        return `
+          <div class="py-2 px-2.5 bg-[#12161F] rounded-[7px] flex items-center justify-between gap-2 text-[11px] num">
+            <div class="min-w-0">
+              <div class="text-[#D1D5DB]">
+                第${b.index}批 ${dateLabel} · ${fmtMoney(b.shares)}股 · 買進 ${fmtPrice(b.price)} ${b.currency}
+              </div>
+              <div class="text-[10px] text-[#8A94A6] mt-0.5">
+                每股 ${diffSign}${fmtPrice(b.perShareDiff)} ${b.currency}
+              </div>
+            </div>
+            <div class="text-right shrink-0 ${getPnlClass(b.pnlTwd)}">
+              <div class="font-semibold">${pnlStr}</div>
+              <div>${fmtSignedPct(b.pct)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div onclick="toggleHoldingRowActions('${rawSym}')" class="px-4 py-3.5 cursor-pointer active:bg-[#12161F] transition-colors">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[14px] font-bold text-[#F4F6F9] truncate">${escapeHtml(r.name)}</span>
+                <span class="text-[12px] font-medium num text-[#8A94A6] shrink-0">${dispSym}</span>
+                ${isUsd ? '<span class="text-[10px] px-1.5 py-0.2 bg-[rgba(255,153,0,0.14)] text-[#FF9900] rounded shrink-0">USD</span>' : ''}
+                ${r.isEtf ? '<span class="text-[10px] px-1.5 py-0.2 bg-[#171C26] text-[#38BDF8] rounded shrink-0">ETF</span>' : ''}
+                ${batchCount > 1 ? `<span class="text-[10px] px-1.5 py-0.2 bg-[#171C26] text-[#8A94A6] rounded shrink-0">${batchCount}批</span>` : ''}
+              </div>
+              <div class="text-[11px] num text-[#8A94A6] mt-1 leading-relaxed">
+                ${isUsd
+                  ? `${fmtMoney(r.shares)}股 · 均 $${fmtPrice(r.avgCost)} · 現 $${fmtPrice(r.curPrice)} USD`
+                  : `${fmtMoney(r.shares)}股 · 均 ${fmtPrice(r.avgCost)} · 現 ${fmtPrice(r.curPrice)} TWD · 損平 ${fmtPrice(r.breakEven)}`}
+              </div>
+            </div>
+
+            <div class="text-right shrink-0 num">
+              <div class="text-[14px] font-bold ${getPnlClass(r.unrealizedTwd)}">
+                ${fmtSignedMoney(r.unrealizedTwd, 0)} <span class="text-[10px] font-normal text-[#8A94A6]">TWD</span>
+              </div>
+              ${isUsd ? `
+                <div class="text-[11px] ${getPnlClass(r.unrealizedNative)} mt-0.5">
+                  (${fmtSignedMoney(r.unrealizedNative, 2)} USD) · ${fmtSignedPct(r.unrealizedPct)}
+                </div>
+              ` : `
+                <div class="text-[11px] ${getPnlClass(r.unrealizedTwd)} mt-0.5">
+                  ${fmtSignedPct(r.unrealizedPct)}
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="${isExpanded ? 'block' : 'hidden'} pt-2.5 mt-2.5 hairline-t space-y-2.5 text-[12px]" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="num text-[#8A94A6]">
+                ${isUsd
+                  ? `市值 $${fmtMoney(r.marketValTwd, 0)} TWD · $${fmtMoney(r.marketValNative, 2)} USD`
+                  : `市值 $${fmtMoney(r.marketValTwd, 0)} TWD`}
+              </span>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="jumpToChart('${rawSym}')" class="tap-btn px-3 py-1 bg-[#171C26] text-[#38BDF8] font-semibold rounded-[6px]">看線圖</button>
+                <button onclick="prefillOrderFromHolding('${rawSym}','SELL')" class="tap-btn px-3 py-1 bg-[#171C26] text-[#FF9900] font-semibold rounded-[6px]">帶入賣出</button>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="text-[11px] text-[#8A94A6] font-medium">買進批次明細（共 ${batchCount} 批）</div>
+              ${batchesHtml}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function renderSimTab() {
@@ -3167,10 +3412,14 @@
       document.getElementById('ovTotalAssets').textContent = fmtMoney(st.totalAssets, 0);
 
       const roiEl = document.getElementById('ovTotalRoi');
-      roiEl.textContent = fmtSignedPct(st.totalRoi);
-      roiEl.className = `px-2 py-0.5 text-[11px] font-semibold num rounded-full ${
-        st.totalRoi > 0 ? 'pill-up' : (st.totalRoi < 0 ? 'pill-down' : 'pill-neutral')
+      roiEl.textContent = `真實報酬 ${fmtSignedPct(st.twrRoiPct)}`;
+      roiEl.className = `px-2 py-0.5 text-[11px] font-semibold num rounded-full whitespace-nowrap ${
+        st.twrRoiPct > 0 ? 'pill-up' : (st.twrRoiPct < 0 ? 'pill-down' : 'pill-neutral')
       }`;
+
+      const totalPnlEl = document.getElementById('ovTotalPnl');
+      totalPnlEl.textContent = `${fmtSignedMoney(st.totalPnl, 0)} TWD`;
+      totalPnlEl.className = `font-bold ${getPnlClass(st.totalPnl)}`;
 
       document.getElementById('ovCash').textContent = fmtMoney(acc.cash, 0);
       const depNote = acc.totalDeposited > 0 ? ` (+${fmtMoney(acc.totalDeposited, 0)})` : '';
@@ -3189,53 +3438,52 @@
       reEl.className = `text-[15px] font-bold num mt-1 truncate ${getPnlClass(acc.realizedPnl)}`;
       document.getElementById('ovHoldingsVal').textContent = `現值 ${fmtMoney(st.holdingsMarketValueTwd, 0)}`;
 
+      // 持股分區：台股部位 (TWD) 與 美股部位 (USD / TWD)
+      const twRows = st.rows.filter(r => r.currency !== 'USD');
+      const usRows = st.rows.filter(r => r.currency === 'USD');
+
       document.getElementById('holdingsCount').textContent = `${st.rows.length} 檔`;
       const hList = document.getElementById('holdingsList');
       if (st.rows.length === 0) {
         hList.innerHTML = `<div class="px-4 py-7 text-center text-[12px] text-[#586274]">目前無持有部位</div>`;
       } else {
-        hList.innerHTML = st.rows.map(r => {
-          const dispSym = escapeHtml(formatDisplaySymbol(r.symbol));
-          const rawSym = escapeHtml(r.symbol);
-          const isExpanded = expandedHoldingSym === r.symbol;
-          const isUsd = r.currency === 'USD';
-          return `
-            <div onclick="toggleHoldingRowActions('${rawSym}')" class="px-4 py-3.5 cursor-pointer active:bg-[#12161F] transition-colors">
-              <div class="flex items-center justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[14px] font-bold text-[#F4F6F9] truncate">${escapeHtml(r.name)}</span>
-                    <span class="text-[12px] font-medium num text-[#8A94A6] shrink-0">${dispSym}</span>
-                    ${isUsd ? '<span class="text-[10px] px-1.5 py-0.2 bg-[rgba(255,153,0,0.14)] text-[#FF9900] rounded shrink-0">USD</span>' : ''}
-                    ${r.isEtf ? '<span class="text-[10px] px-1.5 py-0.2 bg-[#171C26] text-[#38BDF8] rounded shrink-0">ETF</span>' : ''}
-                  </div>
-                  <div class="text-[11px] num text-[#8A94A6] mt-1">
-                    ${fmtMoney(r.shares)}股 · 均 ${fmtPrice(r.avgCost)} ${r.currency} · 損平 ${fmtPrice(r.breakEven)}
-                  </div>
-                </div>
+        let sectionsHtml = '';
 
-                <div class="text-right shrink-0 num">
-                  <div class="text-[14px] font-bold ${getPnlClass(r.unrealizedTwd)}">${fmtSignedMoney(r.unrealizedTwd, 0)} <span class="text-[10px] font-normal text-[#8A94A6]">TWD</span></div>
-                  <div class="text-[11px] ${getPnlClass(r.unrealizedTwd)} mt-0.5">
-                    ${fmtSignedPct(r.unrealizedPct)} <span class="text-[#8A94A6]">· ${fmtPrice(r.curPrice)} ${r.currency}</span>
-                  </div>
-                </div>
+        if (twRows.length > 0) {
+          const twSubVal = twRows.reduce((s, r) => s + r.marketValTwd, 0);
+          sectionsHtml += `
+            <div>
+              <div class="px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px]">
+                <span class="font-semibold text-[#8A94A6]">台股部位（TWD）</span>
+                <span class="num text-[#586274]">${twRows.length} 檔 · 市值 $${fmtMoney(twSubVal, 0)}</span>
               </div>
-
-              <div class="${isExpanded ? 'flex' : 'hidden'} items-center justify-between pt-2.5 mt-2.5 hairline-t text-[12px]" onclick="event.stopPropagation()">
-                <span class="num text-[#8A94A6]">
-                  折合市值 $${fmtMoney(r.marketValTwd, 0)} TWD${isUsd ? ` ($${fmtMoney(r.marketValNative, 2)} USD)` : ''}
-                </span>
-                <div class="flex items-center gap-2 shrink-0">
-                  <button onclick="jumpToChart('${rawSym}')" class="tap-btn px-3 py-1 bg-[#171C26] text-[#38BDF8] font-semibold rounded-[6px]">看線圖</button>
-                  <button onclick="prefillOrderFromHolding('${rawSym}','SELL')" class="tap-btn px-3 py-1 bg-[#171C26] text-[#FF9900] font-semibold rounded-[6px]">帶入賣出</button>
-                </div>
+              <div class="divide-y divide-[#1C222D]">
+                ${twRows.map(r => renderHoldingCardHtml(r)).join('')}
               </div>
             </div>
           `;
-        }).join('');
+        }
+
+        if (usRows.length > 0) {
+          const usSubValTwd = usRows.reduce((s, r) => s + r.marketValTwd, 0);
+          const usSubValUsd = usRows.reduce((s, r) => s + r.marketValNative, 0);
+          sectionsHtml += `
+            <div>
+              <div class="px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px] gap-2">
+                <span class="font-semibold text-[#8A94A6]">美股部位（USD / TWD）</span>
+                <span class="num text-[#586274] truncate">${usRows.length} 檔 · $${fmtMoney(usSubValUsd, 2)} USD ($${fmtMoney(usSubValTwd, 0)})</span>
+              </div>
+              <div class="divide-y divide-[#1C222D]">
+                ${usRows.map(r => renderHoldingCardHtml(r)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        hList.innerHTML = sectionsHtml;
       }
 
+      // 交易紀錄（移除 @ 符號、雙行完整呈現每股單價不截斷）
       document.getElementById('tradesCount').textContent = `${acc.trades.length} 筆`;
       const tList = document.getElementById('tradesList');
       if (acc.trades.length === 0) {
@@ -3251,7 +3499,7 @@
                 <div class="flex items-center gap-2">
                   <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[rgba(255,153,0,0.14)] text-[#FF9900]">充值</span>
                   <span class="font-bold num text-[#F4F6F9]">+${fmtMoney(t.netAmount, 0)} TWD</span>
-                  <span class="text-[#586274]">本金同步更新</span>
+                  <span class="text-[#586274]">真實報酬分段已鎖定</span>
                 </div>
                 <span class="num text-[11px] text-[#586274]">${ts}</span>
               </div>
@@ -3263,14 +3511,14 @@
           const isUsd = trCur === 'USD';
           const twdTotal = Number.isFinite(t.netAmountTwd) ? t.netAmountTwd : t.netAmount;
           const sideTag = t.side === 'BUY'
-            ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded pill-up">買</span>`
-            : `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded pill-down">賣</span>`;
+            ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded pill-up shrink-0">買</span>`
+            : `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded pill-down shrink-0">賣</span>`;
           const pnlHtml = t.realizedPnl !== null && t.realizedPnl !== undefined
             ? `<span class="num font-bold ${getPnlClass(t.realizedPnl)}">${fmtSignedMoney(t.realizedPnl, 0)} TWD</span>`
-            : `<span class="num text-[#8A94A6]">$${fmtMoney(twdTotal, 0)} TWD</span>`;
+            : `<span class="num font-semibold text-[#F4F6F9]">$${fmtMoney(twdTotal, 0)} TWD</span>`;
           const reasonLabel = (t.reason && t.reason !== '未填寫') ? t.reason : '';
           const fxNote = isUsd && Number.isFinite(t.fxRate) ? `匯率 ${Number(t.fxRate).toFixed(2)}` : '';
-          const subNote = [fxNote, reasonLabel, t.note].filter(Boolean).join(' · ');
+          const metaParts = [fxNote, reasonLabel, t.note, ts].filter(Boolean).join(' · ');
 
           return `
             <div class="px-4 py-3 text-[12px] space-y-1">
@@ -3278,14 +3526,16 @@
                 <div class="flex items-center gap-1.5 min-w-0">
                   ${sideTag}
                   <span class="font-bold text-[#F4F6F9]">${dispSym}</span>
-                  <span class="num text-[#8A94A6] truncate">${fmtMoney(t.shares)}股 @ ${fmtPrice(t.price)} ${trCur}</span>
+                  ${t.name && formatDisplaySymbol(t.name) !== dispSym ? `<span class="text-[11px] text-[#8A94A6] truncate">${escapeHtml(t.name)}</span>` : ''}
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="shrink-0">
                   ${pnlHtml}
-                  <span class="num text-[11px] text-[#586274]">${ts}</span>
                 </div>
               </div>
-              ${subNote ? `<div class="text-[11px] text-[#586274] truncate pl-6">${escapeHtml(subNote)}</div>` : ''}
+              <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 pl-6 text-[11px] num">
+                <span class="text-[#D1D5DB] whitespace-nowrap">${fmtMoney(t.shares)}股 · 單價 ${fmtPrice(t.price)} ${trCur}</span>
+                <span class="text-[#586274]">${escapeHtml(metaParts)}</span>
+              </div>
             </div>
           `;
         }).join('');
@@ -3298,7 +3548,8 @@
         `========================================`,
         `【帳戶名稱】${getAccountDisplayName(acc)} (計價基準: TWD 新台幣 | 當前 USD/TWD: ${getActiveUsdTwdRate().toFixed(2)})`,
         `【策略說明】${acc.strategy ? acc.strategy : '未填寫'}`,
-        `【資金總覽】本金: ${fmtMoney(acc.initialCapital)} TWD (含累計充值: ${fmtMoney(acc.totalDeposited || 0)}) | 總資產: ${fmtMoney(st.totalAssets, 0)} TWD | 總報酬率: ${fmtSignedPct(st.totalRoi)}`,
+        `【資金總覽】淨投入本金: ${fmtMoney(acc.initialCapital)} TWD (含累計充值: ${fmtMoney(acc.totalDeposited || 0)}) | 總資產: ${fmtMoney(st.totalAssets, 0)} TWD`,
+        `【真實績效】累積總損益: ${fmtSignedMoney(st.totalPnl, 0)} TWD | 分段資金加權真實報酬率(TWR): ${fmtSignedPct(st.twrRoiPct)}`,
         `【現金損益】可用現金: ${fmtMoney(acc.cash, 0)} TWD | 未實現損益: ${fmtSignedMoney(st.unrealizedTotal, 0)} TWD (${fmtSignedPct(st.unrealizedPctTotal)}) | 累計已實現: ${fmtSignedMoney(acc.realizedPnl, 0)} TWD`,
         `--- 目前持股 (${st.rows.length} 檔) ---`
       ];
@@ -3307,7 +3558,7 @@
       } else {
         st.rows.forEach(r => {
           const dispSym = formatDisplaySymbol(r.symbol);
-          const fxPart = r.currency === 'USD' ? ` | 折合台幣市值 ${fmtMoney(r.marketValTwd, 0)} TWD` : '';
+          const fxPart = r.currency === 'USD' ? ` | 折合台幣市值 ${fmtMoney(r.marketValTwd, 0)} TWD ($${fmtMoney(r.marketValNative, 2)} USD)` : '';
           lines.push(`  • ${dispSym} (${r.name}) [${r.currency}]: ${fmtMoney(r.shares)}股 | 均價 ${fmtPrice(r.avgCost)} ${r.currency} | 現價 ${fmtPrice(r.curPrice)} ${r.currency} | 損平 ${fmtPrice(r.breakEven)}${fxPart} | 未實現 ${fmtSignedMoney(r.unrealizedTwd, 0)} TWD (${fmtSignedPct(r.unrealizedPct)})`);
         });
       }
@@ -3318,7 +3569,7 @@
         acc.trades.slice(0, 15).forEach(t => {
           const d = t.time.slice(0, 16).replace('T', ' ');
           if (t.side === 'DEPOSIT') {
-            lines.push(`  • [${d}] 帳戶充值 +${fmtMoney(t.netAmount, 0)} TWD (不計入交易損益)`);
+            lines.push(`  • [${d}] 帳戶充值 +${fmtMoney(t.netAmount, 0)} TWD (已鎖定前置分段報酬率)`);
           } else {
             const dispSym = formatDisplaySymbol(t.symbol);
             const trCur = t.currency || getSymbolCurrency(t.symbol);
@@ -3326,7 +3577,7 @@
             const twdVal = Number.isFinite(t.netAmountTwd) ? t.netAmountTwd : t.netAmount;
             const fxDetail = trCur === 'USD' ? ` [匯率 ${Number(t.fxRate || getActiveUsdTwdRate()).toFixed(2)} -> ${fmtMoney(twdVal, 0)} TWD]` : '';
             const pnlPart = t.realizedPnl != null ? ` | 已實現 ${fmtSignedMoney(t.realizedPnl, 0)} TWD` : '';
-            lines.push(`  • [${d}] ${sideTxt} ${dispSym} ${fmtMoney(t.shares)}股 @ ${fmtPrice(t.price)} ${trCur} (費${t.fee}/稅${t.tax})${fxDetail}${pnlPart} | 理由:${t.reason || '未填寫'}${t.note ? ' - ' + t.note : ''}`);
+            lines.push(`  • [${d}] ${sideTxt} ${dispSym} ${fmtMoney(t.shares)}股 · 單價 ${fmtPrice(t.price)} ${trCur} (費${t.fee}/稅${t.tax})${fxDetail}${pnlPart} | 理由:${t.reason || '未填寫'}${t.note ? ' - ' + t.note : ''}`);
           }
         });
       }
@@ -3565,8 +3816,12 @@
     }
 
     function jumpToChart(symbol) {
+      const normSym = normalizeSymbol(symbol);
+      if (!normSym) return;
+      appState.activeChartSymbol = normSym;
+      saveState();
       switchMainTab('chart');
-      loadChartSymbol(symbol, false);
+      loadChartSymbol(normSym, false);
     }
 
     function setChartTimeframe(tf) {
@@ -3581,6 +3836,22 @@
       saveState();
       updateChartControlsUI();
       renderActiveChart();
+    }
+
+    function openChartDatePicker() {
+      const input = document.getElementById('chartDateInput');
+      if (!input) return;
+      try {
+        if (typeof input.showPicker === 'function') {
+          input.showPicker();
+        } else {
+          input.focus();
+          input.click();
+        }
+      } catch (_) {
+        input.focus();
+        input.click();
+      }
     }
 
     function syncChartDatePickerBounds(bars) {
@@ -3598,20 +3869,8 @@
       btnText.textContent = input.value;
     }
 
-    function openChartDatePicker() {
-      const input = document.getElementById('chartDateInput');
-      if (!input) return;
-      if (typeof input.showPicker === 'function') {
-        try {
-          input.showPicker();
-          return;
-        } catch (_) {}
-      }
-      input.focus();
-      input.click();
-    }
-
-    function jumpChartToSelectedDate(targetDate) {
+    function jumpChartToSelectedDate(targetDate, options = {}) {
+      const { showNotice = true } = options;
       if (!targetDate || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
 
       let bestIdx = 0;
@@ -3649,11 +3908,25 @@
 
       updateCrosshairReadoutAtIndex(currentRenderedBars, bestIdx, appState.activeChartMode);
 
-      if (!exactMatch && matchedBar.time !== targetDate) {
-        showToast(`${targetDate} 非交易日，已跳轉至最近交易日 ${matchedBar.time}`, 'info');
-      } else {
-        showToast(`已跳轉至 ${matchedBar.time} 盤面`, 'success');
+      if (showNotice) {
+        if (!exactMatch && matchedBar.time !== targetDate) {
+          showToast(`${targetDate} 非交易日，已跳轉至最近交易日 ${matchedBar.time}`, 'info');
+        } else {
+          showToast(`已跳轉至 ${matchedBar.time} 盤面`, 'success');
+        }
       }
+    }
+
+    function zoomChartBars(barCount) {
+      if (!lwcChart || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+      const total = currentRenderedBars.length;
+      const from = Math.max(0, total - barCount);
+      try {
+        lwcChart.timeScale().setVisibleLogicalRange({
+          from: from - 0.5,
+          to: total + 1.5
+        });
+      } catch (_) {}
     }
 
     function fitFullHistoryRange() {
@@ -3862,7 +4135,6 @@
         seriesRefs.osc = oscHist;
       }
 
-      // 全歷史超過 120 根時預設聚焦最近 120 根讓 K 線清晰可辨，可隨時雙指縮放或按「全歷史」檢視數十年走勢
       if (bars.length > 120) {
         try {
           chart.timeScale().setVisibleLogicalRange({
@@ -3931,6 +4203,31 @@
             ${os ? `<span>OSC:${os.value.toFixed(2)}</span>` : ''}`;
         }
       });
+
+      // 點選 / 輕觸某根 K 棒時，同步更新上方日期選擇器並聚焦跳轉至該日盤面
+      viewport.onpointerdown = (ev) => {
+        chartPointerDownPos = { x: ev.clientX, y: ev.clientY, time: Date.now() };
+      };
+      viewport.onpointerup = (ev) => {
+        if (!chartPointerDownPos || !lwcChart || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+        const dx = Math.abs(ev.clientX - chartPointerDownPos.x);
+        const dy = Math.abs(ev.clientY - chartPointerDownPos.y);
+        const elapsed = Date.now() - chartPointerDownPos.time;
+        chartPointerDownPos = null;
+
+        if (dx < 10 && dy < 10 && elapsed < 450) {
+          const rect = viewport.getBoundingClientRect();
+          const localX = ev.clientX - rect.left;
+          const logicalIdx = lwcChart.timeScale().coordinateToLogical(localX);
+          if (logicalIdx !== null && Number.isFinite(logicalIdx)) {
+            const clampedIdx = Math.max(0, Math.min(currentRenderedBars.length - 1, Math.round(logicalIdx)));
+            const clickedBar = currentRenderedBars[clampedIdx];
+            if (clickedBar && clickedBar.time) {
+              jumpChartToSelectedDate(clickedBar.time, { showNotice: true });
+            }
+          }
+        }
+      };
 
       lwcResizeObserver = new ResizeObserver(entries => {
         if (!lwcChart || !entries[0]) return;
