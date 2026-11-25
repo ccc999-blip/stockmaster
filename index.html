@@ -1225,141 +1225,269 @@
         const ctx = canvas.getContext('2d', { alpha: false });
         if (!ctx) return;
 
-        // 1. 不透明深邃夜紫漸層底色 (RGB 無 Alpha 透明通道，避免 iOS 補黑邊)
+        // 1. 不透明深木夜影與冷藍光暈背景 (RGB 無 Alpha 透明通道，對齊附圖氛圍)
         const bgGrad = ctx.createLinearGradient(0, 0, size, size);
-        bgGrad.addColorStop(0, '#141126');
-        bgGrad.addColorStop(0.55, '#1D1838');
-        bgGrad.addColorStop(1, '#0C0A18');
+        bgGrad.addColorStop(0, '#3C4659');
+        bgGrad.addColorStop(0.45, '#2E2623');
+        bgGrad.addColorStop(1, '#1E1A18');
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, size, size);
 
-        // 2. 柔和光暈背光
-        const halo = ctx.createRadialGradient(90, 86, 12, 90, 86, 82);
-        halo.addColorStop(0, 'rgba(167, 139, 250, 0.34)');
-        halo.addColorStop(1, 'rgba(20, 17, 38, 0)');
-        ctx.fillStyle = halo;
+        // 左側窗光與冷色光暈
+        const leftGlow = ctx.createRadialGradient(22, 74, 6, 22, 74, 88);
+        leftGlow.addColorStop(0, 'rgba(186, 204, 232, 0.55)');
+        leftGlow.addColorStop(0.55, 'rgba(116, 134, 168, 0.25)');
+        leftGlow.addColorStop(1, 'rgba(46, 38, 35, 0)');
+        ctx.fillStyle = leftGlow;
         ctx.fillRect(0, 0, size, size);
 
-        // 3. 繪製薰衣草紫雙馬尾與精靈耳角色頭像剪影 (保留安全邊距以適配 iOS 圓角遮罩)
-        // 後髮與雙馬尾
-        ctx.fillStyle = '#5B4B8A';
+        // 2. 後側深紫長髮與螺旋捲髮尾
+        const backHairGrad = ctx.createLinearGradient(20, 40, 165, 175);
+        backHairGrad.addColorStop(0, '#6B5B9E');
+        backHairGrad.addColorStop(0.55, '#4A3B7C');
+        backHairGrad.addColorStop(1, '#2E2452');
+        ctx.fillStyle = backHairGrad;
         ctx.beginPath();
-        ctx.ellipse(42, 108, 22, 46, -0.18, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(138, 108, 22, 46, 0.18, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 深藍緞帶蝴蝶結
-        ctx.fillStyle = '#1E293B';
-        ctx.beginPath();
-        ctx.moveTo(126, 36);
-        ctx.lineTo(148, 26);
-        ctx.lineTo(144, 48);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(126, 38);
-        ctx.lineTo(152, 54);
-        ctx.lineTo(136, 62);
+        ctx.moveTo(22, 62);
+        ctx.quadraticCurveTo(8, 125, 24, 180);
+        ctx.lineTo(172, 180);
+        ctx.quadraticCurveTo(176, 118, 146, 42);
         ctx.closePath();
         ctx.fill();
 
-        // 精靈尖耳
-        ctx.fillStyle = '#F7C9B6';
+        // 右上深海軍藍緞帶髮飾
+        ctx.fillStyle = '#182436';
         ctx.beginPath();
-        ctx.moveTo(132, 82);
-        ctx.lineTo(156, 70);
-        ctx.lineTo(136, 98);
+        ctx.moveTo(116, 26);
+        ctx.quadraticCurveTo(138, 2, 156, 14);
+        ctx.quadraticCurveTo(150, 34, 132, 42);
         ctx.closePath();
         ctx.fill();
 
-        // 頸部與衣領
-        ctx.fillStyle = '#F3C1AE';
-        ctx.fillRect(78, 126, 24, 24);
-        ctx.fillStyle = '#1E293B';
+        ctx.fillStyle = '#22324A';
         ctx.beginPath();
-        ctx.moveTo(46, 168);
-        ctx.quadraticCurveTo(90, 140, 134, 168);
-        ctx.lineTo(142, 180);
-        ctx.lineTo(38, 180);
+        ctx.moveTo(126, 32);
+        ctx.lineTo(164, 48);
+        ctx.lineTo(146, 62);
+        ctx.lineTo(122, 44);
+        ctx.closePath();
+        ctx.fill();
+
+        // 垂落深藍緞帶尾
+        ctx.fillStyle = '#172334';
+        ctx.beginPath();
+        ctx.moveTo(132, 42);
+        ctx.lineTo(152, 108);
+        ctx.lineTo(134, 114);
+        ctx.lineTo(122, 52);
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. 精靈長尖耳（右側突出）
+        ctx.fillStyle = '#E8AD94';
+        ctx.beginPath();
+        ctx.moveTo(130, 74);
+        ctx.lineTo(162, 56);
+        ctx.quadraticCurveTo(148, 84, 128, 92);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#D48C72';
+        ctx.beginPath();
+        ctx.moveTo(132, 77);
+        ctx.lineTo(155, 62);
+        ctx.lineTo(133, 85);
+        ctx.closePath();
+        ctx.fill();
+
+        // 4. 頸部與深色馬甲、淺藍荷葉領襯衫
+        ctx.fillStyle = '#F2C3AC';
+        ctx.beginPath();
+        ctx.moveTo(76, 122);
+        ctx.lineTo(104, 122);
+        ctx.lineTo(110, 152);
+        ctx.lineTo(72, 152);
+        ctx.closePath();
+        ctx.fill();
+
+        // 頸部陰影
+        ctx.fillStyle = 'rgba(185, 116, 94, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(76, 124);
+        ctx.quadraticCurveTo(92, 134, 104, 124);
+        ctx.lineTo(104, 136);
+        ctx.quadraticCurveTo(90, 142, 76, 134);
+        ctx.closePath();
+        ctx.fill();
+
+        // 深色背心外衣
+        ctx.fillStyle = '#1E2433';
+        ctx.beginPath();
+        ctx.moveTo(42, 180);
+        ctx.lineTo(54, 148);
+        ctx.lineTo(126, 148);
+        ctx.lineTo(144, 180);
         ctx.closePath();
         ctx.fill();
 
         // 淺藍荷葉領
-        ctx.strokeStyle = '#93C5FD';
-        ctx.lineWidth = 4;
+        ctx.fillStyle = '#7FB0E8';
         ctx.beginPath();
-        ctx.moveTo(64, 152);
-        ctx.quadraticCurveTo(90, 164, 116, 152);
-        ctx.stroke();
-
-        // 臉部輪廓
-        ctx.fillStyle = '#FDE0D2';
-        ctx.beginPath();
-        ctx.moveTo(52, 74);
-        ctx.quadraticCurveTo(52, 128, 90, 134);
-        ctx.quadraticCurveTo(128, 128, 128, 74);
-        ctx.quadraticCurveTo(128, 38, 90, 38);
-        ctx.quadraticCurveTo(52, 38, 52, 74);
+        ctx.moveTo(58, 144);
+        ctx.quadraticCurveTo(72, 166, 90, 154);
+        ctx.quadraticCurveTo(108, 168, 122, 144);
+        ctx.lineTo(116, 138);
+        ctx.quadraticCurveTo(90, 156, 66, 138);
         ctx.closePath();
         ctx.fill();
 
-        // 紅寶石眼眸
-        const drawEye = (cx, cy) => {
-          ctx.fillStyle = '#2A0A18';
+        // 領口紫晶胸針
+        ctx.fillStyle = '#A78BFA';
+        ctx.beginPath();
+        ctx.moveTo(114, 164);
+        ctx.lineTo(124, 174);
+        ctx.lineTo(114, 180);
+        ctx.lineTo(104, 174);
+        ctx.closePath();
+        ctx.fill();
+
+        // 5. 臉部輪廓（微側向左下方傾角）
+        const skinGrad = ctx.createLinearGradient(48, 56, 130, 132);
+        skinGrad.addColorStop(0, '#FFF0E6');
+        skinGrad.addColorStop(0.65, '#FCE0CE');
+        skinGrad.addColorStop(1, '#F2C1A8');
+        ctx.fillStyle = skinGrad;
+        ctx.beginPath();
+        ctx.moveTo(46, 68);
+        ctx.quadraticCurveTo(44, 114, 78, 132);
+        ctx.quadraticCurveTo(86, 136, 94, 132);
+        ctx.quadraticCurveTo(128, 118, 132, 70);
+        ctx.quadraticCurveTo(130, 34, 88, 34);
+        ctx.quadraticCurveTo(48, 36, 46, 68);
+        ctx.closePath();
+        ctx.fill();
+
+        // 臉頰微紅腮紅
+        ctx.fillStyle = 'rgba(239, 116, 126, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(62, 102, 11, 5.5, 0.12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(110, 102, 11, 5.5, -0.12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 6. 雙眼（半垂眼簾、紅寶石瞳孔與高光）
+        const drawAnimeEye = (cx, cy, tilt, isRightEye) => {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(tilt);
+
+          // 眼白
+          ctx.fillStyle = '#FFF9F7';
           ctx.beginPath();
-          ctx.ellipse(cx, cy, 9.5, 6.5, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, 1, 11, 6.2, 0, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = '#EF4444';
+
+          // 紅寶石虹膜
+          const irisGrad = ctx.createRadialGradient(0, 0, 1, 0, 1, 6.5);
+          irisGrad.addColorStop(0, '#FF4D6D');
+          irisGrad.addColorStop(0.65, '#C9184A');
+          irisGrad.addColorStop(1, '#590D22');
+          ctx.fillStyle = irisGrad;
           ctx.beginPath();
-          ctx.arc(cx, cy + 0.5, 5.2, 0, Math.PI * 2);
+          ctx.arc(isRightEye ? -0.8 : 0.8, 1.2, 5.6, 0, Math.PI * 2);
           ctx.fill();
+
+          // 瞳孔深心
+          ctx.fillStyle = '#3A0614';
+          ctx.beginPath();
+          ctx.arc(isRightEye ? -0.8 : 0.8, 1.4, 2.3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 眼神高光
           ctx.fillStyle = '#FFFFFF';
           ctx.beginPath();
-          ctx.arc(cx - 2, cy - 1.8, 1.8, 0, Math.PI * 2);
+          ctx.arc((isRightEye ? -0.8 : 0.8) - 2.1, -0.8, 1.7, 0, Math.PI * 2);
           ctx.fill();
+
+          // 上眼瞼與睫毛
+          ctx.strokeStyle = '#241822';
+          ctx.lineWidth = 2.6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-12.5, 0.5);
+          ctx.quadraticCurveTo(0, -5.8, 12.5, 0.8);
+          ctx.stroke();
+
+          ctx.restore();
         };
-        drawEye(72, 92);
-        drawEye(106, 92);
 
-        // 眼下淚痣與微紅臉頰
-        ctx.fillStyle = 'rgba(244, 114, 182, 0.28)';
+        drawAnimeEye(66, 90, 0.08, false);
+        drawAnimeEye(106, 91, -0.06, true);
+
+        // 右眼下方標誌性淚痣
+        ctx.fillStyle = '#3B232B';
         ctx.beginPath();
-        ctx.ellipse(68, 104, 9, 4.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(110, 104, 9, 4.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#3B1D2A';
-        ctx.beginPath();
-        ctx.arc(114, 101, 1.4, 0, Math.PI * 2);
+        ctx.arc(114, 100, 1.6, 0, Math.PI * 2);
         ctx.fill();
 
-        // 薰衣草銀紫瀏海與高光
-        const hairGrad = ctx.createLinearGradient(44, 24, 136, 116);
-        hairGrad.addColorStop(0, '#C4B5FD');
-        hairGrad.addColorStop(0.5, '#A78BFA');
-        hairGrad.addColorStop(1, '#6D5CAE');
-        ctx.fillStyle = hairGrad;
+        // 精緻小鼻影與櫻唇
+        ctx.fillStyle = '#D99B82';
         ctx.beginPath();
-        ctx.moveTo(42, 92);
-        ctx.quadraticCurveTo(42, 24, 92, 24);
-        ctx.quadraticCurveTo(138, 24, 138, 92);
-        ctx.quadraticCurveTo(124, 68, 112, 86);
-        ctx.quadraticCurveTo(102, 62, 90, 88);
-        ctx.quadraticCurveTo(78, 62, 66, 86);
-        ctx.quadraticCurveTo(54, 68, 42, 92);
+        ctx.arc(82, 106, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#C97B6B';
+        ctx.lineWidth = 1.6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(78, 118);
+        ctx.quadraticCurveTo(83, 120, 88, 118);
+        ctx.stroke();
+
+        // 7. 薰衣草銀紫前瀏海與側鬢捲髮（覆蓋額頭與雙側）
+        const frontHairGrad = ctx.createLinearGradient(30, 12, 145, 135);
+        frontHairGrad.addColorStop(0, '#D4CCFF');
+        frontHairGrad.addColorStop(0.45, '#ABA0EB');
+        frontHairGrad.addColorStop(1, '#6859A8');
+        ctx.fillStyle = frontHairGrad;
+
+        // 頭頂與瀏海主體
+        ctx.beginPath();
+        ctx.moveTo(24, 96);
+        ctx.quadraticCurveTo(22, 18, 86, 12);
+        ctx.quadraticCurveTo(144, 16, 152, 92);
+        ctx.quadraticCurveTo(140, 128, 128, 156);
+        ctx.quadraticCurveTo(120, 122, 124, 84);
+        ctx.quadraticCurveTo(112, 66, 104, 88);
+        ctx.quadraticCurveTo(96, 62, 86, 92);
+        ctx.quadraticCurveTo(78, 62, 68, 88);
+        ctx.quadraticCurveTo(56, 64, 48, 92);
+        ctx.quadraticCurveTo(42, 128, 48, 168);
+        ctx.quadraticCurveTo(26, 142, 24, 96);
         ctx.closePath();
         ctx.fill();
 
-        // 髮絲亮光挑染
-        ctx.fillStyle = 'rgba(245, 243, 255, 0.65)';
+        // 瀏海銀白天使光環與藍紫挑染
+        ctx.fillStyle = 'rgba(244, 242, 255, 0.72)';
         ctx.beginPath();
-        ctx.moveTo(82, 30);
-        ctx.quadraticCurveTo(96, 52, 86, 80);
-        ctx.quadraticCurveTo(78, 54, 82, 30);
+        ctx.moveTo(74, 20);
+        ctx.quadraticCurveTo(92, 46, 86, 84);
+        ctx.quadraticCurveTo(76, 52, 74, 20);
         ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(130, 170, 232, 0.55)';
+        ctx.beginPath();
+        ctx.moveTo(98, 22);
+        ctx.quadraticCurveTo(114, 48, 106, 80);
+        ctx.quadraticCurveTo(100, 50, 98, 22);
+        ctx.closePath();
+        ctx.fill();
+
+        // 右側螺旋捲髮尾
+        ctx.fillStyle = '#5E4E9C';
+        ctx.beginPath();
+        ctx.ellipse(134, 154, 14, 24, 0.25, 0, Math.PI * 2);
         ctx.fill();
 
         const dataUri = canvas.toDataURL('image/png');
