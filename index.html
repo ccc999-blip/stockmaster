@@ -60,11 +60,21 @@
     html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
       background-color: var(--bg-root);
       color: var(--text-primary);
       font-family: 'Noto Sans TC', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overscroll-behavior-x: none;
       overscroll-behavior-y: none;
+      touch-action: pan-y;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* 確保所有 Flex / Grid 子容器不會撐破外層螢幕寬度 */
+    .min-w-0 {
+      min-width: 0;
     }
 
     /* 純數值套用等寬數字對齊 */
@@ -153,6 +163,9 @@
       position: sticky;
       top: 0;
       z-index: 40;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
       background-color: rgba(0, 0, 0, 0.92);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
@@ -172,6 +185,9 @@
       left: 0;
       right: 0;
       z-index: 40;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
       background-color: rgba(0, 0, 0, 0.94);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -181,6 +197,9 @@
 
     /* 主內容區 */
     .main-container {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
       padding-bottom: calc(84px + var(--safe-bottom));
       min-height: 100vh;
       background-color: var(--bg-surface);
@@ -281,18 +300,18 @@
        頂部狀態列 (HEADER)
        ======================================================================== -->
   <header class="top-bar">
-    <div class="max-w-3xl mx-auto px-4 h-[46px] flex items-center justify-between gap-2">
-      <div class="flex items-baseline gap-2 shrink-0">
-        <span class="text-[15px] font-bold tracking-tight text-[#F4F6F9] whitespace-nowrap shrink-0">股市策略實驗室</span>
-        <span id="headerClock" class="text-[11px] text-[#586274] num whitespace-nowrap shrink-0">--:--:--</span>
+    <div class="w-full max-w-3xl mx-auto px-3.5 sm:px-4 h-[46px] flex items-center justify-between gap-1.5 min-w-0">
+      <div class="flex items-baseline gap-1.5 min-w-0">
+        <span class="text-[14px] sm:text-[15px] font-bold tracking-tight text-[#F4F6F9] truncate">股市策略實驗室</span>
+        <span id="headerClock" class="text-[10px] sm:text-[11px] text-[#586274] num whitespace-nowrap shrink-0">--:--:--</span>
       </div>
 
-      <div class="flex items-center gap-1.5 shrink-0">
+      <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
         <!-- 行情來源狀態與一鍵重連膠囊 -->
         <button id="statusBadgeBtn" onclick="hardResetReconnect(false)" title="點擊清除快取與失敗狀態並強制重新連線"
-          class="tap-btn flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium bg-[#141923] rounded-full whitespace-nowrap">
+          class="tap-btn flex items-center gap-1 px-2 py-1 text-[10px] sm:text-[11px] font-medium bg-[#141923] rounded-full whitespace-nowrap max-w-[125px] sm:max-w-none">
           <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-[#FF9900] shrink-0"></span>
-          <span id="statusText" class="text-[#FF9900]">連線中</span>
+          <span id="statusText" class="text-[#FF9900] truncate">連線中</span>
         </button>
 
         <!-- 右上角設定齒輪圖示 -->
@@ -311,12 +330,12 @@
        主內容區 (MAIN)
        ======================================================================== -->
   <main class="main-container">
-    <div class="max-w-3xl mx-auto">
+    <div class="w-full max-w-3xl mx-auto overflow-x-hidden">
 
       <!-- ====================================================================
            分頁一：模擬股票（統一新台幣 TWD 計價基準 + 戶頭獨立時間軸）
            ==================================================================== -->
-      <section id="tab-sim">
+      <section id="tab-sim" class="w-full overflow-x-hidden">
 
         <!-- 1. 帳戶切換、模擬時間膠囊與管理列（雙排自適應防重疊排版） -->
         <div class="px-4 py-3 hairline-b space-y-2">
@@ -348,21 +367,21 @@
         </div>
 
         <!-- 1B. 單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示，到達今日自動消失） -->
-        <div id="simTimeWarpBar" class="hidden px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-2">
-          <div class="flex items-center gap-1.5 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap shrink-0">
-            <span>📅</span>
-            <span id="simWarpDateLabel">2024/01/01</span>
+        <div id="simTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
+          <div class="flex items-center gap-1 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap min-w-0 truncate">
+            <span class="shrink-0">📅</span>
+            <span id="simWarpDateLabel" class="truncate">2024/01/01</span>
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <button type="button" onclick="fastForwardAccountDays(1)"
-              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
+              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
             <button type="button" onclick="fastForwardAccountDays(5)"
-              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
+              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
             <button type="button" onclick="fastForwardAccountDays(20)"
-              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
+              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
             <div class="relative inline-flex items-center shrink-0">
               <button type="button" onclick="openSimJumpDatePicker()"
-                class="tap-btn px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
+                class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
               <input id="simWarpDateInput" type="date" onchange="jumpAccountToDate(this.value)"
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇快轉目標日期">
             </div>
@@ -371,41 +390,41 @@
 
         <!-- 2. 資產總覽主視覺區（累積總損益金額 ＋ 分段資金加權真實報酬率 TWR 並陳） -->
         <div class="px-4 py-5 hairline-b space-y-4">
-          <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start justify-between gap-2.5 min-w-0">
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-[12px] text-[#8A94A6] font-medium">總資產淨值（TWD）</span>
                 <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral whitespace-nowrap" title="分段資金加權真實報酬率 (TWR)">真實報酬 0.00%</span>
               </div>
-              <div id="ovTotalAssets" class="text-[32px] sm:text-[36px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5">0</div>
-              <div class="flex items-center gap-1.5 mt-1 text-[12px] num">
-                <span class="text-[#8A94A6]">累積總損益</span>
-                <span id="ovTotalPnl" class="font-bold text-[#8A94A6]">0 TWD</span>
+              <div id="ovTotalAssets" class="text-[28px] sm:text-[36px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5 truncate">0</div>
+              <div class="flex items-center gap-1.5 mt-1 text-[12px] num min-w-0">
+                <span class="text-[#8A94A6] shrink-0">累積總損益</span>
+                <span id="ovTotalPnl" class="font-bold text-[#8A94A6] truncate">0 TWD</span>
               </div>
             </div>
 
             <div class="shrink-0 pt-1">
               <button onclick="openDepositModal()"
-                class="tap-btn px-3.5 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full whitespace-nowrap">
+                class="tap-btn px-3 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full whitespace-nowrap">
                 + 充值
               </button>
             </div>
           </div>
 
           <div class="grid grid-cols-3 divide-x divide-[#1C222D] pt-1">
-            <div class="pr-3">
+            <div class="pr-2.5 min-w-0">
               <div class="text-[11px] text-[#8A94A6]">可用現金</div>
-              <div id="ovCash" class="text-[15px] font-bold num text-[#F4F6F9] mt-1 truncate">0</div>
+              <div id="ovCash" class="text-[14px] sm:text-[15px] font-bold num text-[#F4F6F9] mt-1 truncate">0</div>
               <div id="ovInitial" class="text-[11px] num text-[#586274] mt-0.5 truncate">本金 0</div>
             </div>
-            <div class="px-3">
+            <div class="px-2.5 min-w-0">
               <div class="text-[11px] text-[#8A94A6]">未實現損益</div>
-              <div id="ovUnrealized" class="text-[15px] font-bold num mt-1 truncate">0</div>
+              <div id="ovUnrealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
               <div id="ovUnrealizedPct" class="text-[11px] num mt-0.5 truncate">0.00%</div>
             </div>
-            <div class="pl-3">
+            <div class="pl-2.5 min-w-0">
               <div class="text-[11px] text-[#8A94A6]">已實現損益</div>
-              <div id="ovRealized" class="text-[15px] font-bold num mt-1 truncate">0</div>
+              <div id="ovRealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
               <div id="ovHoldingsVal" class="text-[11px] num text-[#586274] mt-0.5 truncate">現值 0</div>
             </div>
           </div>
@@ -470,15 +489,15 @@
 
           <!-- 單價與數量並排 -->
           <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label id="orderPriceLabel" class="block text-[11px] text-[#8A94A6] mb-1">委託單價（TWD）</label>
+            <div class="min-w-0">
+              <label id="orderPriceLabel" class="block text-[11px] text-[#8A94A6] mb-1 truncate">委託單價（TWD）</label>
               <input id="orderPrice" type="number" step="any" min="0" placeholder="0.00"
-                oninput="updateOrderPreview()" class="w-full px-3 py-2 num">
+                oninput="updateOrderPreview()" class="w-full min-w-0 px-3 py-2 num">
             </div>
-            <div>
-              <label id="orderQtyLabel" class="block text-[11px] text-[#8A94A6] mb-1">數量（張）</label>
+            <div class="min-w-0">
+              <label id="orderQtyLabel" class="block text-[11px] text-[#8A94A6] mb-1 truncate">數量（張）</label>
               <input id="orderQty" type="number" step="any" min="0" placeholder="0"
-                oninput="updateOrderPreview()" class="w-full px-3 py-2 num">
+                oninput="updateOrderPreview()" class="w-full min-w-0 px-3 py-2 num">
             </div>
           </div>
 
@@ -558,7 +577,7 @@
       <!-- ====================================================================
            分頁二：盤面分析（受該戶頭 currentSimDate 時間遮罩保護，嚴禁偷看未來）
            ==================================================================== -->
-      <section id="tab-chart" class="hidden">
+      <section id="tab-chart" class="hidden w-full overflow-x-hidden">
         <!-- 1. 搜尋列與自選股 Chips -->
         <div class="px-4 py-4 hairline-b space-y-3">
           <div class="relative flex items-center">
@@ -573,21 +592,21 @@
         </div>
 
         <!-- 1B. 盤面分析單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示） -->
-        <div id="chartTimeWarpBar" class="hidden px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-2">
-          <div class="flex items-center gap-1.5 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap shrink-0">
-            <span>📅</span>
-            <span id="chartWarpDateLabel">2024/01/01</span>
+        <div id="chartTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
+          <div class="flex items-center gap-1 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap min-w-0 truncate">
+            <span class="shrink-0">📅</span>
+            <span id="chartWarpDateLabel" class="truncate">2024/01/01</span>
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <button type="button" onclick="fastForwardAccountDays(1)"
-              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
+              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
             <button type="button" onclick="fastForwardAccountDays(5)"
-              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
+              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
             <button type="button" onclick="fastForwardAccountDays(20)"
-              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
+              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
             <div class="relative inline-flex items-center shrink-0">
               <button type="button" onclick="openChartJumpDatePicker()"
-                class="tap-btn px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
+                class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
               <input id="chartWarpDateInput" type="date" onchange="jumpAccountToDate(this.value)"
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇快轉目標日期">
             </div>
@@ -1696,11 +1715,14 @@
       document.getElementById(id).classList.add('hidden');
     }
 
-    function showConfirmDialog(title, message, onConfirm) {
+    function showConfirmDialog(title, message, onConfirm, options = {}) {
+      const { okText = '確定執行', okBtnClass = 'bg-[#FF3B30] text-white' } = options;
       document.getElementById('confirmTitle').textContent = title;
       document.getElementById('confirmMessage').textContent = message;
       const btn = document.getElementById('confirmOkBtn');
       const newBtn = btn.cloneNode(true);
+      newBtn.textContent = okText;
+      newBtn.className = `tap-btn py-2.5 font-bold rounded-[8px] ${okBtnClass}`;
       btn.parentNode.replaceChild(newBtn, btn);
       newBtn.addEventListener('click', () => {
         closeModal('confirmModal');
@@ -1822,7 +1844,7 @@
     }
 
     /* ========================================================================
-       4. 時間遮罩引擎 (嚴格防偷看未來) ＋ 順向快轉邏輯
+       4. 時間遮罩引擎 (嚴格防偷看未來) ＋ 順向快轉邏輯 (含不可逆確認視窗)
        ======================================================================== */
     function applyTimeMaskToMarketData(rawData, acc = getActiveAccount()) {
       if (!rawData || !Array.isArray(rawData.bars) || rawData.bars.length === 0) return rawData;
@@ -1952,7 +1974,42 @@
       }
     }
 
-    async function fastForwardAccountDays(days) {
+    function requestTimeWarpConfirmation(targetDateStr, stepLabel = '') {
+      const acc = getActiveAccount();
+      const realToday = getTodayDateString();
+      if (acc.currentSimDate >= realToday) {
+        renderSimTimelineUI();
+        return;
+      }
+
+      if (!isValidIsoDate(targetDateStr)) return;
+      if (targetDateStr <= acc.currentSimDate) {
+        showToast('時間軸僅支援單向順向快轉，不可倒轉至過去日期', 'warn');
+        renderSimTimelineUI();
+        return;
+      }
+
+      const clampedTarget = targetDateStr > realToday ? realToday : targetDateStr;
+      const stepDays = diffCalendarDays(acc.currentSimDate, clampedTarget);
+      const stepDesc = stepLabel ? `${stepLabel}（推進 ${stepDays} 天）` : `推進 ${stepDays} 天`;
+      const syncWarning = clampedTarget >= realToday
+        ? '\n⚠️ 此次快轉將直接抵達現實今日，完成後時間軸將與現實完全同步，快轉控制列將自動關閉。'
+        : '';
+
+      showConfirmDialog(
+        '確認快轉時間軸（不可逆）',
+        `確定要將「${getAccountDisplayName(acc)}」從 ${acc.currentSimDate} ${stepDesc}至 ${clampedTarget} 嗎？時間推進後無法倒轉回過去日期。${syncWarning}`,
+        async () => {
+          await executeAccountTimeJump(clampedTarget);
+        },
+        {
+          okText: '確認快轉',
+          okBtnClass: 'bg-[#FF9900] text-black'
+        }
+      );
+    }
+
+    function fastForwardAccountDays(days) {
       const acc = getActiveAccount();
       const realToday = getTodayDateString();
       if (acc.currentSimDate >= realToday) {
@@ -1961,24 +2018,27 @@
       }
 
       let targetDate;
+      let stepLabel;
       if (days === 1 && acc.skipNonTradingDays) {
         targetDate = findNextTradingDayAfter(acc.currentSimDate, realToday, acc);
+        stepLabel = '快轉 +1 交易日';
       } else {
         targetDate = addCalendarDaysCapped(acc.currentSimDate, days, realToday);
+        stepLabel = `快轉 +${days} 日`;
       }
 
-      await jumpAccountToDate(targetDate);
+      requestTimeWarpConfirmation(targetDate, stepLabel);
     }
 
-    async function jumpAccountToDate(targetDateStr) {
+    function jumpAccountToDate(targetDateStr) {
+      requestTimeWarpConfirmation(targetDateStr, '指定日期跳轉');
+    }
+
+    async function executeAccountTimeJump(targetDateStr) {
       const acc = getActiveAccount();
       const realToday = getTodayDateString();
 
-      if (!isValidIsoDate(targetDateStr)) return;
-      if (targetDateStr <= acc.currentSimDate) {
-        showToast('時間軸僅支援單向順向快轉，不可倒轉至過去日期', 'warn');
-        return;
-      }
+      if (!isValidIsoDate(targetDateStr) || targetDateStr <= acc.currentSimDate) return;
 
       const clampedTarget = targetDateStr > realToday ? realToday : targetDateStr;
       acc.currentSimDate = clampedTarget;
@@ -5044,7 +5104,7 @@
     }
 
     /* ========================================================================
-       8. 分頁切換、獨立帳戶設定 Modal 與多模式 JSON 備份還原
+       8. 分頁切換、獨立帳戶設定 Modal 與多模式 JSON 備份還原 (含重複匯入偵測)
        ======================================================================== */
     function switchMainTab(tab) {
       syncAllAccountsWithReality(false);
@@ -5325,6 +5385,36 @@
       return checked ? checked.value : 'import_as_new';
     }
 
+    function computeAccountFingerprint(acc) {
+      const cleanName = String(acc.name || '').replace(/\s*\(匯入\)\s*$/g, '').trim();
+      const tradeSigs = (acc.trades || [])
+        .map(t => `${t.id || ''}|${t.simDate || ''}|${t.side || ''}|${t.symbol || ''}|${t.shares || 0}|${t.price || 0}`)
+        .join(';');
+      const holdingSigs = Object.keys(acc.holdings || {})
+        .sort()
+        .map(sym => `${sym}:${acc.holdings[sym].shares}:${Number(acc.holdings[sym].avgCost || 0).toFixed(4)}`)
+        .join(';');
+      return [
+        cleanName,
+        acc.startDate || '',
+        acc.currentSimDate || '',
+        Number(acc.initialCapital || 0),
+        Number(acc.cash || 0).toFixed(2),
+        Number(acc.realizedPnl || 0).toFixed(2),
+        holdingSigs,
+        tradeSigs
+      ].join('::');
+    }
+
+    function isDuplicateAccountInSystem(candidateAcc, rawSourceId = '') {
+      const candFp = computeAccountFingerprint(candidateAcc);
+      return appState.accounts.some(existing => {
+        if (rawSourceId && existing.id === rawSourceId) return true;
+        if (existing.sourceOriginId && rawSourceId && existing.sourceOriginId === rawSourceId) return true;
+        return computeAccountFingerprint(existing) === candFp;
+      });
+    }
+
     async function validateAndRestoreJson(rawText) {
       try {
         const parsed = JSON.parse(rawText);
@@ -5365,27 +5455,77 @@
           normalizeAccountRecord(a, legacyRootSettings, legacyRootChart)
         );
 
-        for (const acc of normalizedAccounts) {
+        for (let i = 0; i < normalizedAccounts.length; i++) {
+          const acc = normalizedAccounts[i];
+          acc._rawSourceId = rawAccountsList[i].id || '';
           if (acc.startDate > realToday) acc.startDate = realToday;
           if (acc.currentSimDate > realToday) acc.currentSimDate = realToday;
           acc.lastRealSyncDate = realToday;
         }
 
-        closeModal('settingsModal');
-
         if (importMode === 'import_as_new') {
+          const uniqueToAdd = [];
+          const skippedNames = [];
+
+          for (const acc of normalizedAccounts) {
+            if (isDuplicateAccountInSystem(acc, acc._rawSourceId)) {
+              skippedNames.push(getAccountDisplayName(acc));
+            } else {
+              uniqueToAdd.push(acc);
+            }
+          }
+
+          if (uniqueToAdd.length === 0) {
+            document.getElementById('importJsonText').value = '';
+            showToast(
+              `偵測到重複匯入：「${skippedNames.join('、')}」已存在於系統中，未重複建立`,
+              'warn'
+            );
+            return;
+          }
+
+          closeModal('settingsModal');
+          document.getElementById('importJsonText').value = '';
+
           let lastImportedId = appState.activeAccountId;
-          normalizedAccounts.forEach((acc, idx) => {
+          uniqueToAdd.forEach((acc, idx) => {
+            const originId = acc._rawSourceId;
+            delete acc._rawSourceId;
             const freshId = `acc_imp_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`;
             acc.id = freshId;
+            if (originId) acc.sourceOriginId = originId;
             acc.name = `${acc.name} (匯入)`;
             appState.accounts.push(acc);
             lastImportedId = freshId;
           });
           saveState();
           await switchAccount(lastImportedId);
-          showToast(`已成功匯入 ${normalizedAccounts.length} 個新戶頭（模擬日 ${getActiveAccount().currentSimDate}）`, 'success');
+
+          if (skippedNames.length > 0) {
+            showToast(
+              `已匯入 ${uniqueToAdd.length} 個新戶頭；略過 ${skippedNames.length} 個已存在帳戶（${skippedNames.join('、')}）`,
+              'success'
+            );
+          } else {
+            showToast(`已成功匯入 ${uniqueToAdd.length} 個新戶頭（模擬日 ${getActiveAccount().currentSimDate}）`, 'success');
+          }
         } else {
+          // 覆蓋還原模式：若所有戶頭皆與目前系統完全一致，亦主動提醒使用者資料已存在無重複寫入
+          const isAllSame =
+            normalizedAccounts.length === appState.accounts.length &&
+            normalizedAccounts.every(acc => isDuplicateAccountInSystem(acc, acc._rawSourceId));
+
+          normalizedAccounts.forEach(acc => { delete acc._rawSourceId; });
+
+          if (isAllSame) {
+            closeModal('settingsModal');
+            document.getElementById('importJsonText').value = '';
+            showToast('匯入內容與目前系統帳戶完全相同（資料已存在），無需重複覆蓋', 'warn');
+            return;
+          }
+
+          closeModal('settingsModal');
+          document.getElementById('importJsonText').value = '';
           appState.accounts = normalizedAccounts;
           const targetId = normalizedAccounts.some(a => a.id === parsed.activeAccountId)
             ? parsed.activeAccountId
