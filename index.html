@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <!-- iOS Safari Web App 全螢幕設定 -->
+  <!-- iOS Safari Web App 全螢幕與主畫面圖標設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="股市策略實驗室">
+  <meta name="apple-mobile-web-app-title" content="stockmaster📉">
   <meta name="theme-color" content="#000000">
-  <title>股市策略實驗室</title>
+  <title>stockmaster📉</title>
+  <link id="appleTouchIconLink" rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAAA9+43HAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFwSURBVHhe7cExAQAAAMKg9U9tDB+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgLsG/WAAAZ81n7MAAAAASUVORK5CYII=">
+  <link id="faviconIconLink" rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAAA9+43HAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFwSURBVHhe7cExAQAAAMKg9U9tDB+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgLsG/WAAAZ81n7MAAAAASUVORK5CYII=">
 
   <!-- 載入 Tailwind CSS 與清晰無襯線/等寬數字字體 -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -271,7 +273,8 @@
     }
 
     #accountSwitchModal,
-    #accountModal {
+    #accountModal,
+    #watchlistModal {
       align-items: center;
       padding-top: var(--safe-top);
       padding-bottom: max(20px, var(--safe-bottom));
@@ -308,7 +311,7 @@
       transition: opacity 0.12s ease, transform 0.08s ease, background-color 0.12s ease;
       user-select: none;
     }
-    .tap-btn:active {
+    .tap-btn:active:not(:disabled) {
       transform: scale(0.97);
       opacity: 0.82;
     }
@@ -316,25 +319,38 @@
 </head>
 <body>
   <!-- ========================================================================
-       頂部狀態列 (HEADER)
+       頂部狀態列 (HEADER - 標題 stockmaster📉 + Undo/Redo + 即時連線與匯率同步按鈕)
        ======================================================================== -->
   <header class="top-bar">
-    <div class="w-full max-w-3xl mx-auto px-3.5 sm:px-4 h-[46px] flex items-center justify-between gap-1.5 min-w-0">
+    <div class="w-full max-w-3xl mx-auto px-3 sm:px-4 h-[46px] flex items-center justify-between gap-1 min-w-0">
       <div class="flex items-baseline gap-1.5 min-w-0">
-        <span class="text-[14px] sm:text-[15px] font-bold tracking-tight text-[#F4F6F9] truncate">股市策略實驗室</span>
-        <span id="headerClock" class="text-[10px] sm:text-[11px] text-[#586274] num whitespace-nowrap shrink-0">--:--:--</span>
+        <span class="text-[14px] sm:text-[15px] font-bold tracking-tight text-[#F4F6F9] truncate">stockmaster📉</span>
+        <span id="headerClock" class="hidden sm:inline text-[11px] text-[#586274] num whitespace-nowrap shrink-0">--:--:--</span>
       </div>
 
       <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-        <button id="statusBadgeBtn" onclick="hardResetReconnect(false)" title="點擊清除快取與失敗狀態並強制重新連線"
-          class="tap-btn flex items-center gap-1 px-2 py-1 text-[10px] sm:text-[11px] font-medium bg-[#141923] rounded-full whitespace-nowrap max-w-[125px] sm:max-w-none">
+        <!-- 上一步 (Undo) / 下一步 (Redo) 版本快照控制 -->
+        <div class="inline-flex items-center bg-[#141923] rounded-full p-0.5 shrink-0">
+          <button id="btnUndoHistory" type="button" onclick="undoSystemHistory()" title="上一步（復原操作與時間）" aria-label="上一步" disabled
+            class="tap-btn w-6 h-6 sm:w-7 sm:h-6 flex items-center justify-center rounded-full text-[13px] font-bold text-[#F4F6F9] disabled:opacity-30 disabled:pointer-events-none">
+            ↶
+          </button>
+          <button id="btnRedoHistory" type="button" onclick="redoSystemHistory()" title="下一步（重做操作與時間）" aria-label="下一步" disabled
+            class="tap-btn w-6 h-6 sm:w-7 sm:h-6 flex items-center justify-center rounded-full text-[13px] font-bold text-[#F4F6F9] disabled:opacity-30 disabled:pointer-events-none">
+            ↷
+          </button>
+        </div>
+
+        <!-- 點擊一併強制更新最新行情與 USD/TWD 匯率 -->
+        <button id="statusBadgeBtn" onclick="hardResetReconnect(false)" title="點擊同步最新行情與 USD/TWD 匯率"
+          class="tap-btn flex items-center gap-1 px-2 py-1 text-[10px] sm:text-[11px] font-medium bg-[#141923] rounded-full whitespace-nowrap max-w-[108px] sm:max-w-none">
           <span id="statusDot" class="w-1.5 h-1.5 rounded-full bg-[#FF9900] shrink-0"></span>
           <span id="statusText" class="text-[#FF9900] truncate">連線中</span>
         </button>
 
         <button onclick="openSettingsModal()" aria-label="設定" title="設定"
-          class="tap-btn w-8 h-8 flex items-center justify-center rounded-full text-[#8A94A6] hover:text-[#F4F6F9] active:bg-[#171C26] shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          class="tap-btn w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-[#8A94A6] hover:text-[#F4F6F9] active:bg-[#171C26] shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
@@ -440,11 +456,11 @@
 
             <div class="flex items-center gap-2.5 shrink-0">
               <div class="inline-flex bg-[#12161F] p-0.5 rounded-[6px]">
-                <button id="btnUnitLot" onclick="setOrderUnitMode('LOT')"
+                <button id="btnUnitLot" onclick="setOrderUnitMode('LOT', true)"
                   class="tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px]">
                   整股(張)
                 </button>
-                <button id="btnUnitOdd" onclick="setOrderUnitMode('ODD')"
+                <button id="btnUnitOdd" onclick="setOrderUnitMode('ODD', true)"
                   class="tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px]">
                   零股(股)
                 </button>
@@ -582,10 +598,10 @@
       </section>
 
       <!-- ====================================================================
-           分頁二：盤面分析（極簡券商風格排版：選股 ＋ 前日漲跌/開高低收/選日期 ＋ 髮絲線圖表設定列）
+           分頁二：盤面分析（極簡券商風格排版：選股 ＋ 固定右側筆圖標常用股票 ＋ 報價與圖表設定列）
            ==================================================================== -->
       <section id="tab-chart" class="hidden w-full">
-        <!-- 1. 搜尋列與自選股 Chips -->
+        <!-- 1. 搜尋列與常用股票 Chips（右側固定筆圖標 ✎ 管理目前帳戶常用股票） -->
         <div class="px-3.5 sm:px-4 py-3 hairline-b space-y-2.5">
           <div class="relative flex items-center">
             <input id="chartSymbolInput" type="text" placeholder="搜尋台股/美股代號如 2330 或 AAPL" autocomplete="off"
@@ -595,7 +611,13 @@
               載入
             </button>
           </div>
-          <div id="watchlistChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar"></div>
+          <div class="flex items-center justify-between gap-2 min-w-0">
+            <div id="watchlistChips" class="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5"></div>
+            <button type="button" onclick="openWatchlistModal()" title="管理此帳戶常用股票" aria-label="管理此帳戶常用股票"
+              class="tap-btn w-7 h-7 flex items-center justify-center rounded-full bg-[#141923] text-[#8A94A6] hover:text-[#FF9900] text-[12px] shrink-0">
+              ✎
+            </button>
+          </div>
         </div>
 
         <!-- 1B. 盤面分析單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示） -->
@@ -833,7 +855,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 3：全螢幕系統設定視窗 (settingsModal)
+       MODAL 3：全螢幕系統設定視窗 (settingsModal - 匯率更新已合併至頂部即時狀態按鈕)
        ======================================================================== -->
   <div id="settingsModal" class="modal-backdrop hidden">
     <div class="settings-full-panel">
@@ -859,27 +881,6 @@
 
           <div class="space-y-2.5 pb-4 hairline-b">
             <div class="flex items-center justify-between gap-2">
-              <label class="text-[12px] font-semibold text-[#8A94A6]">美股匯率設定（USD / TWD）</label>
-              <span id="setFxStatusBadge" class="text-[11px] num text-[#FF9900]">1 USD = 32.50 TWD</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <input id="setUsdTwdRate" type="number" step="0.001" min="1" placeholder="32.50" class="flex-1 px-3 py-2 num">
-              <button type="button" onclick="refreshUsdTwdRateFromSettings()"
-                class="tap-btn px-3.5 py-2 text-[12px] font-semibold bg-[#171C26] text-[#38BDF8] rounded-[8px] shrink-0">
-                立即更新匯率
-              </button>
-            </div>
-            <div class="flex items-center justify-between gap-2 text-[11px] text-[#8A94A6]">
-              <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
-                <input id="setUseManualFx" type="checkbox">
-                <span>鎖定手動匯率（不隨連網自動覆蓋）</span>
-              </label>
-              <span id="setFxUpdatedAt" class="num text-[#586274]">尚未更新</span>
-            </div>
-          </div>
-
-          <div class="space-y-2.5 pb-4 hairline-b">
-            <div class="flex items-center justify-between gap-2">
               <label class="text-[12px] font-semibold text-[#8A94A6]">專屬 Cloudflare Worker 行情中繼網址</label>
               <button type="button" onclick="resetDefaultWorkerUrl()"
                 class="text-[11px] text-[#38BDF8] underline underline-offset-2 shrink-0">恢復預設網址</button>
@@ -887,7 +888,7 @@
             <input id="setWorkerUrl" type="url" placeholder="https://throbbing-queen-5ddbus-stock-relay.yhchen8541.workers.dev" autocomplete="off"
               class="w-full px-3 py-2 num text-[13px]">
             <p class="text-[11px] text-[#586274] leading-relaxed">
-              所有美股及非台股標的皆直接透過此 Worker 抓取完整歷史日 K 線（<span class="num text-[#8A94A6]">range=max&amp;interval=1d</span>），並依各戶頭獨立時間軸套用截止日濾鏡。
+              所有美股及非台股標的皆直接透過此 Worker 抓取完整歷史日 K 線（<span class="num text-[#8A94A6]">range=max&amp;interval=1d</span>）；點擊主畫面頂部「即時 · WORKER」可一併強制同步最新行情與 USD/TWD 匯率。
             </p>
           </div>
 
@@ -943,16 +944,6 @@
                 <option value="900000">15 分鐘 (省流量)</option>
                 <option value="0">當日 / 永久快取 (僅手動強制更新)</option>
               </select>
-            </div>
-          </div>
-
-          <div class="space-y-2.5 pb-4 hairline-b">
-            <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶自選股快捷列表</label>
-            <div id="settingsWatchlist" class="flex flex-wrap gap-2"></div>
-            <div class="flex gap-2">
-              <input id="newWatchSymbol" type="text" placeholder="新增代號如 2317 或 TSLA" class="flex-1 px-3 py-2 num uppercase"
-                onkeydown="if(event.key==='Enter') addWatchlistSymbol()">
-              <button onclick="addWatchlistSymbol()" class="tap-btn px-4 py-2 text-[13px] font-bold bg-[#171C26] text-[#FF9900] rounded-[8px]">新增</button>
             </div>
           </div>
 
@@ -1121,11 +1112,10 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 8：全屏圖表檢視器 (fullChartModal - 無十字準星、無點選K棒跳轉、右上角「關閉 ✕」退出)
+       MODAL 8：全屏圖表檢視器 (fullChartModal)
        ======================================================================== -->
   <div id="fullChartModal" class="modal-backdrop hidden">
     <div class="full-chart-panel">
-      <!-- 頂部標的標題與右上角「關閉 ✕」按鈕 -->
       <div class="px-3.5 py-2 hairline-b bg-[#000000] flex items-center justify-between gap-2 shrink-0">
         <div class="min-w-0 flex items-center gap-2">
           <span id="fcTitleBadge" class="text-[12px] font-semibold text-[#FF9900] shrink-0">價格主圖</span>
@@ -1139,7 +1129,6 @@
         </button>
       </div>
 
-      <!-- 週期切換 (日K / 週K / 月K)、選日期跳轉、快捷視窗與報價摘要 -->
       <div class="px-3.5 py-2 hairline-b bg-[#090B0E] space-y-1.5 shrink-0">
         <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
           <div class="flex items-center gap-1.5 shrink-0">
@@ -1175,14 +1164,41 @@
           <span id="chartEngineTag" class="text-[10px] text-[#586274]">LWC</span>
         </div>
 
-        <!-- 數值摘要列 -->
         <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2 gap-y-0.5 min-h-[18px] items-center">
           左右滑動或雙指縮放檢視走勢，雙擊回到最新區間
         </div>
       </div>
 
-      <!-- 全屏單一圖表畫布容器（底部日期刻度永駐顯示） -->
       <div id="chartViewport" class="w-full flex-1 min-h-[220px] bg-[#090B0E] relative overflow-hidden"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 9：帳戶專屬常用股票管理視窗 (watchlistModal)
+       ======================================================================== -->
+  <div id="watchlistModal" class="modal-backdrop hidden">
+    <div class="modal-panel" style="max-width: 420px;">
+      <div class="px-4 py-3.5 hairline-b flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-[14px] font-bold text-[#F4F6F9] shrink-0">管理常用股票</span>
+          <span id="wlModalAccBadge" class="px-2 py-0.5 text-[11px] font-semibold bg-[#171C26] text-[#FF9900] rounded-full truncate">帳戶 1</span>
+        </div>
+        <button onclick="closeModal('watchlistModal')" class="tap-btn text-[13px] text-[#8A94A6] px-2 py-1 shrink-0">關閉 ✕</button>
+      </div>
+      <div class="p-4 space-y-3.5 overflow-y-auto">
+        <p class="text-[11px] text-[#8A94A6] leading-relaxed">
+          此清單僅屬於目前帳戶；每次在該帳戶買進股票皆會自動收錄，亦可在此手動新增或移除。
+        </p>
+        <div class="flex gap-2">
+          <input id="modalNewWatchSymbol" type="text" placeholder="輸入代號如 2330 或 NVDA" autocomplete="off"
+            class="flex-1 px-3 py-2 num uppercase" onkeydown="if(event.key==='Enter') addWatchlistSymbolFromModal()">
+          <button type="button" onclick="addWatchlistSymbolFromModal()"
+            class="tap-btn px-4 py-2 text-[13px] font-bold bg-[#FF9900] text-black rounded-[8px] shrink-0">
+            新增
+          </button>
+        </div>
+        <div id="modalWatchlistChips" class="flex flex-wrap gap-2 pt-1 min-h-[40px]"></div>
+      </div>
     </div>
   </div>
 
@@ -1198,6 +1214,165 @@
     'use strict';
 
     /* ========================================================================
+       0. PWA 180x180 不透明 RGB PNG 主畫面圖標初始化 (支援離線單檔穩定顯示)
+       ======================================================================== */
+    function initOpaquePwaAppIcon() {
+      try {
+        const size = 180;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d', { alpha: false });
+        if (!ctx) return;
+
+        // 1. 不透明深邃夜紫漸層底色 (RGB 無 Alpha 透明通道，避免 iOS 補黑邊)
+        const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+        bgGrad.addColorStop(0, '#141126');
+        bgGrad.addColorStop(0.55, '#1D1838');
+        bgGrad.addColorStop(1, '#0C0A18');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, size, size);
+
+        // 2. 柔和光暈背光
+        const halo = ctx.createRadialGradient(90, 86, 12, 90, 86, 82);
+        halo.addColorStop(0, 'rgba(167, 139, 250, 0.34)');
+        halo.addColorStop(1, 'rgba(20, 17, 38, 0)');
+        ctx.fillStyle = halo;
+        ctx.fillRect(0, 0, size, size);
+
+        // 3. 繪製薰衣草紫雙馬尾與精靈耳角色頭像剪影 (保留安全邊距以適配 iOS 圓角遮罩)
+        // 後髮與雙馬尾
+        ctx.fillStyle = '#5B4B8A';
+        ctx.beginPath();
+        ctx.ellipse(42, 108, 22, 46, -0.18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(138, 108, 22, 46, 0.18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 深藍緞帶蝴蝶結
+        ctx.fillStyle = '#1E293B';
+        ctx.beginPath();
+        ctx.moveTo(126, 36);
+        ctx.lineTo(148, 26);
+        ctx.lineTo(144, 48);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(126, 38);
+        ctx.lineTo(152, 54);
+        ctx.lineTo(136, 62);
+        ctx.closePath();
+        ctx.fill();
+
+        // 精靈尖耳
+        ctx.fillStyle = '#F7C9B6';
+        ctx.beginPath();
+        ctx.moveTo(132, 82);
+        ctx.lineTo(156, 70);
+        ctx.lineTo(136, 98);
+        ctx.closePath();
+        ctx.fill();
+
+        // 頸部與衣領
+        ctx.fillStyle = '#F3C1AE';
+        ctx.fillRect(78, 126, 24, 24);
+        ctx.fillStyle = '#1E293B';
+        ctx.beginPath();
+        ctx.moveTo(46, 168);
+        ctx.quadraticCurveTo(90, 140, 134, 168);
+        ctx.lineTo(142, 180);
+        ctx.lineTo(38, 180);
+        ctx.closePath();
+        ctx.fill();
+
+        // 淺藍荷葉領
+        ctx.strokeStyle = '#93C5FD';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(64, 152);
+        ctx.quadraticCurveTo(90, 164, 116, 152);
+        ctx.stroke();
+
+        // 臉部輪廓
+        ctx.fillStyle = '#FDE0D2';
+        ctx.beginPath();
+        ctx.moveTo(52, 74);
+        ctx.quadraticCurveTo(52, 128, 90, 134);
+        ctx.quadraticCurveTo(128, 128, 128, 74);
+        ctx.quadraticCurveTo(128, 38, 90, 38);
+        ctx.quadraticCurveTo(52, 38, 52, 74);
+        ctx.closePath();
+        ctx.fill();
+
+        // 紅寶石眼眸
+        const drawEye = (cx, cy) => {
+          ctx.fillStyle = '#2A0A18';
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, 9.5, 6.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#EF4444';
+          ctx.beginPath();
+          ctx.arc(cx, cy + 0.5, 5.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.arc(cx - 2, cy - 1.8, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        };
+        drawEye(72, 92);
+        drawEye(106, 92);
+
+        // 眼下淚痣與微紅臉頰
+        ctx.fillStyle = 'rgba(244, 114, 182, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(68, 104, 9, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(110, 104, 9, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#3B1D2A';
+        ctx.beginPath();
+        ctx.arc(114, 101, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 薰衣草銀紫瀏海與高光
+        const hairGrad = ctx.createLinearGradient(44, 24, 136, 116);
+        hairGrad.addColorStop(0, '#C4B5FD');
+        hairGrad.addColorStop(0.5, '#A78BFA');
+        hairGrad.addColorStop(1, '#6D5CAE');
+        ctx.fillStyle = hairGrad;
+        ctx.beginPath();
+        ctx.moveTo(42, 92);
+        ctx.quadraticCurveTo(42, 24, 92, 24);
+        ctx.quadraticCurveTo(138, 24, 138, 92);
+        ctx.quadraticCurveTo(124, 68, 112, 86);
+        ctx.quadraticCurveTo(102, 62, 90, 88);
+        ctx.quadraticCurveTo(78, 62, 66, 86);
+        ctx.quadraticCurveTo(54, 68, 42, 92);
+        ctx.closePath();
+        ctx.fill();
+
+        // 髮絲亮光挑染
+        ctx.fillStyle = 'rgba(245, 243, 255, 0.65)';
+        ctx.beginPath();
+        ctx.moveTo(82, 30);
+        ctx.quadraticCurveTo(96, 52, 86, 80);
+        ctx.quadraticCurveTo(78, 54, 82, 30);
+        ctx.closePath();
+        ctx.fill();
+
+        const dataUri = canvas.toDataURL('image/png');
+        if (dataUri && dataUri.startsWith('data:image/png;base64,')) {
+          const touchLink = document.getElementById('appleTouchIconLink');
+          const favLink = document.getElementById('faviconIconLink');
+          if (touchLink) touchLink.setAttribute('href', dataUri);
+          if (favLink) favLink.setAttribute('href', dataUri);
+        }
+      } catch (_) {}
+    }
+
+    /* ========================================================================
        1. 全域常數與預設帳戶獨立模型 (Per-Account Independent System & Timeline)
        ======================================================================== */
     const STORAGE_KEY = 'bloomberg_sim_lab_v1';
@@ -1209,6 +1384,7 @@
     const DEFAULT_WORKER_URL = 'https://throbbing-queen-5ddbus-stock-relay.yhchen8541.workers.dev';
     const WORKER_FETCH_TIMEOUT_MS = 15000;
     const MAX_CACHED_SYMBOLS = 6;
+    const MAX_HISTORY_SNAPSHOTS = 30;
 
     const BUILTIN_STOCK_META = {
       '2330.TW': { name: '台積電 (離線模擬)', base: 1050, vol: 32000000, drift: 0.0009, sigma: 0.016, seed: 2330 },
@@ -1243,7 +1419,7 @@
         usdTwdUpdatedAt: 0,
         useManualFx: false,
         workerBaseUrl: DEFAULT_WORKER_URL,
-        watchlist: ['2330.TW', '0050.TW', 'NVDA', 'AAPL', '00830.TW']
+        watchlist: []
       };
     }
 
@@ -1278,6 +1454,7 @@
 
       const mergedSettings = { ...createDefaultAccountSettings(), ...(options.settings || {}) };
       mergedSettings.workerBaseUrl = sanitizeWorkerUrl(mergedSettings.workerBaseUrl);
+      mergedSettings.watchlist = Array.isArray(mergedSettings.watchlist) ? [...mergedSettings.watchlist] : [];
 
       const defaultChart = createDefaultChartState();
       const rawChart = options.chartState || {};
@@ -1296,6 +1473,8 @@
         currentSimDate: rawStart,
         lastRealSyncDate: realToday,
         skipNonTradingDays: options.skipNonTradingDays !== undefined ? Boolean(options.skipNonTradingDays) : true,
+        orderUnitMode: options.orderUnitMode === 'ODD' ? 'ODD' : 'LOT',
+        watchlist: Array.isArray(options.watchlist) ? [...options.watchlist] : [...mergedSettings.watchlist],
         settings: mergedSettings,
         chartState: mergedChartState,
         initialCapital: cap,
@@ -1315,6 +1494,7 @@
         version: 2,
         activeTab: 'sim',
         activeAccountId: firstAcc.id,
+        orderUnitMode: 'LOT',
         accounts: [firstAcc],
         marketCache: {}
       };
@@ -1322,7 +1502,7 @@
 
     let appState = loadState();
     let orderSide = 'BUY';
-    let orderUnitMode = 'LOT';
+    let orderUnitMode = (getActiveAccount().orderUnitMode || appState.orderUnitMode) === 'ODD' ? 'ODD' : 'LOT';
     let orderExtraOpen = false;
     let pendingOrderPayload = null;
     let lastQuotedSymbol = '';
@@ -1336,6 +1516,112 @@
     let chartPointerDownPos = null;
     let chartLastTapTime = 0;
     const tabScrollPositions = { sim: 0, chart: 0 };
+
+    /* ========================================================================
+       版本歷史快照系統 (Undo / Redo Stack)
+       ======================================================================== */
+    let stateHistoryStack = [];
+    let historyIndex = -1;
+
+    function createSystemSnapshot(label = '') {
+      return {
+        label,
+        timestamp: Date.now(),
+        data: JSON.stringify({
+          activeAccountId: appState.activeAccountId,
+          orderUnitMode: appState.orderUnitMode,
+          accounts: appState.accounts
+        })
+      };
+    }
+
+    function pushHistorySnapshot(label = '') {
+      try {
+        const snap = createSystemSnapshot(label);
+        if (historyIndex >= 0 && stateHistoryStack[historyIndex] && stateHistoryStack[historyIndex].data === snap.data) {
+          updateUndoRedoButtons();
+          return;
+        }
+        if (historyIndex < stateHistoryStack.length - 1) {
+          stateHistoryStack = stateHistoryStack.slice(0, historyIndex + 1);
+        }
+        stateHistoryStack.push(snap);
+        if (stateHistoryStack.length > MAX_HISTORY_SNAPSHOTS) {
+          stateHistoryStack.shift();
+        }
+        historyIndex = stateHistoryStack.length - 1;
+        updateUndoRedoButtons();
+      } catch (_) {}
+    }
+
+    function updateUndoRedoButtons() {
+      const undoBtn = document.getElementById('btnUndoHistory');
+      const redoBtn = document.getElementById('btnRedoHistory');
+      if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+      if (redoBtn) redoBtn.disabled = historyIndex < 0 || historyIndex >= stateHistoryStack.length - 1;
+    }
+
+    async function restoreSnapshotAt(targetIdx, directionLabel) {
+      if (targetIdx < 0 || targetIdx >= stateHistoryStack.length) return;
+      try {
+        const snap = stateHistoryStack[targetIdx];
+        const parsed = JSON.parse(snap.data);
+        historyIndex = targetIdx;
+
+        const restoredAccounts = (parsed.accounts || []).map(a => normalizeAccountRecord(a));
+        if (restoredAccounts.length === 0) return;
+
+        appState.accounts = restoredAccounts;
+        appState.activeAccountId = restoredAccounts.some(a => a.id === parsed.activeAccountId)
+          ? parsed.activeAccountId
+          : restoredAccounts[0].id;
+        appState.orderUnitMode = parsed.orderUnitMode === 'ODD' ? 'ODD' : 'LOT';
+        saveState();
+        updateUndoRedoButtons();
+
+        const acc = getActiveAccount();
+        const cs = getActiveChartState();
+        applyColorTheme();
+        setOrderUnitMode(acc.orderUnitMode || appState.orderUnitMode || 'LOT', false);
+        expandedHoldingSym = null;
+        renderSimTimelineUI();
+        renderSimTab();
+        updateOrderPreview();
+        updateChartControlsUI();
+        renderWatchlistChips();
+
+        if (document.getElementById('watchlistModal') && !document.getElementById('watchlistModal').classList.contains('hidden')) {
+          renderWatchlistModalContent();
+        }
+
+        if (cs.activeChartSymbol) {
+          currentChartData = await getAccountMarketData(cs.activeChartSymbol, false, { silentError: true }, acc);
+          if (appState.activeTab === 'chart') {
+            updateChartHeader();
+            if (isFullChartModalOpen()) {
+              renderActiveChart();
+            }
+          }
+        }
+
+        const desc = snap.label ? `（${snap.label}）` : '';
+        showToast(`已${directionLabel}${desc}`, 'info');
+      } catch (e) {
+        showToast('版本還原發生錯誤：' + e.message, 'error');
+      }
+    }
+
+    async function undoSystemHistory() {
+      if (historyIndex <= 0) return;
+      const currentAction = stateHistoryStack[historyIndex]?.label || '';
+      await restoreSnapshotAt(historyIndex - 1, currentAction ? `復原「${currentAction}」` : '退回上一步');
+    }
+
+    async function redoSystemHistory() {
+      if (historyIndex < 0 || historyIndex >= stateHistoryStack.length - 1) return;
+      const nextSnap = stateHistoryStack[historyIndex + 1];
+      await restoreSnapshotAt(historyIndex + 1, nextSnap?.label ? `重做「${nextSnap.label}」` : '前進下一步');
+    }
 
     /* ========================================================================
        連線健康管理狀態機
@@ -1419,7 +1705,21 @@
       const acc = getActiveAccount();
       if (!acc.settings) acc.settings = createDefaultAccountSettings();
       acc.settings.workerBaseUrl = sanitizeWorkerUrl(acc.settings.workerBaseUrl);
+      if (!Array.isArray(acc.watchlist)) {
+        acc.watchlist = Array.isArray(acc.settings.watchlist) ? [...acc.settings.watchlist] : [];
+      }
+      acc.settings.watchlist = acc.watchlist;
       return acc.settings;
+    }
+
+    function getAccountWatchlist(acc = getActiveAccount()) {
+      if (!acc) return [];
+      if (!acc.settings) acc.settings = createDefaultAccountSettings();
+      if (!Array.isArray(acc.watchlist)) {
+        acc.watchlist = Array.isArray(acc.settings.watchlist) ? [...acc.settings.watchlist] : [];
+      }
+      acc.settings.watchlist = acc.watchlist;
+      return acc.watchlist;
     }
 
     function getActiveChartState() {
@@ -1513,15 +1813,20 @@
       const validFx = Number(rawSet.usdTwdRate);
       const cleanWorkerUrl = sanitizeWorkerUrl(rawSet.workerBaseUrl);
 
+      const rawWatchlist = Array.isArray(rawAcc.watchlist)
+        ? rawAcc.watchlist
+        : (Array.isArray(rawSet.watchlist) ? rawSet.watchlist : []);
+      const cleanWatchlist = Array.from(
+        new Set(rawWatchlist.map(s => normalizeSymbol(s)).filter(Boolean))
+      );
+
       const cleanSettings = {
         ...rawSet,
         usdTwdRate: Number.isFinite(validFx) && validFx > 0 ? validFx : DEFAULT_USD_TWD_RATE,
         usdTwdUpdatedAt: Number(rawSet.usdTwdUpdatedAt) || 0,
         useManualFx: Boolean(rawSet.useManualFx),
         workerBaseUrl: cleanWorkerUrl,
-        watchlist: Array.isArray(rawSet.watchlist) && rawSet.watchlist.length > 0
-          ? rawSet.watchlist
-          : [...defSet.watchlist]
+        watchlist: [...cleanWatchlist]
       };
 
       const defChart = createDefaultChartState();
@@ -1645,6 +1950,10 @@
           })
         : [];
 
+      const resolvedUnitMode = (rawAcc.orderUnitMode === 'ODD' || rawAcc.orderUnitMode === 'LOT')
+        ? rawAcc.orderUnitMode
+        : 'LOT';
+
       return {
         ...rawAcc,
         id: rawAcc.id || ('acc_' + Date.now() + '_' + Math.floor(Math.random() * 1000)),
@@ -1654,6 +1963,8 @@
         currentSimDate,
         lastRealSyncDate,
         skipNonTradingDays: rawAcc.skipNonTradingDays !== undefined ? Boolean(rawAcc.skipNonTradingDays) : true,
+        orderUnitMode: resolvedUnitMode,
+        watchlist: cleanWatchlist,
         settings: cleanSettings,
         chartState: cleanChartState,
         initialCapital: initCap,
@@ -1704,10 +2015,15 @@
           }
         }
 
+        const activeAcc = accounts.find(a => a.id === parsed.activeAccountId) || accounts[0];
+        const savedUnitMode = (activeAcc && activeAcc.orderUnitMode)
+          || (parsed.orderUnitMode === 'ODD' ? 'ODD' : 'LOT');
+
         const state = {
           version: 2,
           activeTab: parsed.activeTab || def.activeTab,
-          activeAccountId: parsed.activeAccountId || accounts[0].id,
+          activeAccountId: activeAcc.id,
+          orderUnitMode: savedUnitMode,
           accounts,
           marketCache: cleanCache
         };
@@ -2047,7 +2363,7 @@
         cs.activeChartSymbol,
         normalizeSymbol(document.getElementById('orderSymbol')?.value || ''),
         ...Object.keys(acc.holdings || {}),
-        ...(acc.settings?.watchlist || [])
+        ...getAccountWatchlist(acc)
       ]);
 
       for (const sym of checkSyms) {
@@ -2150,10 +2466,10 @@
         : '';
 
       showConfirmDialog(
-        '確認快轉時間軸（不可逆）',
-        `確定要將「${getAccountDisplayName(acc)}」從 ${acc.currentSimDate} ${stepDesc}至 ${clampedTarget} 嗎？時間推進後無法倒轉回過去日期。${syncWarning}`,
+        '確認快轉時間軸',
+        `確定要將「${getAccountDisplayName(acc)}」從 ${acc.currentSimDate} ${stepDesc}至 ${clampedTarget} 嗎？（可透過頂部上一步按鈕復原）${syncWarning}`,
         async () => {
-          await executeAccountTimeJump(clampedTarget);
+          await executeAccountTimeJump(clampedTarget, stepLabel || `快轉至 ${clampedTarget}`);
         },
         {
           okText: '確認快轉',
@@ -2187,7 +2503,7 @@
       requestTimeWarpConfirmation(targetDateStr, '指定日期跳轉');
     }
 
-    async function executeAccountTimeJump(targetDateStr) {
+    async function executeAccountTimeJump(targetDateStr, actionLabel = '') {
       const acc = getActiveAccount();
       const realToday = getTodayDateString();
 
@@ -2197,6 +2513,7 @@
       acc.currentSimDate = clampedTarget;
       acc.lastRealSyncDate = realToday;
       saveState();
+      pushHistorySnapshot(actionLabel || `快轉至 ${clampedTarget}`);
 
       await applyTimelineChangeRefresh(acc);
 
@@ -2495,7 +2812,6 @@
       const livePrice = (Number.isFinite(expectedMarketPrice) && expectedMarketPrice > 0)
         ? Number(expectedMarketPrice.toFixed(2))
         : lastBar.close;
-      // 永遠優先使用前一根日 K 收盤價計算前一日到當日漲跌
       const prevClose = prevBar.close;
 
       return {
@@ -2645,9 +2961,6 @@
 
     async function fetchLiveUsdTwdRate(forceRefresh = false) {
       const s = getActiveSettings();
-      if (!forceRefresh && s.useManualFx) {
-        return getActiveUsdTwdRate();
-      }
       const now = Date.now();
       if (!forceRefresh && s.usdTwdUpdatedAt > 0 && (now - s.usdTwdUpdatedAt) < 1800000) {
         return getActiveUsdTwdRate();
@@ -2684,7 +2997,6 @@
         curSettings.usdTwdRate = fetchedRate;
         curSettings.usdTwdUpdatedAt = Date.now();
         saveState();
-        updateSettingsFxDisplay();
         return fetchedRate;
       } catch (_) {
         return getActiveUsdTwdRate();
@@ -3082,20 +3394,28 @@
       connState.tpexSnapshot = { fetchedAt: 0, map: null, inFlight: null };
 
       if (!silent) {
-        showToast('正在重置連線並重新抓取全歷史行情與匯率...', 'info');
+        showToast('正在同步最新行情與 USD/TWD 匯率...', 'info');
       }
 
-      fetchLiveUsdTwdRate(!silent).then(() => {
+      const prevFxTs = Number(getActiveSettings().usdTwdUpdatedAt || 0);
+      const fxPromise = fetchLiveUsdTwdRate(!silent).then(rate => {
         renderSimTab();
         updateOrderPreview();
-      }).catch(() => {});
+        return rate;
+      }).catch(() => getActiveUsdTwdRate());
 
       const acc = getActiveAccount();
 
       if (appState.activeTab === 'chart') {
-        await loadChartSymbol(getActiveChartState().activeChartSymbol, true);
+        const [, latestFx] = await Promise.all([
+          loadChartSymbol(getActiveChartState().activeChartSymbol, true),
+          fxPromise
+        ]);
         if (!silent && connState.status === 'LIVE') {
-          showToast(`重連成功！已取得 ${formatDisplaySymbol(getActiveChartState().activeChartSymbol)} 全歷史報價`, 'success');
+          showToast(
+            `已同步 ${formatDisplaySymbol(getActiveChartState().activeChartSymbol)} 最新行情 · 匯率 ${Number(latestFx).toFixed(2)}`,
+            'success'
+          );
         }
         return;
       }
@@ -3106,52 +3426,72 @@
 
       if (orderSymRaw) targetSyms.add(normalizeSymbol(orderSymRaw));
       holdingSyms.forEach(s => targetSyms.add(s));
-      if (targetSyms.size === 0) targetSyms.add('2330.TW');
 
-      const results = await Promise.allSettled(
-        Array.from(targetSyms).map(s => getMarketData(s, true, { silentError: true }))
-      );
+      if (targetSyms.size > 0) {
+        const [results, latestFx] = await Promise.all([
+          Promise.allSettled(Array.from(targetSyms).map(s => getMarketData(s, true, { silentError: true }))),
+          fxPromise
+        ]);
 
-      if (orderSymRaw) {
-        const reqSeq = ++orderQuoteRequestSeq;
-        const maskedOrder = await getAccountMarketData(orderSymRaw, false, { silentError: true }, acc);
-        const currentInputNow = document.getElementById('orderSymbol').value.trim();
-        if (
-          reqSeq === orderQuoteRequestSeq &&
-          isSameNormalizedSymbol(currentInputNow, orderSymRaw) &&
-          maskedOrder &&
-          Number.isFinite(maskedOrder.price)
-        ) {
-          const dispSym = formatDisplaySymbol(maskedOrder.symbol);
-          const cur = getSymbolCurrency(maskedOrder.symbol);
-          lastQuotedSymbol = normalizeSymbol(maskedOrder.symbol);
-          document.getElementById('orderPrice').value = maskedOrder.price;
-          document.getElementById('orderQuoteName').textContent = `${dispSym} ${maskedOrder.name} · ${fmtPrice(maskedOrder.price)} ${cur}`;
-          updateOrderPreview();
+        if (orderSymRaw) {
+          const reqSeq = ++orderQuoteRequestSeq;
+          const maskedOrder = await getAccountMarketData(orderSymRaw, false, { silentError: true }, acc);
+          const currentInputNow = document.getElementById('orderSymbol').value.trim();
+          if (
+            reqSeq === orderQuoteRequestSeq &&
+            isSameNormalizedSymbol(currentInputNow, orderSymRaw) &&
+            maskedOrder &&
+            Number.isFinite(maskedOrder.price)
+          ) {
+            const dispSym = formatDisplaySymbol(maskedOrder.symbol);
+            const cur = getSymbolCurrency(maskedOrder.symbol);
+            lastQuotedSymbol = normalizeSymbol(maskedOrder.symbol);
+            document.getElementById('orderPrice').value = maskedOrder.price;
+            document.getElementById('orderQuoteName').textContent = `${dispSym} ${maskedOrder.name} · ${fmtPrice(maskedOrder.price)} ${cur}`;
+            updateOrderPreview();
+          }
         }
-      }
 
-      for (const s of holdingSyms) {
-        const d = appState.marketCache[s];
-        if (d && d.name && acc.holdings[s]) {
-          acc.holdings[s].name = d.name;
+        for (const s of holdingSyms) {
+          const d = appState.marketCache[s];
+          if (d && d.name && acc.holdings[s]) {
+            acc.holdings[s].name = d.name;
+          }
         }
-      }
-      saveState();
-      renderSimTab();
+        saveState();
+        renderSimTab();
 
-      const liveItems = results
-        .filter(r => r.status === 'fulfilled' && r.value && r.value.source === 'LIVE')
-        .map(r => r.value);
+        const liveItems = results
+          .filter(r => r.status === 'fulfilled' && r.value && r.value.source === 'LIVE')
+          .map(r => r.value);
 
-      if (liveItems.length > 0) {
-        updateStatusBadge('LIVE', liveItems[0].sourceLabel || 'LIVE');
-        if (!silent) {
-          showToast(`重連成功！已更新 ${liveItems.length} 檔標的即時行情`, 'success');
+        if (liveItems.length > 0) {
+          updateStatusBadge('LIVE', liveItems[0].sourceLabel || 'LIVE');
+          if (!silent) {
+            showToast(
+              `已更新 ${liveItems.length} 檔標的即時行情 · 匯率 1 USD = ${Number(latestFx).toFixed(2)} TWD`,
+              'success'
+            );
+          }
+        } else if (!silent) {
+          const reason = connState.lastErrorDetail ? `：${connState.lastErrorDetail}` : '';
+          showToast(`行情重連失敗${reason}，匯率 ${Number(latestFx).toFixed(2)}`, 'error');
         }
-      } else if (!silent) {
-        const reason = connState.lastErrorDetail ? `：${connState.lastErrorDetail}` : '';
-        showToast(`重連失敗${reason}，目前為離線模擬狀態`, 'error');
+      } else {
+        const [probe, latestFx] = await Promise.all([
+          getMarketData('2330.TW', true, { silentError: true }),
+          fxPromise
+        ]);
+        if (probe && probe.source === 'LIVE') {
+          updateStatusBadge('LIVE', probe.sourceLabel || 'LIVE');
+          if (!silent) {
+            const fxUpdated = Number(getActiveSettings().usdTwdUpdatedAt || 0) > prevFxTs;
+            showToast(
+              `連線正常 · 匯率 ${fxUpdated ? '已更新' : '目前'} 1 USD = ${Number(latestFx).toFixed(2)} TWD`,
+              'success'
+            );
+          }
+        }
       }
     }
 
@@ -3163,7 +3503,7 @@
       return n || '未命名帳戶';
     }
 
-    async function switchAccount(accId) {
+    async function switchAccount(accId, recordSnapshot = true) {
       appState.activeAccountId = accId;
       syncAllAccountsWithReality(false);
       saveState();
@@ -3172,6 +3512,9 @@
       const acc = getActiveAccount();
       const cs = getActiveChartState();
       expandedHoldingSym = null;
+
+      const persistedMode = (acc.orderUnitMode || appState.orderUnitMode) === 'ODD' ? 'ODD' : 'LOT';
+      setOrderUnitMode(persistedMode, false);
 
       const orderSymRaw = document.getElementById('orderSymbol').value.trim();
       if (orderSymRaw) {
@@ -3194,6 +3537,10 @@
           document.getElementById('orderQuoteName').textContent =
             `${formatDisplaySymbol(masked.symbol)} ${masked.name} · ${fmtPrice(masked.price)} ${cur}`;
         }
+      }
+
+      if (recordSnapshot) {
+        pushHistorySnapshot(`切換至「${getAccountDisplayName(acc)}」`);
       }
 
       setOrderSide(orderSide);
@@ -3244,7 +3591,7 @@
 
     async function selectAccountFromModal(accId) {
       closeModal('accountSwitchModal');
-      await switchAccount(accId);
+      await switchAccount(accId, true);
       showToast(`已切換至「${getAccountDisplayName(getActiveAccount())}」`, 'info');
     }
 
@@ -3310,11 +3657,13 @@
           strategy,
           initialCapital: Math.round(cap),
           startDate: chosenStart,
-          skipNonTradingDays
+          skipNonTradingDays,
+          orderUnitMode: orderUnitMode
         });
         appState.accounts.push(newAcc);
         closeModal('accountModal');
-        await switchAccount(newAcc.id);
+        await switchAccount(newAcc.id, false);
+        pushHistorySnapshot(`建立帳戶「${name}」`);
         showToast(
           chosenStart < realToday
             ? `已建立「${name}」，起始日期設為 ${chosenStart}`
@@ -3327,6 +3676,7 @@
         acc.strategy = strategy;
         acc.skipNonTradingDays = skipNonTradingDays;
         saveState();
+        pushHistorySnapshot(`編輯帳戶「${name}」`);
         closeModal('accountModal');
         renderSimTab();
         showToast('帳戶資訊已更新', 'success');
@@ -3402,6 +3752,7 @@
       });
 
       saveState();
+      pushHistorySnapshot(`帳戶充值 +$${fmtMoney(depositAmount)}`);
       closeModal('depositModal');
       renderSimTab();
       updateOrderPreview();
@@ -3424,6 +3775,7 @@
           acc.currentSimDate = acc.startDate;
           acc.lastRealSyncDate = getTodayDateString();
           saveState();
+          pushHistorySnapshot(`重置帳戶「${dispName}」`);
           await applyTimelineChangeRefresh(acc);
           showToast(`帳戶「${dispName}」已重置完成`, 'success');
         }
@@ -3439,10 +3791,11 @@
       const dispName = getAccountDisplayName(acc);
       showConfirmDialog(
         '刪除帳戶',
-        `確定要永久刪除「${dispName}」及其所有紀錄嗎？此動作無法復原。`,
+        `確定要永久刪除「${dispName}」及其所有紀錄嗎？`,
         async () => {
           appState.accounts = appState.accounts.filter(a => a.id !== acc.id);
-          await switchAccount(appState.accounts[0].id);
+          await switchAccount(appState.accounts[0].id, false);
+          pushHistorySnapshot(`刪除帳戶「${dispName}」`);
           showToast(`已刪除帳戶「${dispName}」`, 'warn');
         }
       );
@@ -3510,9 +3863,6 @@
         document.getElementById('orderIsEtf').checked = sym ? isLikelyEtf(sym) : false;
       }
 
-      if (sym && cur === 'USD' && orderUnitMode === 'LOT') {
-        setOrderUnitMode('ODD');
-      }
       updateOrderPreview();
     }
 
@@ -3536,14 +3886,14 @@
       updateOrderPreview();
     }
 
-    function setOrderUnitMode(mode) {
-      orderUnitMode = mode;
+    function setOrderUnitMode(mode, persistChoice = false) {
+      orderUnitMode = mode === 'ODD' ? 'ODD' : 'LOT';
       const lotBtn = document.getElementById('btnUnitLot');
       const oddBtn = document.getElementById('btnUnitOdd');
       const qtyLabel = document.getElementById('orderQtyLabel');
       const baseBtn = document.getElementById('btnQuickBaseQty');
 
-      if (mode === 'LOT') {
+      if (orderUnitMode === 'LOT') {
         lotBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] bg-[#1F2633] text-[#F4F6F9]';
         oddBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] text-[#8A94A6]';
         qtyLabel.textContent = '數量（張）';
@@ -3553,6 +3903,13 @@
         lotBtn.className = 'tap-btn px-2.5 py-0.5 text-[11px] font-semibold rounded-[5px] text-[#8A94A6]';
         qtyLabel.textContent = '數量（股）';
         if (baseBtn) baseBtn.textContent = '100股';
+      }
+
+      if (persistChoice) {
+        const acc = getActiveAccount();
+        acc.orderUnitMode = orderUnitMode;
+        appState.orderUnitMode = orderUnitMode;
+        saveState();
       }
       updateOrderPreview();
     }
@@ -3607,15 +3964,12 @@
             return;
           }
           const targetShares = Math.max(1, Math.floor(held * ratio));
-          if (targetShares >= 1000 && targetShares % 1000 === 0) {
-            setOrderUnitMode('LOT');
-            document.getElementById('orderQty').value = targetShares / 1000;
-          } else if (targetShares <= 999) {
-            setOrderUnitMode('ODD');
-            document.getElementById('orderQty').value = targetShares;
+          if (orderUnitMode === 'LOT') {
+            const lots = Math.floor(targetShares / 1000);
+            document.getElementById('orderQty').value = lots > 0 ? lots : '';
+            if (lots <= 0) showToast('目前持有股數不足 1 張，可切換零股(股)模式賣出', 'warn');
           } else {
-            setOrderUnitMode('LOT');
-            document.getElementById('orderQty').value = Math.floor(targetShares / 1000);
+            document.getElementById('orderQty').value = Math.min(999, targetShares);
           }
         }
       }
@@ -3663,9 +4017,7 @@
         document.getElementById('orderPriceLabel').textContent = `委託單價（${cur}）`;
         document.getElementById('orderQuoteName').textContent = `${dispSym} ${data.name} · ${fmtPrice(data.price)} ${cur}`;
         document.getElementById('orderIsEtf').checked = isLikelyEtf(data.symbol);
-        if (cur === 'USD' && orderUnitMode === 'LOT') {
-          setOrderUnitMode('ODD');
-        }
+
         updateOrderPreview();
         renderSimTab();
         if (data.source === 'LIVE') {
@@ -3888,6 +4240,28 @@
       }
     }
 
+    function clearOrderFormAfterExecution() {
+      lastQuotedSymbol = '';
+      orderQuoteRequestSeq += 1;
+      const symEl = document.getElementById('orderSymbol');
+      const priceEl = document.getElementById('orderPrice');
+      const qtyEl = document.getElementById('orderQty');
+      const noteEl = document.getElementById('orderNote');
+      const reasonEl = document.getElementById('orderReason');
+      const nameEl = document.getElementById('orderQuoteName');
+      const etfEl = document.getElementById('orderIsEtf');
+
+      if (symEl) symEl.value = '';
+      if (priceEl) priceEl.value = '';
+      if (qtyEl) qtyEl.value = '';
+      if (noteEl) noteEl.value = '';
+      if (reasonEl) reasonEl.value = '';
+      if (etfEl) etfEl.checked = false;
+      if (nameEl) nameEl.textContent = '請點擊查詢或輸入單價';
+
+      updateOrderPreview();
+    }
+
     function executeConfirmedOrder() {
       try {
         if (!pendingOrderPayload) {
@@ -3981,6 +4355,13 @@
               batches: [newBatch]
             };
           }
+
+          // 嚴格帳戶隔離：買進任一股票時，自動加入目前帳戶專屬常用股票清單
+          const accWatchlist = getAccountWatchlist(acc);
+          const alreadyExists = accWatchlist.some(w => isSameNormalizedSymbol(w, sym));
+          if (!alreadyExists) {
+            accWatchlist.push(sym);
+          }
         } else {
           const existing = acc.holdings[sym];
           const prevCostTwd = Number.isFinite(existing.totalCostTwd)
@@ -4050,10 +4431,11 @@
 
         pendingOrderPayload = null;
         closeModal('orderConfirmModal');
-        document.getElementById('orderNote').value = '';
         saveState();
+        pushHistorySnapshot(`${side === 'BUY' ? '買進' : '賣出'} ${dispSym} ${fmtMoney(shares)}股`);
+        clearOrderFormAfterExecution();
         renderSimTab();
-        updateOrderPreview();
+        renderWatchlistChips();
         showToast(
           `[${simDate}] ${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 · 單價 ${fmtPrice(price)} ${metrics.currency}`,
           'success'
@@ -4088,11 +4470,10 @@
       document.getElementById('orderIsEtf').checked = Boolean(h.isEtf);
       setOrderSide(side);
 
-      if (cur === 'TWD' && h.shares >= 1000 && h.shares % 1000 === 0) {
-        setOrderUnitMode('LOT');
-        document.getElementById('orderQty').value = h.shares / 1000;
+      if (orderUnitMode === 'LOT') {
+        const lots = Math.floor(h.shares / 1000);
+        document.getElementById('orderQty').value = lots > 0 ? lots : '';
       } else {
-        setOrderUnitMode('ODD');
         document.getElementById('orderQty').value = Math.min(999, h.shares);
       }
       updateOrderPreview();
@@ -4145,7 +4526,6 @@
           : (Number(h.avgCost) * shares);
         const avgCostNative = nativeCostBasis / shares;
 
-        // 先計算原幣未實現損益，再依當前匯率折合台幣，避免匯率變動造成美金虧損、台幣卻顯示獲利的矛盾
         const unrealizedNative = (curPrice - avgCostNative) * shares;
         const unrealizedTwd = unrealizedNative * fxRate;
         const unrealizedPct = nativeCostBasis > 0 ? (unrealizedNative / nativeCostBasis) * 100 : 0;
@@ -4549,7 +4929,7 @@
     }
 
     function exportReport(scope) {
-      const header = `股市策略實驗室｜多時間軸交易績效檢討報告（統一 TWD 計價）\n匯出時間：${new Date().toLocaleString('zh-TW')}\n`;
+      const header = `stockmaster📉｜多時間軸交易績效檢討報告（統一 TWD 計價）\n匯出時間：${new Date().toLocaleString('zh-TW')}\n`;
       let body = '';
       if (scope === 'current') {
         body = buildAccountReportText(getActiveAccount());
@@ -4579,7 +4959,7 @@
     }
 
     /* ========================================================================
-       7. 分頁二：盤面分析 (前日到當日漲跌、開高低收與選日期連動、無十字準星全屏圖表)
+       7. 分頁二：盤面分析 (常用股票獨立彈窗管理、前日漲跌、開高低收與無十字準星全屏圖表)
        ======================================================================== */
     function isFullChartModalOpen() {
       const modal = document.getElementById('fullChartModal');
@@ -5208,16 +5588,94 @@
     function renderWatchlistChips() {
       const container = document.getElementById('watchlistChips');
       if (!container) return;
+      const acc = getActiveAccount();
       const cs = getActiveChartState();
-      const s = getActiveSettings();
+      const list = getAccountWatchlist(acc);
       const activeClean = formatDisplaySymbol(cs.activeChartSymbol);
-      container.innerHTML = s.watchlist.map(sym => {
+
+      if (list.length === 0) {
+        container.innerHTML = `<span class="text-[11px] text-[#586274] whitespace-nowrap">尚無常用股票，買進後自動加入或點右側編輯</span>`;
+        return;
+      }
+
+      container.innerHTML = list.map(sym => {
         const dispSym = formatDisplaySymbol(sym);
         const active = sym === cs.activeChartSymbol || dispSym === activeClean;
         return `<button onclick="loadChartSymbol('${escapeHtml(sym)}')" class="tap-btn px-2.5 py-0.5 text-[11px] num font-semibold shrink-0 rounded-full ${
           active ? 'bg-[rgba(255,153,0,0.16)] text-[#FF9900]' : 'bg-[#141923] text-[#8A94A6]'
         }">${escapeHtml(dispSym)}</button>`;
       }).join('');
+    }
+
+    function openWatchlistModal() {
+      const acc = getActiveAccount();
+      document.getElementById('wlModalAccBadge').textContent = getAccountDisplayName(acc);
+      document.getElementById('modalNewWatchSymbol').value = '';
+      renderWatchlistModalContent();
+      openModal('watchlistModal');
+    }
+
+    function renderWatchlistModalContent() {
+      const container = document.getElementById('modalWatchlistChips');
+      if (!container) return;
+      const acc = getActiveAccount();
+      const list = getAccountWatchlist(acc);
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="w-full py-4 text-center text-[12px] text-[#586274]">目前此帳戶尚無常用股票，買進任意股票會自動收錄，或於上方輸入代號新增</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(sym => {
+        const dispSym = escapeHtml(formatDisplaySymbol(sym));
+        const rawSym = escapeHtml(sym);
+        return `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#171C26] rounded-full text-[12px] num text-[#F4F6F9]">
+            <button type="button" onclick="selectWatchlistSymbolFromModal('${rawSym}')" class="hover:text-[#FF9900] font-semibold">${dispSym}</button>
+            <button type="button" onclick="removeWatchlistSymbolFromModal('${rawSym}')" title="移除 ${dispSym}" class="text-[#FF3B30] font-bold px-1">✕</button>
+          </span>
+        `;
+      }).join('');
+    }
+
+    function selectWatchlistSymbolFromModal(sym) {
+      closeModal('watchlistModal');
+      loadChartSymbol(sym, false);
+    }
+
+    function addWatchlistSymbolFromModal() {
+      const input = document.getElementById('modalNewWatchSymbol');
+      const sym = normalizeSymbol(input.value);
+      if (!sym) {
+        showToast('請輸入有效的股票代號', 'warn');
+        return;
+      }
+      const acc = getActiveAccount();
+      const list = getAccountWatchlist(acc);
+      if (list.some(s => isSameNormalizedSymbol(s, sym))) {
+        showToast(`${formatDisplaySymbol(sym)} 已在目前帳戶常用清單中`, 'info');
+        input.value = '';
+        return;
+      }
+      list.push(sym);
+      saveState();
+      pushHistorySnapshot(`新增常用股票 ${formatDisplaySymbol(sym)}`);
+      input.value = '';
+      renderWatchlistModalContent();
+      renderWatchlistChips();
+      showToast(`已新增 ${formatDisplaySymbol(sym)} 至此帳戶常用股票`, 'success');
+    }
+
+    function removeWatchlistSymbolFromModal(sym) {
+      const acc = getActiveAccount();
+      const list = getAccountWatchlist(acc);
+      const nextList = list.filter(item => !isSameNormalizedSymbol(item, sym));
+      acc.watchlist = nextList;
+      if (acc.settings) acc.settings.watchlist = nextList;
+      saveState();
+      pushHistorySnapshot(`移除常用股票 ${formatDisplaySymbol(sym)}`);
+      renderWatchlistModalContent();
+      renderWatchlistChips();
     }
 
     function getBarDailyChangeBadgeHtml(bars, idx) {
@@ -5652,7 +6110,7 @@
     }
 
     /* ========================================================================
-       8. 分頁切換、獨立帳戶設定 Modal 與多模式 JSON 備份還原 (含重複匯入偵測)
+       8. 分頁切換、獨立帳戶設定 Modal 與多模式 JSON 備份還原
        ======================================================================== */
     function switchMainTab(tab) {
       syncAllAccountsWithReality(false);
@@ -5720,42 +6178,6 @@
       }
     }
 
-    function updateSettingsFxDisplay() {
-      const s = getActiveSettings();
-      const rate = getActiveUsdTwdRate();
-      const badge = document.getElementById('setFxStatusBadge');
-      const updatedEl = document.getElementById('setFxUpdatedAt');
-      if (badge) badge.textContent = `1 USD = ${rate.toFixed(2)} TWD`;
-      if (updatedEl) {
-        const ts = Number(s.usdTwdUpdatedAt);
-        if (ts > 0) {
-          const d = new Date(ts);
-          updatedEl.textContent = `更新於 ${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        } else {
-          updatedEl.textContent = '預設匯率';
-        }
-      }
-    }
-
-    async function refreshUsdTwdRateFromSettings() {
-      const s = getActiveSettings();
-      const prevManual = s.useManualFx;
-      s.useManualFx = false;
-      document.getElementById('setUseManualFx').checked = false;
-      showToast('正在連網取得最新 USD/TWD 匯率...', 'info');
-      const rate = await fetchLiveUsdTwdRate(true);
-      document.getElementById('setUsdTwdRate').value = rate;
-      updateSettingsFxDisplay();
-      renderSimTab();
-      updateOrderPreview();
-      if (s.usdTwdUpdatedAt > 0) {
-        showToast(`已更新美元匯率：1 USD = ${rate.toFixed(2)} TWD`, 'success');
-      } else {
-        s.useManualFx = prevManual;
-        showToast('匯率連線暫時無法更新，沿用目前匯率', 'warn');
-      }
-    }
-
     function resetDefaultWorkerUrl() {
       document.getElementById('setWorkerUrl').value = DEFAULT_WORKER_URL;
       showToast('已填入預設 Cloudflare Worker 網址', 'info');
@@ -5774,12 +6196,8 @@
       document.getElementById('setMa1').value = s.maPeriods[1];
       document.getElementById('setMa2').value = s.maPeriods[2];
       document.getElementById('setCacheTtl').value = String(s.cacheTtlMs);
-      document.getElementById('setUsdTwdRate').value = getActiveUsdTwdRate();
-      document.getElementById('setUseManualFx').checked = Boolean(s.useManualFx);
       document.getElementById('setWorkerUrl').value = getWorkerBaseUrl();
-      updateSettingsFxDisplay();
       updateColorModeButtons();
-      renderSettingsWatchlist();
       openModal('settingsModal');
     }
 
@@ -5789,6 +6207,7 @@
       applyColorTheme();
       updateColorModeButtons();
       saveState();
+      pushHistorySnapshot(`切換為${mode === 'US' ? '美股' : '台股'}配色`);
       setOrderSide(orderSide);
       renderSimTab();
       if (appState.activeTab === 'chart') {
@@ -5807,47 +6226,6 @@
         : 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[#171C26] text-[#8A94A6] font-semibold';
     }
 
-    function renderSettingsWatchlist() {
-      const el = document.getElementById('settingsWatchlist');
-      const s = getActiveSettings();
-      el.innerHTML = s.watchlist.map(sym => {
-        const dispSym = escapeHtml(formatDisplaySymbol(sym));
-        const rawSym = escapeHtml(sym);
-        return `
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#171C26] rounded-full text-[12px] num text-[#F4F6F9]">
-            ${dispSym}
-            <button onclick="removeWatchlistSymbol('${rawSym}')" class="text-[#FF3B30] font-bold px-0.5">✕</button>
-          </span>
-        `;
-      }).join('');
-    }
-
-    function addWatchlistSymbol() {
-      const input = document.getElementById('newWatchSymbol');
-      const sym = normalizeSymbol(input.value);
-      const s = getActiveSettings();
-      if (!sym) return;
-      if (!s.watchlist.includes(sym)) {
-        s.watchlist.push(sym);
-        saveState();
-        renderSettingsWatchlist();
-        renderWatchlistChips();
-      }
-      input.value = '';
-    }
-
-    function removeWatchlistSymbol(sym) {
-      const s = getActiveSettings();
-      if (s.watchlist.length <= 1) {
-        showToast('自選股至少需保留 1 檔標的', 'warn');
-        return;
-      }
-      s.watchlist = s.watchlist.filter(item => item !== sym);
-      saveState();
-      renderSettingsWatchlist();
-      renderWatchlistChips();
-    }
-
     function saveSettingsFromModal() {
       const s = getActiveSettings();
       const feeRate = Number(document.getElementById('setFeeRate').value);
@@ -5859,16 +6237,10 @@
       const ma1 = Math.max(2, Math.min(240, Math.round(Number(document.getElementById('setMa1').value) || 20)));
       const ma2 = Math.max(2, Math.min(240, Math.round(Number(document.getElementById('setMa2').value) || 60)));
       const cacheTtlMs = Number(document.getElementById('setCacheTtl').value);
-      const fxVal = Number(document.getElementById('setUsdTwdRate').value);
-      const useManualFx = document.getElementById('setUseManualFx').checked;
       const workerBaseUrl = sanitizeWorkerUrl(document.getElementById('setWorkerUrl').value);
 
       if (feeRate < 0 || discount < 0 || minFee < 0 || stockTax < 0 || etfTax < 0) {
         showToast('費率與折數不可為負數', 'error');
-        return;
-      }
-      if (!Number.isFinite(fxVal) || fxVal <= 0) {
-        showToast('請輸入大於 0 的有效美元匯率', 'error');
         return;
       }
 
@@ -5879,11 +6251,10 @@
       s.etfTaxRate = etfTax;
       s.maPeriods = [ma0, ma1, ma2];
       s.cacheTtlMs = cacheTtlMs;
-      s.usdTwdRate = Number(fxVal.toFixed(4));
-      s.useManualFx = useManualFx;
       s.workerBaseUrl = workerBaseUrl;
 
       saveState();
+      pushHistorySnapshot('修改帳戶設定');
       closeModal('settingsModal');
       renderSimTab();
       updateOrderPreview();
@@ -5905,7 +6276,7 @@
           exportedAt: new Date().toISOString(),
           account: activeAcc
         };
-        fileName = `stock_lab_account_${getAccountDisplayName(activeAcc)}_${getTodayDateString()}.json`;
+        fileName = `stockmaster_account_${getAccountDisplayName(activeAcc)}_${getTodayDateString()}.json`;
         modalTitle = `單一戶頭備份 JSON（${getAccountDisplayName(activeAcc)}）`;
       } else {
         payload = {
@@ -5914,7 +6285,7 @@
           marketCache: {},
           exportedAt: new Date().toISOString()
         };
-        fileName = `stock_lab_full_backup_${getTodayDateString()}.json`;
+        fileName = `stockmaster_full_backup_${getTodayDateString()}.json`;
         modalTitle = '全部系統資料備份 (JSON)';
       }
 
@@ -6048,7 +6419,8 @@
           appState.accounts.push(...uniqueToImport);
           saveState();
           closeModal('settingsModal');
-          await switchAccount(uniqueToImport[0].id);
+          await switchAccount(uniqueToImport[0].id, false);
+          pushHistorySnapshot(`匯入 ${uniqueToImport.length} 個帳戶`);
           const skipMsg = skippedNames.length > 0 ? `（已略過重複帳戶：${skippedNames.join('、')}）` : '';
           showToast(
             `已匯入 ${uniqueToImport.length} 個新戶頭${skipMsg}${dateClampedNotice ? '（超過今日之日期已自動校正為今日）' : ''}`,
@@ -6063,12 +6435,14 @@
             version: 2,
             activeTab: parsed.activeTab === 'chart' ? 'chart' : 'sim',
             activeAccountId: targetActiveId,
+            orderUnitMode: normalizedAccounts[0].orderUnitMode || 'LOT',
             accounts: normalizedAccounts,
             marketCache: appState.marketCache || {}
           };
           saveState();
           closeModal('settingsModal');
-          await switchAccount(targetActiveId);
+          await switchAccount(targetActiveId, false);
+          pushHistorySnapshot('覆蓋還原系統備份');
           switchMainTab(appState.activeTab);
           showToast(
             `系統已完整覆蓋還原（共 ${normalizedAccounts.length} 個戶頭）${dateClampedNotice ? '，超過今日之日期已校正為今日' : ''}`,
@@ -6166,19 +6540,26 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      initOpaquePwaAppIcon();
+      document.title = 'stockmaster📉';
       syncAllAccountsWithReality(false);
       applyColorTheme();
       updateClock();
       setInterval(updateClock, 1000);
       setupConnectionLifecycleListeners();
 
+      const acc = getActiveAccount();
+      const persistedUnit = (acc.orderUnitMode || appState.orderUnitMode) === 'ODD' ? 'ODD' : 'LOT';
       setOrderSide('BUY');
-      setOrderUnitMode('LOT');
-      document.getElementById('orderSymbol').value = '2330';
+      setOrderUnitMode(persistedUnit, false);
+
+      document.getElementById('orderSymbol').value = '';
       document.getElementById('orderPrice').value = '';
+      document.getElementById('orderQty').value = '';
       document.getElementById('orderQuoteName').textContent = '請點擊查詢或輸入單價';
       lastQuotedSymbol = '';
 
+      pushHistorySnapshot('初始載入');
       switchMainTab(appState.activeTab || 'sim');
 
       fetchLiveUsdTwdRate(false).then(() => {
@@ -6186,26 +6567,12 @@
         updateOrderPreview();
       }).catch(() => {});
 
-      const acc = getActiveAccount();
-      const initReqSeq = ++orderQuoteRequestSeq;
-      getAccountMarketData('2330.TW', false, { silentError: true }, acc).then(data => {
-        const currentInputNow = document.getElementById('orderSymbol').value.trim();
-        if (
-          initReqSeq === orderQuoteRequestSeq &&
-          isSameNormalizedSymbol(currentInputNow, '2330') &&
-          !document.getElementById('orderPrice').value
-        ) {
-          const cur = getSymbolCurrency(data.symbol);
-          lastQuotedSymbol = normalizeSymbol(data.symbol);
-          document.getElementById('orderPrice').value = data.price;
-          document.getElementById('orderPriceLabel').textContent = `委託單價（${cur}）`;
-          document.getElementById('orderQuoteName').textContent = `${formatDisplaySymbol(data.symbol)} ${data.name} · ${fmtPrice(data.price)} ${cur}`;
-          updateOrderPreview();
-        }
-        renderSimTab();
-      }).catch(() => {});
-
-      refreshAccountHoldingsPrices(false);
+      const holdingSyms = Object.keys(acc.holdings || {});
+      if (holdingSyms.length > 0) {
+        refreshAccountHoldingsPrices(false);
+      } else {
+        getMarketData('2330.TW', false, { silentError: true }).catch(() => {});
+      }
     });
   </script>
 </body>
