@@ -42,6 +42,8 @@
       /* 適配 iOS 26 頂部透明化 UI 與動態島，給予充足安全避讓空間 */
       --safe-top: calc(max(env(safe-area-inset-top, 0px), 36px) + 20px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --header-total-h: calc(var(--safe-top) + 46px);
+      --bottom-total-h: calc(54px + var(--safe-bottom));
     }
 
     /* 美股模式：綠漲紅跌 */
@@ -205,6 +207,40 @@
       background-color: var(--bg-surface);
     }
 
+    /* 盤面分析單一螢幕完整鎖定（不下滑、不溢位） */
+    body.chart-single-screen {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+    }
+    body.chart-single-screen .main-container {
+      height: calc(100dvh - var(--header-total-h) - var(--bottom-total-h));
+      min-height: 0;
+      max-height: calc(100dvh - var(--header-total-h) - var(--bottom-total-h));
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+    body.chart-single-screen .main-inner-wrap {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tab-chart {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tab-chart.hidden {
+      display: none !important;
+    }
+    #chartViewport {
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -330,14 +366,14 @@
        主內容區 (MAIN)
        ======================================================================== -->
   <main class="main-container">
-    <div class="w-full max-w-3xl mx-auto overflow-x-hidden">
+    <div class="main-inner-wrap w-full max-w-3xl mx-auto overflow-x-hidden">
 
       <!-- ====================================================================
-           分頁一：模擬股票（統一新台幣 TWD 計價基準 + 戶頭獨立時間軸）
+           分頁一：模擬股票（由上而下：帳戶列 -> 交易股票 -> 持有股票 -> 總額(資產) -> 歷史紀錄）
            ==================================================================== -->
       <section id="tab-sim" class="w-full overflow-x-hidden">
 
-        <!-- 1. 帳戶切換、模擬時間膠囊與管理列（雙排自適應防重疊排版） -->
+        <!-- 帳戶切換、模擬時間膠囊與管理列 -->
         <div class="px-4 py-3 hairline-b space-y-2">
           <div class="flex items-center justify-between gap-2">
             <button onclick="openAccountSwitchModal()" title="點擊切換帳戶"
@@ -366,7 +402,7 @@
           </div>
         </div>
 
-        <!-- 1B. 單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示，到達今日自動消失） -->
+        <!-- 單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示，到達今日自動消失） -->
         <div id="simTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
           <div class="flex items-center gap-1 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap min-w-0 truncate">
             <span class="shrink-0">📅</span>
@@ -388,59 +424,8 @@
           </div>
         </div>
 
-        <!-- 2. 資產總覽主視覺區（累積總損益金額 ＋ 分段資金加權真實報酬率 TWR 並陳） -->
-        <div class="px-4 py-5 hairline-b space-y-4">
-          <div class="flex items-start justify-between gap-2.5 min-w-0">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-[12px] text-[#8A94A6] font-medium">總資產淨值（TWD）</span>
-                <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral whitespace-nowrap" title="分段資金加權真實報酬率 (TWR)">真實報酬 0.00%</span>
-              </div>
-              <div id="ovTotalAssets" class="text-[28px] sm:text-[36px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5 truncate">0</div>
-              <div class="flex items-center gap-1.5 mt-1 text-[12px] num min-w-0">
-                <span class="text-[#8A94A6] shrink-0">累積總損益</span>
-                <span id="ovTotalPnl" class="font-bold text-[#8A94A6] truncate">0 TWD</span>
-              </div>
-            </div>
-
-            <div class="shrink-0 pt-1">
-              <button onclick="openDepositModal()"
-                class="tap-btn px-3 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full whitespace-nowrap">
-                + 充值
-              </button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 divide-x divide-[#1C222D] pt-1">
-            <div class="pr-2.5 min-w-0">
-              <div class="text-[11px] text-[#8A94A6]">可用現金</div>
-              <div id="ovCash" class="text-[14px] sm:text-[15px] font-bold num text-[#F4F6F9] mt-1 truncate">0</div>
-              <div id="ovInitial" class="text-[11px] num text-[#586274] mt-0.5 truncate">本金 0</div>
-            </div>
-            <div class="px-2.5 min-w-0">
-              <div class="text-[11px] text-[#8A94A6]">未實現損益</div>
-              <div id="ovUnrealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
-              <div id="ovUnrealizedPct" class="text-[11px] num mt-0.5 truncate">0.00%</div>
-            </div>
-            <div class="pl-2.5 min-w-0">
-              <div class="text-[11px] text-[#8A94A6]">已實現損益</div>
-              <div id="ovRealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
-              <div id="ovHoldingsVal" class="text-[11px] num text-[#586274] mt-0.5 truncate">現值 0</div>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between gap-2 text-[12px] text-[#8A94A6] pt-0.5">
-            <div class="flex items-center gap-2.5">
-              <button onclick="exportReport('current')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出此帳戶報告</button>
-              <span class="text-[#2A3343]">·</span>
-              <button onclick="exportReport('all')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出全部帳戶報告</button>
-            </div>
-            <span id="ovFxHint" class="text-[11px] num text-[#586274] shrink-0">USD/TWD 32.50</span>
-          </div>
-        </div>
-
-        <!-- 3. 委託下單區 -->
-        <div class="px-4 py-5 hairline-b space-y-3.5">
+        <!-- 1. 交易股票（委託下單區） -->
+        <div id="simOrderSection" class="px-4 py-5 hairline-b space-y-3.5">
           <!-- 買進 / 賣出 Segmented Control -->
           <div class="grid grid-cols-2 p-1 bg-[#12161F] rounded-[9px]">
             <button id="btnSideBuy" onclick="setOrderSide('BUY')"
@@ -555,7 +540,7 @@
           </button>
         </div>
 
-        <!-- 4. 目前持股（台股部位 / 美股部位分區 + 批次明細展開） -->
+        <!-- 2. 持有股票（台股部位 / 美股部位分區 + 批次明細展開） -->
         <div class="pt-5 hairline-b">
           <div class="px-4 pb-2.5 flex items-center justify-between">
             <span class="text-[13px] font-bold text-[#F4F6F9]">目前持股</span>
@@ -564,7 +549,58 @@
           <div id="holdingsList"></div>
         </div>
 
-        <!-- 5. 交易紀錄 -->
+        <!-- 3. 總額（資產總覽主視覺區：累積總損益金額 ＋ 分段資金加權真實報酬率 TWR 並陳） -->
+        <div class="px-4 py-5 hairline-b space-y-4">
+          <div class="flex items-start justify-between gap-2.5 min-w-0">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[12px] text-[#8A94A6] font-medium">總資產淨值（TWD）</span>
+                <span id="ovTotalRoi" class="px-2 py-0.5 text-[11px] font-semibold num rounded-full pill-neutral whitespace-nowrap" title="分段資金加權真實報酬率 (TWR)">真實報酬 0.00%</span>
+              </div>
+              <div id="ovTotalAssets" class="text-[28px] sm:text-[36px] font-bold num tracking-tight leading-snug text-[#F4F6F9] mt-0.5 truncate">0</div>
+              <div class="flex items-center gap-1.5 mt-1 text-[12px] num min-w-0">
+                <span class="text-[#8A94A6] shrink-0">累積總損益</span>
+                <span id="ovTotalPnl" class="font-bold text-[#8A94A6] truncate">0 TWD</span>
+              </div>
+            </div>
+
+            <div class="shrink-0 pt-1">
+              <button onclick="openDepositModal()"
+                class="tap-btn px-3 py-1.5 text-[12px] font-semibold text-[#FF9900] bg-[rgba(255,153,0,0.14)] rounded-full whitespace-nowrap">
+                + 充值
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 divide-x divide-[#1C222D] pt-1">
+            <div class="pr-2.5 min-w-0">
+              <div class="text-[11px] text-[#8A94A6]">可用現金</div>
+              <div id="ovCash" class="text-[14px] sm:text-[15px] font-bold num text-[#F4F6F9] mt-1 truncate">0</div>
+              <div id="ovInitial" class="text-[11px] num text-[#586274] mt-0.5 truncate">本金 0</div>
+            </div>
+            <div class="px-2.5 min-w-0">
+              <div class="text-[11px] text-[#8A94A6]">未實現損益</div>
+              <div id="ovUnrealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
+              <div id="ovUnrealizedPct" class="text-[11px] num mt-0.5 truncate">0.00%</div>
+            </div>
+            <div class="pl-2.5 min-w-0">
+              <div class="text-[11px] text-[#8A94A6]">已實現損益</div>
+              <div id="ovRealized" class="text-[14px] sm:text-[15px] font-bold num mt-1 truncate">0</div>
+              <div id="ovHoldingsVal" class="text-[11px] num text-[#586274] mt-0.5 truncate">現值 0</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 text-[12px] text-[#8A94A6] pt-0.5">
+            <div class="flex items-center gap-2.5">
+              <button onclick="exportReport('current')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出此帳戶報告</button>
+              <span class="text-[#2A3343]">·</span>
+              <button onclick="exportReport('all')" class="tap-btn hover:text-[#F4F6F9] underline decoration-[#2A3343] underline-offset-4">匯出全部帳戶報告</button>
+            </div>
+            <span id="ovFxHint" class="text-[11px] num text-[#586274] shrink-0">USD/TWD 32.50</span>
+          </div>
+        </div>
+
+        <!-- 4. 歷史紀錄（交易紀錄） -->
         <div class="pt-5">
           <div class="px-4 pb-2.5 flex items-center justify-between">
             <span class="text-[13px] font-bold text-[#F4F6F9]">交易紀錄</span>
@@ -575,71 +611,69 @@
       </section>
 
       <!-- ====================================================================
-           分頁二：盤面分析（受該戶頭 currentSimDate 時間遮罩保護，嚴禁偷看未來）
+           分頁二：盤面分析（完整貼合手機單一螢幕高度、無下方說明區、底部日期刻度永駐）
            ==================================================================== -->
-      <section id="tab-chart" class="hidden w-full overflow-x-hidden">
-        <!-- 1. 搜尋列與自選股 Chips -->
-        <div class="px-4 py-4 hairline-b space-y-3">
+      <section id="tab-chart" class="hidden w-full overflow-hidden">
+        <!-- 1. 搜尋列與自選股 Chips（緊湊單屏間距） -->
+        <div class="px-3.5 py-2 hairline-b space-y-2 shrink-0">
           <div class="relative flex items-center">
             <input id="chartSymbolInput" type="text" placeholder="搜尋台股/美股代號如 2330 或 AAPL" autocomplete="off"
-              class="w-full pl-3.5 pr-16 py-2.5 num uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
+              class="w-full pl-3 pr-14 py-1.5 num uppercase" onkeydown="if(event.key==='Enter') loadChartSymbolFromInput()">
             <button onclick="loadChartSymbolFromInput()"
-              class="tap-btn absolute right-2 px-3 py-1 text-[12px] font-semibold text-[#FF9900] rounded-[6px] active:bg-[#1C222D]">
+              class="tap-btn absolute right-1.5 px-2.5 py-0.5 text-[12px] font-semibold text-[#FF9900] rounded-[6px] active:bg-[#1C222D]">
               載入
             </button>
           </div>
-          <div id="watchlistChips" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
+          <div id="watchlistChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar"></div>
         </div>
 
         <!-- 1B. 盤面分析單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示） -->
-        <div id="chartTimeWarpBar" class="hidden px-3.5 sm:px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0">
+        <div id="chartTimeWarpBar" class="hidden px-3.5 h-[34px] bg-[#0D1118] hairline-b flex items-center justify-between gap-1.5 min-w-0 shrink-0">
           <div class="flex items-center gap-1 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap min-w-0 truncate">
             <span class="shrink-0">📅</span>
             <span id="chartWarpDateLabel" class="truncate">2024/01/01</span>
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <button type="button" onclick="fastForwardAccountDays(1)"
-              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
+              class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
             <button type="button" onclick="fastForwardAccountDays(5)"
-              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
+              class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
             <button type="button" onclick="fastForwardAccountDays(20)"
-              class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
+              class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
             <div class="relative inline-flex items-center shrink-0">
               <button type="button" onclick="openChartJumpDatePicker()"
-                class="tap-btn px-1.5 sm:px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
+                class="tap-btn px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
               <input id="chartWarpDateInput" type="date" onchange="jumpAccountToDate(this.value)"
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇快轉目標日期">
             </div>
           </div>
         </div>
 
-        <!-- 2. 報價標題與週期/單圖控制列 -->
-        <div class="px-4 py-4 hairline-b space-y-3">
-          <div class="flex items-center justify-between gap-3 pt-0.5">
-            <div class="min-w-0 flex items-baseline gap-2">
-              <span id="chartHeaderSymbol" class="text-[19px] font-bold num text-[#F4F6F9] shrink-0">--</span>
-              <span id="chartHeaderName" class="text-[13px] text-[#8A94A6] truncate">--</span>
+        <!-- 2. 報價標題與週期/單圖控制列（精簡緊湊版面） -->
+        <div class="px-3.5 py-2 hairline-b space-y-2 shrink-0">
+          <div class="flex items-center justify-between gap-2">
+            <div class="min-w-0 flex items-baseline gap-1.5">
+              <span id="chartHeaderSymbol" class="text-[17px] font-bold num text-[#F4F6F9] shrink-0">--</span>
+              <span id="chartHeaderName" class="text-[12px] text-[#8A94A6] truncate">--</span>
             </div>
-            <div class="text-right shrink-0">
-              <div class="flex items-baseline justify-end gap-1.5">
-                <span id="chartHeaderCurrency" class="px-1.5 py-0.5 text-[10px] font-semibold num rounded bg-[#171C26] text-[#8A94A6]">TWD</span>
-                <span id="chartHeaderPrice" class="text-[22px] font-bold num leading-snug">--</span>
-              </div>
-              <div id="chartHeaderChange" class="text-[12px] num leading-tight">--</div>
+            <div class="text-right shrink-0 flex items-baseline gap-1.5">
+              <span id="chartHeaderCurrency" class="px-1.5 py-0.5 text-[9px] font-semibold num rounded bg-[#171C26] text-[#8A94A6]">TWD</span>
+              <span id="chartHeaderPrice" class="text-[18px] font-bold num leading-none">--</span>
+              <span id="chartHeaderChange" class="text-[11px] num leading-none">--</span>
             </div>
           </div>
 
-          <!-- 時間週期切換 (日K / 週K / 月K)、日期跳轉與資料來源（單行不換行） -->
+          <!-- 時間週期切換 (日K / 週K / 月K)、日期跳轉與資料來源 -->
           <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
             <div class="flex items-center gap-1.5 shrink-0">
-              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">日K</button>
-              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">週K</button>
-              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">月K</button>
+              <button data-tf="1D" onclick="setChartTimeframe('1D')" class="tf-btn tap-btn px-2 py-0.5 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">日K</button>
+              <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-2 py-0.5 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">週K</button>
+              <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-2 py-0.5 text-[11px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">月K</button>
 
-              <!-- 選擇歷史過去日期並聚焦跳轉至該日盤面（上限鎖定 <= currentSimDate） -->
+              <!-- 選擇歷史過去日期並聚焦跳轉至該日盤面 -->
               <div class="relative inline-flex items-center shrink-0">
                 <button type="button" onclick="openChartDatePicker()" title="選擇歷史日期並定位圖表"
-                  class="tap-btn inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium num bg-[#141923] text-[#D1D5DB] rounded-[6px] whitespace-nowrap shrink-0">
+                  class="tap-btn inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium num bg-[#141923] text-[#D1D5DB] rounded-[6px] whitespace-nowrap shrink-0">
                   <span id="chartDateBtnText" class="whitespace-nowrap">選日期</span>
                   <span class="text-[9px] text-[#8A94A6]">▾</span>
                 </button>
@@ -647,7 +681,7 @@
                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇圖表日期">
               </div>
             </div>
-            <div class="flex items-center gap-1.5 text-[11px] num text-[#586274] whitespace-nowrap shrink-0">
+            <div class="flex items-center gap-1 text-[10px] num text-[#586274] whitespace-nowrap shrink-0">
               <span id="chartSourceTag" class="whitespace-nowrap">--</span>
               <span>·</span>
               <span id="chartEngineTag" class="whitespace-nowrap">LWC</span>
@@ -655,31 +689,31 @@
           </div>
 
           <!-- 單一指標圖表互斥切換列 -->
-          <div class="grid grid-cols-5 p-1 bg-[#12161F] rounded-[8px]">
-            <button data-mode="CANDLE_MA" onclick="setChartMode('CANDLE_MA')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">K線+MA</button>
-            <button data-mode="VOL" onclick="setChartMode('VOL')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">成交量</button>
-            <button data-mode="KD" onclick="setChartMode('KD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">KD</button>
-            <button data-mode="RSI" onclick="setChartMode('RSI')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">RSI</button>
-            <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[6px] text-center">MACD</button>
+          <div class="grid grid-cols-5 p-0.5 bg-[#12161F] rounded-[7px]">
+            <button data-mode="CANDLE_MA" onclick="setChartMode('CANDLE_MA')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">K線+MA</button>
+            <button data-mode="VOL" onclick="setChartMode('VOL')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">成交量</button>
+            <button data-mode="KD" onclick="setChartMode('KD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">KD</button>
+            <button data-mode="RSI" onclick="setChartMode('RSI')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">RSI</button>
+            <button data-mode="MACD" onclick="setChartMode('MACD')" class="mode-btn tap-btn py-1 text-[11px] font-semibold rounded-[5px] text-center">MACD</button>
           </div>
 
           <!-- 均線顯示開關與快捷時間區間切換 -->
-          <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num pt-0.5 overflow-x-auto no-scrollbar">
-            <div class="flex items-center gap-3 shrink-0">
-              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+          <div id="maToggleRow" class="flex items-center justify-between gap-2 text-[11px] num overflow-x-auto no-scrollbar">
+            <div class="flex items-center gap-2.5 shrink-0">
+              <label class="flex items-center gap-1 cursor-pointer whitespace-nowrap">
                 <input id="toggleMa0" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa0" class="text-[#F59E0B]">MA5</span>
               </label>
-              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <label class="flex items-center gap-1 cursor-pointer whitespace-nowrap">
                 <input id="toggleMa1" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa1" class="text-[#38BDF8]">MA20</span>
               </label>
-              <label class="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <label class="flex items-center gap-1 cursor-pointer whitespace-nowrap">
                 <input id="toggleMa2" type="checkbox" onchange="renderActiveChart()">
                 <span id="labelMa2" class="text-[#C084FC]">MA60</span>
               </label>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-1.5 shrink-0">
               <button onclick="zoomChartBars(22)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1M</button>
               <button onclick="zoomChartBars(66)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">3M</button>
               <button onclick="zoomChartBars(250)" class="tap-btn px-1.5 py-0.5 rounded bg-[#141923] text-[#8A94A6] hover:text-[#F4F6F9]">1Y</button>
@@ -688,23 +722,14 @@
             </div>
           </div>
 
-          <!-- 十字準星精確數值讀數列 -->
-          <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2.5 gap-y-0.5 min-h-[20px] items-center">
+          <!-- 十字準星精確數值讀數列（含當日漲跌幅 %） -->
+          <div id="chartCrosshairBar" class="text-[11px] num text-[#8A94A6] flex flex-wrap gap-x-2 gap-y-0.5 min-h-[18px] items-center">
             滑動或點擊 K 棒查看詳細數值...
           </div>
         </div>
 
-        <!-- 3. 貼合螢幕全寬的單一純淨圖表畫布容器 -->
-        <div id="chartViewport" class="w-full h-[360px] sm:h-[440px] bg-[#090B0E] hairline-b relative overflow-hidden"></div>
-
-        <!-- 4. 可收合指標判讀重點提示 -->
-        <div class="px-4 py-4">
-          <button onclick="toggleGuideBox()" class="w-full flex items-center justify-between text-left py-1">
-            <span id="guideTitle" class="text-[12px] font-semibold text-[#8A94A6]">指標判讀重點</span>
-            <span id="guideChevron" class="text-[11px] text-[#586274]">收合 ▲</span>
-          </button>
-          <div id="guideContent" class="pt-1.5 text-[12px] leading-relaxed text-[#8A94A6]"></div>
-        </div>
+        <!-- 3. 貼合剩餘視窗高度的單一純淨圖表畫布容器（底部日期刻度永駐可見） -->
+        <div id="chartViewport" class="w-full flex-1 min-h-[180px] bg-[#090B0E] relative overflow-hidden"></div>
       </section>
 
     </div>
@@ -1131,29 +1156,6 @@
     const WORKER_FETCH_TIMEOUT_MS = 15000;
     const MAX_CACHED_SYMBOLS = 6;
 
-    const INDICATOR_GUIDES = {
-      CANDLE_MA: {
-        title: 'K線 + 均線 (MA) 判讀重點',
-        text: '均線代表過去 N 天的市場平均成本。短均線由下往上穿越長均線稱為「黃金交叉」（偏多訊號），反之為「死亡交叉」。常見陷阱：均線具「落後性」，在橫盤震盪時容易頻繁交叉造成雙巴，切忌單看交叉就重倉追高。'
-      },
-      VOL: {
-        title: '成交量 (VOL) 判讀重點',
-        text: '成交量是價格變動的燃料，上漲伴隨「價漲量增」（突破量均線）通常代表買盤健康；下跌縮量代表賣壓減輕。常見陷阱：高檔爆出天量卻收長上影線或黑K，往往是主力出貨訊號而非起漲點。'
-      },
-      KD: {
-        title: 'KD 隨機指標 (9, 3, 3) 判讀重點',
-        text: 'KD 衡量目前收盤價在近 9 期高低區間的相對位置。K值 > 80 為超買區、< 20 為超賣區。常見陷阱：強勢股常出現「高檔鈍化」（KD 持續維持在 80 以上卻一路大漲），切勿只因 KD > 80 就盲目放空或提早賣飛。'
-      },
-      RSI: {
-        title: 'RSI 相對強弱指標 (14) 判讀重點',
-        text: 'RSI 反映過去 14 期漲跌力道的相對強度，50 為多空分水嶺，> 70 偏過熱、< 30 偏超賣。當股價創新高但 RSI 未創新高時稱為「頂背離」，是動能轉弱的警訊；盤整行情準確率高，單邊大趨勢則容易鈍化。'
-      },
-      MACD: {
-        title: 'MACD 趨勢動能指標 (12, 26, 9) 判讀重點',
-        text: 'DIF（快線）與 MACD（訊號線）均在零軸之上代表多頭趨勢，OSC 柱狀體由負轉正為動能轉強。常見陷阱：MACD 屬於中長線趨勢指標，轉折訊號比 K 線與 KD 慢半拍，適合搭配支撐壓力位確認波段方向。'
-      }
-    };
-
     const BUILTIN_STOCK_META = {
       '2330.TW': { name: '台積電 (離線模擬)', base: 1050, vol: 32000000, drift: 0.0009, sigma: 0.016, seed: 2330 },
       '0050.TW': { name: '元大台灣50 (離線模擬)', base: 195, vol: 14000000, drift: 0.0006, sigma: 0.011, seed: 50 },
@@ -1226,7 +1228,6 @@
         version: 2,
         activeTab: 'sim',
         activeAccountId: firstAcc.id,
-        guideExpanded: true,
         accounts: [firstAcc],
         marketCache: {}
       };
@@ -1244,6 +1245,7 @@
     let currentChartData = null;
     let currentRenderedBars = [];
     let chartPointerDownPos = null;
+    let chartLastTapTime = 0;
     const tabScrollPositions = { sim: 0, chart: 0 };
 
     /* ========================================================================
@@ -1568,7 +1570,6 @@
           version: 2,
           activeTab: parsed.activeTab || def.activeTab,
           activeAccountId: parsed.activeAccountId || accounts[0].id,
-          guideExpanded: parsed.guideExpanded !== undefined ? Boolean(parsed.guideExpanded) : true,
           accounts,
           marketCache: cleanCache
         };
@@ -3827,7 +3828,12 @@
         document.getElementById('orderQty').value = Math.min(999, h.shares);
       }
       updateOrderPreview();
-      window.scrollTo({ top: 140, behavior: 'smooth' });
+      const orderSec = document.getElementById('simOrderSection');
+      if (orderSec) {
+        orderSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
 
     async function refreshAccountHoldingsPrices(isManual = false) {
@@ -4287,7 +4293,7 @@
     }
 
     /* ========================================================================
-       7. 分頁二：盤面分析 (時間遮罩保護 + 指標數學引擎 + 雙向日期跳轉)
+       7. 分頁二：盤面分析 (單屏鎖定 + 底部日期刻度永駐 + 雙擊復位 + 單日漲跌%)
        ======================================================================== */
     function getIsoWeekKey(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
@@ -4600,6 +4606,35 @@
       }
     }
 
+    function resetChartToLatestView(showNotice = true) {
+      if (!Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+      const lastIdx = currentRenderedBars.length - 1;
+      const latestBar = currentRenderedBars[lastIdx];
+
+      const input = document.getElementById('chartDateInput');
+      const btnText = document.getElementById('chartDateBtnText');
+      if (input) input.value = latestBar.time;
+      if (btnText) btnText.textContent = latestBar.time;
+
+      if (lwcChart) {
+        try {
+          if (currentRenderedBars.length > 120) {
+            lwcChart.timeScale().setVisibleLogicalRange({
+              from: currentRenderedBars.length - 120,
+              to: currentRenderedBars.length + 2
+            });
+          } else {
+            lwcChart.timeScale().fitContent();
+          }
+        } catch (_) {}
+      }
+
+      updateCrosshairReadoutAtIndex(currentRenderedBars, lastIdx, getActiveChartState().activeChartMode);
+      if (showNotice) {
+        showToast(`已回到最新盤面 (${latestBar.time})`, 'info');
+      }
+    }
+
     function zoomChartBars(barCount) {
       if (!lwcChart || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
       const total = currentRenderedBars.length;
@@ -4642,11 +4677,11 @@
 
       const pEl = document.getElementById('chartHeaderPrice');
       pEl.textContent = fmtPrice(d.price);
-      pEl.className = `text-[22px] font-bold num leading-snug ${getPnlClass(diff)}`;
+      pEl.className = `text-[18px] font-bold num leading-none ${getPnlClass(diff)}`;
 
       const cEl = document.getElementById('chartHeaderChange');
       cEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${fmtSignedPct(pct)})`;
-      cEl.className = `text-[12px] num leading-tight ${getPnlClass(diff)}`;
+      cEl.className = `text-[11px] num leading-none ${getPnlClass(diff)}`;
     }
 
     function updateChartControlsUI() {
@@ -4656,15 +4691,15 @@
       document.querySelectorAll('.tf-btn').forEach(btn => {
         const active = btn.dataset.tf === cs.activeTimeframe;
         btn.className = active
-          ? 'tf-btn tap-btn px-2.5 py-1 text-[12px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900] whitespace-nowrap shrink-0'
-          : 'tf-btn tap-btn px-2.5 py-1 text-[12px] font-medium rounded-[6px] text-[#8A94A6] whitespace-nowrap shrink-0';
+          ? 'tf-btn tap-btn px-2 py-0.5 text-[11px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900] whitespace-nowrap shrink-0'
+          : 'tf-btn tap-btn px-2 py-0.5 text-[11px] font-medium rounded-[6px] text-[#8A94A6] whitespace-nowrap shrink-0';
       });
 
       document.querySelectorAll('.mode-btn').forEach(btn => {
         const active = btn.dataset.mode === cs.activeChartMode;
         btn.className = active
-          ? 'mode-btn tap-btn py-1 text-[11px] font-bold rounded-[6px] bg-[#1F2633] text-[#F4F6F9] text-center'
-          : 'mode-btn tap-btn py-1 text-[11px] font-medium rounded-[6px] text-[#8A94A6] text-center';
+          ? 'mode-btn tap-btn py-1 text-[11px] font-bold rounded-[5px] bg-[#1F2633] text-[#F4F6F9] text-center'
+          : 'mode-btn tap-btn py-1 text-[11px] font-medium rounded-[5px] text-[#8A94A6] text-center';
       });
 
       const maRow = document.getElementById('maToggleRow');
@@ -4678,18 +4713,6 @@
       document.getElementById('labelMa0').textContent = `MA${periods[0]}`;
       document.getElementById('labelMa1').textContent = `MA${periods[1]}`;
       document.getElementById('labelMa2').textContent = `MA${periods[2]}`;
-
-      const guide = INDICATOR_GUIDES[cs.activeChartMode];
-      document.getElementById('guideTitle').textContent = guide.title;
-      document.getElementById('guideContent').textContent = guide.text;
-      document.getElementById('guideContent').classList.toggle('hidden', !appState.guideExpanded);
-      document.getElementById('guideChevron').textContent = appState.guideExpanded ? '收合 ▲' : '展開 ▼';
-    }
-
-    function toggleGuideBox() {
-      appState.guideExpanded = !appState.guideExpanded;
-      saveState();
-      updateChartControlsUI();
     }
 
     function renderWatchlistChips() {
@@ -4700,10 +4723,20 @@
       container.innerHTML = s.watchlist.map(sym => {
         const dispSym = formatDisplaySymbol(sym);
         const active = sym === cs.activeChartSymbol || dispSym === activeClean;
-        return `<button onclick="loadChartSymbol('${escapeHtml(sym)}')" class="tap-btn px-3 py-1 text-[12px] num font-semibold shrink-0 rounded-full ${
+        return `<button onclick="loadChartSymbol('${escapeHtml(sym)}')" class="tap-btn px-2.5 py-0.5 text-[11px] num font-semibold shrink-0 rounded-full ${
           active ? 'bg-[rgba(255,153,0,0.16)] text-[#FF9900]' : 'bg-[#141923] text-[#8A94A6]'
         }">${escapeHtml(dispSym)}</button>`;
       }).join('');
+    }
+
+    function getBarDailyChangeBadgeHtml(bars, idx) {
+      if (!Array.isArray(bars) || idx < 0 || idx >= bars.length) return '';
+      const bar = bars[idx];
+      const basePrice = idx > 0 ? bars[idx - 1].close : bar.open;
+      if (!Number.isFinite(basePrice) || basePrice <= 0) return '';
+      const pct = ((bar.close - basePrice) / basePrice) * 100;
+      const cls = getPnlClass(pct);
+      return `<span class="font-semibold ${cls}">${fmtSignedPct(pct)}</span>`;
     }
 
     function renderActiveChart() {
@@ -4716,6 +4749,9 @@
       currentRenderedBars = bars;
       syncChartDatePickerBounds(bars);
 
+      const barIndexByTime = new Map();
+      bars.forEach((b, idx) => barIndexByTime.set(b.time, idx));
+
       const viewport = document.getElementById('chartViewport');
       const mode = cs.activeChartMode;
       const colors = getThemeColors();
@@ -4727,9 +4763,12 @@
       }
 
       document.getElementById('chartEngineTag').textContent = 'LWC';
+      const initW = Math.max(280, viewport.clientWidth || window.innerWidth || 340);
+      const initH = Math.max(200, viewport.clientHeight || 260);
+
       const chart = window.LightweightCharts.createChart(viewport, {
-        width: viewport.clientWidth || 340,
-        height: viewport.clientHeight || 360,
+        width: initW,
+        height: initH,
         layout: {
           background: { type: 'solid', color: colors.bg },
           textColor: colors.text,
@@ -4745,8 +4784,18 @@
           vertLine: { color: '#FF9900', width: 1, style: 2, labelBackgroundColor: '#FF9900' },
           horzLine: { color: '#FF9900', width: 1, style: 2, labelBackgroundColor: '#FF9900' }
         },
-        rightPriceScale: { borderColor: '#1C222D' },
-        timeScale: { borderColor: '#1C222D', timeVisible: false }
+        rightPriceScale: {
+          borderColor: '#1C222D'
+        },
+        timeScale: {
+          visible: true,
+          borderColor: '#1C222D',
+          timeVisible: false,
+          secondsVisible: false,
+          fixLeftEdge: false,
+          fixRightEdge: false,
+          minimumHeight: 24
+        }
       });
 
       lwcChart = chart;
@@ -4848,6 +4897,9 @@
         }
         const barEl = document.getElementById('chartCrosshairBar');
         const dateStr = String(param.time);
+        const barIdx = barIndexByTime.has(dateStr) ? barIndexByTime.get(dateStr) : -1;
+        const pctHtml = barIdx >= 0 ? getBarDailyChangeBadgeHtml(bars, barIdx) : '';
+
         if (mode === 'CANDLE_MA' && seriesRefs.candle) {
           const c = param.seriesData.get(seriesRefs.candle);
           if (!c) return;
@@ -4862,13 +4914,13 @@
             }
           });
           barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>
-            <span>開:${c.open}</span><span>高:${c.high}</span><span>低:${c.low}</span><span>收:${c.close}</span>${maHtml}`;
+            <span>開:${c.open}</span><span>高:${c.high}</span><span>低:${c.low}</span><span>收:${c.close}</span>${pctHtml}${maHtml}`;
         } else if (mode === 'VOL' && seriesRefs.vol) {
           const v = param.seriesData.get(seriesRefs.vol);
           const m5 = seriesRefs.vma5 ? param.seriesData.get(seriesRefs.vma5) : null;
           const m20 = seriesRefs.vma20 ? param.seriesData.get(seriesRefs.vma20) : null;
           if (!v) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>
+          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
             <span>量:${fmtMoney(v.value)}</span>
             ${m5 ? `<span class="text-[#F59E0B]">VMA5:${fmtMoney(Math.round(m5.value))}</span>` : ''}
             ${m20 ? `<span class="text-[#38BDF8]">VMA20:${fmtMoney(Math.round(m20.value))}</span>` : ''}`;
@@ -4876,37 +4928,46 @@
           const kv = param.seriesData.get(seriesRefs.k);
           const dv = param.seriesData.get(seriesRefs.d);
           if (!kv) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>
+          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
             <span class="text-[#FF9900]">%K:${kv.value.toFixed(2)}</span>
             ${dv ? `<span class="text-[#38BDF8]">%D:${dv.value.toFixed(2)}</span>` : ''}`;
         } else if (mode === 'RSI' && seriesRefs.rsi) {
           const rv = param.seriesData.get(seriesRefs.rsi);
           if (!rv) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>
+          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
             <span class="text-[#C084FC]">RSI(14):${rv.value.toFixed(2)}</span>`;
         } else if (mode === 'MACD' && seriesRefs.dif) {
           const df = param.seriesData.get(seriesRefs.dif);
           const sg = param.seriesData.get(seriesRefs.sig);
           const os = param.seriesData.get(seriesRefs.osc);
           if (!df) return;
-          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>
+          barEl.innerHTML = `<span class="text-[#FF9900]">${dateStr}</span>${pctHtml}
             <span class="text-[#FF9900]">DIF:${df.value.toFixed(2)}</span>
             ${sg ? `<span class="text-[#38BDF8]">MACD:${sg.value.toFixed(2)}</span>` : ''}
             ${os ? `<span>OSC:${os.value.toFixed(2)}</span>` : ''}`;
         }
       });
 
+      // 單擊某根 K 棒跳轉該日、雙擊圖表快速回到最新區間
       viewport.onpointerdown = (ev) => {
         chartPointerDownPos = { x: ev.clientX, y: ev.clientY, time: Date.now() };
       };
       viewport.onpointerup = (ev) => {
         if (!chartPointerDownPos || !lwcChart || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+        const now = Date.now();
         const dx = Math.abs(ev.clientX - chartPointerDownPos.x);
         const dy = Math.abs(ev.clientY - chartPointerDownPos.y);
-        const elapsed = Date.now() - chartPointerDownPos.time;
+        const elapsed = now - chartPointerDownPos.time;
         chartPointerDownPos = null;
 
         if (dx < 10 && dy < 10 && elapsed < 450) {
+          if (now - chartLastTapTime < 300) {
+            chartLastTapTime = 0;
+            resetChartToLatestView(true);
+            return;
+          }
+          chartLastTapTime = now;
+
           const rect = viewport.getBoundingClientRect();
           const localX = ev.clientX - rect.left;
           const logicalIdx = lwcChart.timeScale().coordinateToLogical(localX);
@@ -4920,6 +4981,20 @@
         }
       };
 
+      viewport.ondblclick = (ev) => {
+        ev.preventDefault();
+        resetChartToLatestView(true);
+      };
+
+      const syncViewportSize = () => {
+        if (!lwcChart) return;
+        const w = viewport.clientWidth;
+        const h = viewport.clientHeight;
+        if (w > 0 && h > 0) {
+          lwcChart.applyOptions({ width: w, height: h });
+        }
+      };
+
       lwcResizeObserver = new ResizeObserver(entries => {
         if (!lwcChart || !entries[0]) return;
         const { width, height } = entries[0].contentRect;
@@ -4928,6 +5003,7 @@
         }
       });
       lwcResizeObserver.observe(viewport);
+      requestAnimationFrame(syncViewportSize);
     }
 
     function updateCrosshairReadoutAtIndex(bars, idx, mode) {
@@ -4935,6 +5011,7 @@
       const s = getActiveSettings();
       if (!bars || bars.length === 0 || idx < 0 || idx >= bars.length) return;
       const bar = bars[idx];
+      const pctHtml = getBarDailyChangeBadgeHtml(bars, idx);
 
       if (mode === 'CANDLE_MA') {
         const maColors = ['#F59E0B', '#38BDF8', '#C084FC'];
@@ -4947,24 +5024,24 @@
             maHtml += `<span style="color:${maColors[mIdx]}">MA${p}:${(sum / p).toFixed(2)}</span>`;
           }
         });
-        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span><span>開:${bar.open}</span><span>高:${bar.high}</span><span>低:${bar.low}</span><span>收:${bar.close}</span>${maHtml}`;
+        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span><span>開:${bar.open}</span><span>高:${bar.high}</span><span>低:${bar.low}</span><span>收:${bar.close}</span>${pctHtml}${maHtml}`;
       } else if (mode === 'VOL') {
-        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span><span>成交量:${fmtMoney(bar.volume)}</span>`;
+        barEl.innerHTML = `<span class="text-[#FF9900]">${bar.time}</span>${pctHtml}<span>成交量:${fmtMoney(bar.volume)}</span>`;
       } else if (mode === 'KD') {
         const { kSeries, dSeries } = calcKD(bars, 9);
         const kItem = kSeries.find(x => x.time === bar.time) || kSeries[kSeries.length - 1];
         const dItem = dSeries.find(x => x.time === bar.time) || dSeries[dSeries.length - 1];
-        barEl.innerHTML = kItem ? `<span class="text-[#FF9900]">${kItem.time}</span><span class="text-[#FF9900]">%K:${kItem.value}</span><span class="text-[#38BDF8]">%D:${dItem.value}</span>` : '目前週期筆數不足計算 KD(9)';
+        barEl.innerHTML = kItem ? `<span class="text-[#FF9900]">${kItem.time}</span>${pctHtml}<span class="text-[#FF9900]">%K:${kItem.value}</span><span class="text-[#38BDF8]">%D:${dItem.value}</span>` : '目前週期筆數不足計算 KD(9)';
       } else if (mode === 'RSI') {
         const r = calcRSI(bars, 14);
         const rItem = r.find(x => x.time === bar.time) || r[r.length - 1];
-        barEl.innerHTML = rItem ? `<span class="text-[#FF9900]">${rItem.time}</span><span class="text-[#C084FC]">RSI(14):${rItem.value}</span>` : '目前週期筆數不足計算 RSI(14)';
+        barEl.innerHTML = rItem ? `<span class="text-[#FF9900]">${rItem.time}</span>${pctHtml}<span class="text-[#C084FC]">RSI(14):${rItem.value}</span>` : '目前週期筆數不足計算 RSI(14)';
       } else if (mode === 'MACD') {
         const { difSeries, macdSeries, oscSeries } = calcMACD(bars, 12, 26, 9);
         const dItem = difSeries.find(x => x.time === bar.time) || difSeries[difSeries.length - 1];
         const mItem = macdSeries.find(x => x.time === bar.time) || macdSeries[macdSeries.length - 1];
         const oItem = oscSeries.find(x => x.time === bar.time) || oscSeries[oscSeries.length - 1];
-        barEl.innerHTML = dItem ? `<span class="text-[#FF9900]">${dItem.time}</span><span class="text-[#FF9900]">DIF:${dItem.value}</span><span class="text-[#38BDF8]">MACD:${mItem.value}</span><span>OSC:${oItem.value}</span>` : '目前週期筆數不足計算 MACD';
+        barEl.innerHTML = dItem ? `<span class="text-[#FF9900]">${dItem.time}</span>${pctHtml}<span class="text-[#FF9900]">DIF:${dItem.value}</span><span class="text-[#38BDF8]">MACD:${mItem.value}</span><span>OSC:${oItem.value}</span>` : '目前週期筆數不足計算 MACD';
       }
     }
 
@@ -4982,13 +5059,13 @@
       const slice = bars.slice(-65);
       const dpr = window.devicePixelRatio || 1;
       const w = viewport.clientWidth || 340;
-      const h = viewport.clientHeight || 360;
+      const h = viewport.clientHeight || 260;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
 
-      const pad = { top: 18, right: 54, bottom: 24, left: 8 };
+      const pad = { top: 14, right: 54, bottom: 26, left: 8 };
       const cw = w - pad.left - pad.right;
       const ch = h - pad.top - pad.bottom;
 
@@ -5008,6 +5085,13 @@
           ctx.lineTo(w - pad.right, y);
           ctx.stroke();
           ctx.fillText(val >= 10000 ? (val / 1000).toFixed(0) + 'K' : val.toFixed(1), w - pad.right + 4, y + 3);
+        }
+        if (slice.length > 0) {
+          const tickIndices = [0, Math.floor(slice.length / 2), slice.length - 1];
+          tickIndices.forEach(idx => {
+            const tx = pad.left + ((idx + 0.5) / Math.max(1, slice.length)) * cw;
+            ctx.fillText(slice[idx].time.slice(2), Math.max(4, Math.min(w - pad.right - 36, tx - 22)), h - 8);
+          });
         }
       };
 
@@ -5109,8 +5193,9 @@
     function switchMainTab(tab) {
       syncAllAccountsWithReality(false);
       const prevTab = appState.activeTab;
-      if (prevTab && prevTab !== tab) {
-        tabScrollPositions[prevTab] = window.scrollY || window.pageYOffset || 0;
+
+      if (prevTab && prevTab !== tab && prevTab === 'sim') {
+        tabScrollPositions.sim = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
       }
 
       appState.activeTab = tab;
@@ -5125,6 +5210,7 @@
       const cs = getActiveChartState();
 
       if (tab === 'sim') {
+        document.body.classList.remove('chart-single-screen');
         simSec.classList.remove('hidden');
         chartSec.classList.add('hidden');
         btnSim.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#F4F6F9]';
@@ -5132,13 +5218,22 @@
         indSim.classList.remove('hidden');
         indChart.classList.add('hidden');
         renderSimTab();
+
+        const targetScrollY = tabScrollPositions.sim || 0;
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: targetScrollY, behavior: 'auto' });
+        });
       } else {
+        document.body.classList.add('chart-single-screen');
         simSec.classList.add('hidden');
         chartSec.classList.remove('hidden');
         btnChart.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#F4F6F9]';
         btnSim.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#586274]';
         indChart.classList.remove('hidden');
         indSim.classList.add('hidden');
+        tabScrollPositions.chart = 0;
+        window.scrollTo({ top: 0, behavior: 'auto' });
+
         renderSimTimelineUI();
         updateChartControlsUI();
         renderWatchlistChips();
@@ -5153,10 +5248,6 @@
           renderActiveChart();
         }
       }
-
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: tabScrollPositions[tab] || 0, behavior: 'auto' });
-      });
     }
 
     function updateSettingsFxDisplay() {
@@ -5510,7 +5601,6 @@
             showToast(`已成功匯入 ${uniqueToAdd.length} 個新戶頭（模擬日 ${getActiveAccount().currentSimDate}）`, 'success');
           }
         } else {
-          // 覆蓋還原模式：若所有戶頭皆與目前系統完全一致，亦主動提醒使用者資料已存在無重複寫入
           const isAllSame =
             normalizedAccounts.length === appState.accounts.length &&
             normalizedAccounts.every(acc => isDuplicateAccountInSystem(acc, acc._rawSourceId));
@@ -5530,7 +5620,6 @@
           const targetId = normalizedAccounts.some(a => a.id === parsed.activeAccountId)
             ? parsed.activeAccountId
             : normalizedAccounts[0].id;
-          appState.guideExpanded = parsed.guideExpanded !== undefined ? Boolean(parsed.guideExpanded) : true;
           saveState();
           await switchAccount(targetId);
           switchMainTab(parsed.activeTab || 'sim');
