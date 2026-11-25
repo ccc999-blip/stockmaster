@@ -85,6 +85,7 @@
     input[type="text"],
     input[type="url"],
     input[type="number"],
+    input[type="date"],
     select,
     textarea {
       font-size: 16px !important;
@@ -93,11 +94,13 @@
       border: 1px solid transparent;
       border-radius: 8px;
       outline: none;
+      color-scheme: dark;
       transition: border-color 0.15s ease, background-color 0.15s ease;
     }
     input[type="text"]:focus,
     input[type="url"]:focus,
     input[type="number"]:focus,
+    input[type="date"]:focus,
     select:focus,
     textarea:focus {
       border-color: var(--hairline-strong);
@@ -194,7 +197,7 @@
       animation: pulseDot 2s infinite;
     }
 
-    /* 彈出 Modal 遮罩：預設自上方安全區展開，確保標題與關閉按鈕永遠在最上方順手點擊 */
+    /* 彈出 Modal 遮罩 */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -311,15 +314,15 @@
     <div class="max-w-3xl mx-auto">
 
       <!-- ====================================================================
-           分頁一：模擬股票（統一新台幣 TWD 計價基準）
+           分頁一：模擬股票（統一新台幣 TWD 計價基準 + 戶頭獨立時間軸）
            ==================================================================== -->
       <section id="tab-sim">
 
-        <!-- 1. 帳戶切換與管理列 -->
-        <div class="px-4 py-3.5 hairline-b">
+        <!-- 1. 帳戶切換、模擬時間膠囊與管理列（雙排自適應防重疊排版） -->
+        <div class="px-4 py-3 hairline-b space-y-2">
           <div class="flex items-center justify-between gap-2">
             <button onclick="openAccountSwitchModal()" title="點擊切換帳戶"
-              class="tap-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#141923] text-[#F4F6F9] text-[13px] font-semibold max-w-[65%]">
+              class="tap-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#141923] text-[#F4F6F9] text-[13px] font-semibold min-w-0 flex-1 max-w-[230px] sm:max-w-[300px]">
               <span id="accountDisplayName" class="truncate">帳戶 1</span>
               <span class="text-[11px] text-[#8A94A6] shrink-0">▾</span>
             </button>
@@ -335,7 +338,35 @@
                 class="tap-btn w-8 h-8 flex items-center justify-center text-[13px] text-[#8A94A6] hover:text-[#FF3B30] rounded-full active:bg-[#171C26]">✕</button>
             </div>
           </div>
-          <div id="accountStrategyTag" class="hidden text-[12px] text-[#8A94A6] truncate pt-2"></div>
+
+          <div class="flex items-center justify-between gap-2 min-w-0">
+            <span id="simTimelineBadge" class="inline-flex items-center px-2.5 py-0.5 text-[11px] num font-medium rounded-full bg-[#141923] text-[#8A94A6] whitespace-nowrap shrink-0">
+              已同步今日
+            </span>
+            <span id="accountStrategyTag" class="hidden text-[12px] text-[#8A94A6] truncate text-right"></span>
+          </div>
+        </div>
+
+        <!-- 1B. 單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示，到達今日自動消失） -->
+        <div id="simTimeWarpBar" class="hidden px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap shrink-0">
+            <span>📅</span>
+            <span id="simWarpDateLabel">2024/01/01</span>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" onclick="fastForwardAccountDays(1)"
+              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
+            <button type="button" onclick="fastForwardAccountDays(5)"
+              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
+            <button type="button" onclick="fastForwardAccountDays(20)"
+              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
+            <div class="relative inline-flex items-center shrink-0">
+              <button type="button" onclick="openSimJumpDatePicker()"
+                class="tap-btn px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
+              <input id="simWarpDateInput" type="date" onchange="jumpAccountToDate(this.value)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇快轉目標日期">
+            </div>
+          </div>
         </div>
 
         <!-- 2. 資產總覽主視覺區（累積總損益金額 ＋ 分段資金加權真實報酬率 TWR 並陳） -->
@@ -525,7 +556,7 @@
       </section>
 
       <!-- ====================================================================
-           分頁二：盤面分析（維持原始交易幣別，標示 USD / TWD 標籤，全歷史 K 線）
+           分頁二：盤面分析（受該戶頭 currentSimDate 時間遮罩保護，嚴禁偷看未來）
            ==================================================================== -->
       <section id="tab-chart" class="hidden">
         <!-- 1. 搜尋列與自選股 Chips -->
@@ -539,6 +570,28 @@
             </button>
           </div>
           <div id="watchlistChips" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
+        </div>
+
+        <!-- 1B. 盤面分析單行緊湊順向快轉控制列（僅在 currentSimDate < realToday 時顯示） -->
+        <div id="chartTimeWarpBar" class="hidden px-4 h-[38px] bg-[#0D1118] hairline-b flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 text-[11px] num text-[#FF9900] font-semibold whitespace-nowrap shrink-0">
+            <span>📅</span>
+            <span id="chartWarpDateLabel">2024/01/01</span>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" onclick="fastForwardAccountDays(1)"
+              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+1日</button>
+            <button type="button" onclick="fastForwardAccountDays(5)"
+              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+5日</button>
+            <button type="button" onclick="fastForwardAccountDays(20)"
+              class="tap-btn px-2 py-1 text-[11px] font-semibold num bg-[#171C26] text-[#F4F6F9] rounded-[5px] whitespace-nowrap">+20日</button>
+            <div class="relative inline-flex items-center shrink-0">
+              <button type="button" onclick="openChartJumpDatePicker()"
+                class="tap-btn px-2 py-1 text-[11px] font-semibold bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-[5px] whitespace-nowrap">跳轉▾</button>
+              <input id="chartWarpDateInput" type="date" onchange="jumpAccountToDate(this.value)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="選擇快轉目標日期">
+            </div>
+          </div>
         </div>
 
         <!-- 2. 報價標題與週期/單圖控制列 -->
@@ -564,9 +617,9 @@
               <button data-tf="1W" onclick="setChartTimeframe('1W')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">週K</button>
               <button data-tf="1M" onclick="setChartTimeframe('1M')" class="tf-btn tap-btn px-2.5 py-1 text-[12px] font-semibold rounded-[6px] whitespace-nowrap shrink-0">月K</button>
 
-              <!-- 選擇日期並跳轉至該日盤面 -->
+              <!-- 選擇歷史過去日期並聚焦跳轉至該日盤面（上限鎖定 <= currentSimDate） -->
               <div class="relative inline-flex items-center shrink-0">
-                <button type="button" onclick="openChartDatePicker()" title="選擇日期並跳轉至該日盤面"
+                <button type="button" onclick="openChartDatePicker()" title="選擇歷史日期並定位圖表"
                   class="tap-btn inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium num bg-[#141923] text-[#D1D5DB] rounded-[6px] whitespace-nowrap shrink-0">
                   <span id="chartDateBtnText" class="whitespace-nowrap">選日期</span>
                   <span class="text-[9px] text-[#8A94A6]">▾</span>
@@ -657,7 +710,7 @@
   </nav>
 
   <!-- ========================================================================
-       MODAL 1：新增 / 編輯帳戶視窗 (accountModal)
+       MODAL 1：新增 / 編輯帳戶視窗 (accountModal - 含獨立起始日期與跳假日設定)
        ======================================================================== -->
   <div id="accountModal" class="modal-backdrop hidden">
     <div class="modal-panel">
@@ -668,15 +721,28 @@
       <div class="p-4 space-y-3.5 overflow-y-auto">
         <div>
           <label class="block text-[11px] text-[#8A94A6] mb-1">帳戶名稱</label>
-          <input id="accNameInput" type="text" placeholder="例如：波段突破策略戶" class="w-full px-3 py-2">
+          <input id="accNameInput" type="text" placeholder="例如：2023多頭回測練習戶" class="w-full px-3 py-2">
         </div>
         <div id="accCapitalGroup">
           <label class="block text-[11px] text-[#8A94A6] mb-1">初始本金（TWD 新台幣，最低 1,000）</label>
           <input id="accCapitalInput" type="number" min="1000" step="1000" value="1000000" class="w-full px-3 py-2 num">
         </div>
+        <div id="accStartDateGroup">
+          <label class="block text-[11px] text-[#8A94A6] mb-1">帳戶起始日期</label>
+          <input id="accStartDateInput" type="date" class="w-full px-3 py-2 num">
+          <p class="text-[11px] text-[#586274] mt-1 leading-relaxed">
+            選擇過去日期可開啟獨立時間軸練習看盤，快轉至今日後自動與現實同步。
+          </p>
+        </div>
+        <div>
+          <label class="inline-flex items-center gap-2 text-[12px] text-[#D1D5DB] cursor-pointer select-none">
+            <input id="accSkipNonTradingInput" type="checkbox" checked>
+            <span>快轉 +1日 時自動跳過非交易日 / 假日</span>
+          </label>
+        </div>
         <div>
           <label class="block text-[11px] text-[#8A94A6] mb-1">策略說明與紀律備註（選填）</label>
-          <textarea id="accStrategyInput" rows="3" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-3 py-2"></textarea>
+          <textarea id="accStrategyInput" rows="2" placeholder="例如：只做站上 20MA 且量增的強勢股，單筆停損 -7%" class="w-full px-3 py-2"></textarea>
         </div>
         <div class="grid grid-cols-2 gap-2.5 pt-1">
           <button onclick="closeModal('accountModal')" class="tap-btn py-2.5 bg-[#171C26] text-[#F4F6F9] font-semibold rounded-[8px]">取消</button>
@@ -728,13 +794,16 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 3：全螢幕系統設定視窗 (settingsModal)
+       MODAL 3：全螢幕系統設定視窗 (settingsModal - 獨立於目前使用帳戶)
        ======================================================================== -->
   <div id="settingsModal" class="modal-backdrop hidden">
     <div class="settings-full-panel">
       <div class="px-4 h-[48px] hairline-b flex items-center justify-between bg-[#000000] shrink-0">
-        <span class="text-[15px] font-bold text-[#F4F6F9]">系統設定</span>
-        <button onclick="closeModal('settingsModal')" class="tap-btn px-3 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-[15px] font-bold text-[#F4F6F9] shrink-0">帳戶獨立設定</span>
+          <span id="settingsAccBadge" class="px-2 py-0.5 text-[11px] font-semibold bg-[#171C26] text-[#FF9900] rounded-full truncate">帳戶 1</span>
+        </div>
+        <button onclick="closeModal('settingsModal')" class="tap-btn px-3 py-1 text-[13px] font-semibold text-[#8A94A6] hover:text-[#F4F6F9] bg-[#171C26] rounded-full shrink-0">
           關閉 ✕
         </button>
       </div>
@@ -743,7 +812,7 @@
         <div class="max-w-3xl mx-auto px-4 py-4 space-y-5">
           <!-- 漲跌配色模式 -->
           <div class="space-y-2 pb-4 hairline-b">
-            <label class="block text-[12px] font-semibold text-[#8A94A6]">盤面漲跌配色模式</label>
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶盤面漲跌配色模式</label>
             <div class="grid grid-cols-2 gap-2">
               <button id="setColorTW" onclick="setColorMode('TW')" class="tap-btn py-2.5 rounded-[8px] text-[13px]">台股模式（紅漲綠跌）</button>
               <button id="setColorUS" onclick="setColorMode('US')" class="tap-btn py-2.5 rounded-[8px] text-[13px]">美股模式（綠漲紅跌）</button>
@@ -782,13 +851,13 @@
             <input id="setWorkerUrl" type="url" placeholder="https://throbbing-queen-5ddbus-stock-relay.yhchen8541.workers.dev" autocomplete="off"
               class="w-full px-3 py-2 num text-[13px]">
             <p class="text-[11px] text-[#586274] leading-relaxed">
-              所有美股及非台股標的皆直接透過此 Worker 抓取完整歷史日 K 線（<span class="num text-[#8A94A6]">range=max&amp;interval=1d</span>），支援 JSON 與 CSV 雙格式回應。
+              所有美股及非台股標的皆直接透過此 Worker 抓取完整歷史日 K 線（<span class="num text-[#8A94A6]">range=max&amp;interval=1d</span>），並依各戶頭獨立時間軸套用截止日濾鏡。
             </p>
           </div>
 
           <!-- 交易手續費與證交稅率 -->
           <div class="space-y-2.5 pb-4 hairline-b">
-            <label class="block text-[12px] font-semibold text-[#8A94A6]">交易成本與稅率設定</label>
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶交易成本與稅率設定</label>
             <div class="grid grid-cols-3 gap-2">
               <div>
                 <label class="block text-[11px] text-[#8A94A6] mb-1">手續費率</label>
@@ -843,9 +912,9 @@
             </div>
           </div>
 
-          <!-- 自選股快捷管理 -->
+          <!-- 此帳戶獨立自選股快捷管理 -->
           <div class="space-y-2.5 pb-4 hairline-b">
-            <label class="block text-[12px] font-semibold text-[#8A94A6]">自選股快捷列表</label>
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">此帳戶自選股快捷列表</label>
             <div id="settingsWatchlist" class="flex flex-wrap gap-2"></div>
             <div class="flex gap-2">
               <input id="newWatchSymbol" type="text" placeholder="新增代號如 2317 或 TSLA" class="flex-1 px-3 py-2 num uppercase"
@@ -854,21 +923,39 @@
             </div>
           </div>
 
-          <!-- JSON 備份與還原 -->
-          <div class="space-y-2.5 pb-4">
-            <label class="block text-[12px] font-semibold text-[#8A94A6]">系統資料備份與還原 (JSON)</label>
+          <!-- 時間維度 JSON 備份與多模式還原 -->
+          <div class="space-y-3 pb-4">
+            <label class="block text-[12px] font-semibold text-[#8A94A6]">時間軸與帳戶資料備份 / 還原 (JSON)</label>
             <div class="grid grid-cols-2 gap-2">
-              <button onclick="exportJsonBackup()" class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#F4F6F9] rounded-[8px]">
-                匯出 JSON 備份
+              <button onclick="exportJsonBackup('single')" class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#FF9900] rounded-[8px]">
+                匯出目前戶頭 JSON
               </button>
-              <label class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#38BDF8] text-center cursor-pointer rounded-[8px]">
-                選擇 JSON 檔還原
-                <input type="file" accept=".json,application/json" class="hidden" onchange="handleImportJsonFile(event)">
-              </label>
+              <button onclick="exportJsonBackup('all')" class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#F4F6F9] rounded-[8px]">
+                匯出全部系統 JSON
+              </button>
             </div>
-            <div class="flex gap-2">
-              <input id="importJsonText" type="text" placeholder="或直接在此貼上 JSON 備份字串..." class="flex-1 px-3 py-2 num text-[12px]">
-              <button onclick="importJsonFromTextarea()" class="tap-btn px-4 py-2 text-[12px] font-bold bg-[#171C26] text-[#F4F6F9] rounded-[8px] shrink-0">還原</button>
+
+            <div class="pt-1 space-y-2">
+              <div class="flex flex-wrap items-center gap-4 text-[11px] text-[#D1D5DB]">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="importModeRadio" value="import_as_new" checked class="accent-[#FF9900]">
+                  <span>匯入為新戶頭（自動產生新 ID）</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="importModeRadio" value="overwrite_all" class="accent-[#FF9900]">
+                  <span>覆蓋還原整份系統</span>
+                </label>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label class="tap-btn py-2.5 text-[12px] font-semibold bg-[#171C26] text-[#38BDF8] text-center cursor-pointer rounded-[8px]">
+                  選擇 JSON 檔案匯入
+                  <input type="file" accept=".json,application/json" class="hidden" onchange="handleImportJsonFile(event)">
+                </label>
+                <div class="flex gap-2">
+                  <input id="importJsonText" type="text" placeholder="或貼上 JSON 字串..." class="flex-1 px-3 py-2 num text-[12px]">
+                  <button onclick="importJsonFromTextarea()" class="tap-btn px-3.5 py-2 text-[12px] font-bold bg-[#171C26] text-[#F4F6F9] rounded-[8px] shrink-0">執行</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -904,7 +991,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 5：切換帳戶視窗 (accountSwitchModal - 螢幕正中央置中)
+       MODAL 5：切換帳戶視窗 (accountSwitchModal - 顯示各戶頭時間軸進度)
        ======================================================================== -->
   <div id="accountSwitchModal" class="modal-backdrop hidden">
     <div class="modal-panel">
@@ -917,7 +1004,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 6：自訂確認對話框 (confirmModal - 取代 confirm())
+       MODAL 6：自訂確認對話框 (confirmModal)
        ======================================================================== -->
   <div id="confirmModal" class="modal-backdrop hidden">
     <div class="modal-panel" style="max-width: 400px;">
@@ -936,7 +1023,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 7：買入 / 賣出委託確認視窗 (orderConfirmModal - 支援美金/台幣雙明細)
+       MODAL 7：買入 / 賣出委託確認視窗 (orderConfirmModal)
        ======================================================================== -->
   <div id="orderConfirmModal" class="modal-backdrop hidden">
     <div class="modal-panel" style="max-width: 420px;">
@@ -949,6 +1036,10 @@
       </div>
       <div class="p-4 space-y-3.5 overflow-y-auto">
         <div class="py-2.5 px-3 bg-[#141923] rounded-[10px] space-y-2 text-[13px]">
+          <div class="flex items-center justify-between">
+            <span class="text-[#8A94A6]">模擬成交日期</span>
+            <span id="ocSimDate" class="font-semibold num text-[#FF9900]">--</span>
+          </div>
           <div class="flex items-center justify-between">
             <span class="text-[#8A94A6]">委託標的</span>
             <span id="ocSymbolName" class="font-bold text-[#F4F6F9]">--</span>
@@ -998,7 +1089,7 @@
   </div>
 
   <!-- ========================================================================
-       TOAST 通知列 (支援上滑與右滑手勢快速關閉，取代 alert())
+       TOAST 通知列 (支援上滑與右滑手勢快速關閉)
        ======================================================================== -->
   <div id="toastContainer" class="fixed left-1/2 -translate-x-1/2 z-[80] w-[92%] max-w-md pointer-events-none space-y-2"></div>
 
@@ -1009,7 +1100,7 @@
     'use strict';
 
     /* ========================================================================
-       1. 全域常數與預設狀態結構
+       1. 全域常數與預設帳戶獨立模型 (Per-Account Independent System & Timeline)
        ======================================================================== */
     const STORAGE_KEY = 'bloomberg_sim_lab_v1';
     const TW_INFO_CACHE_KEY = 'bloomberg_tw_stock_info_v1';
@@ -1054,46 +1145,70 @@
       'MSFT':    { name: 'Microsoft Corp. (離線模擬)', base: 425, vol: 21000000, drift: 0.0006, sigma: 0.014, seed: 7777 }
     };
 
-    function createDefaultState() {
-      const defaultAccId = 'acc_' + Date.now();
+    function createDefaultAccountSettings() {
       return {
-        version: 1,
-        activeTab: 'sim',
-        activeAccountId: defaultAccId,
+        colorMode: 'TW',
+        feeRate: 0.001425,
+        discount: 0.28,
+        minFee: 1,
+        stockTaxRate: 0.003,
+        etfTaxRate: 0.001,
+        maPeriods: [5, 20, 60],
+        cacheTtlMs: 300000,
+        usdTwdRate: DEFAULT_USD_TWD_RATE,
+        usdTwdUpdatedAt: 0,
+        useManualFx: false,
+        workerBaseUrl: DEFAULT_WORKER_URL,
+        watchlist: ['2330.TW', '0050.TW', 'NVDA', 'AAPL', '00830.TW']
+      };
+    }
+
+    function createDefaultChartState() {
+      return {
         activeChartSymbol: '2330.TW',
         activeTimeframe: '1D',
-        activeChartMode: 'CANDLE_MA',
+        activeChartMode: 'CANDLE_MA'
+      };
+    }
+
+    function createDefaultAccount(options = {}) {
+      const realToday = getTodayDateString();
+      const rawStart = isValidIsoDate(options.startDate) && options.startDate <= realToday
+        ? options.startDate
+        : realToday;
+      const cap = Number.isFinite(Number(options.initialCapital)) && Number(options.initialCapital) >= 1000
+        ? Math.round(Number(options.initialCapital))
+        : 1000000;
+
+      return {
+        id: options.id || ('acc_' + Date.now() + '_' + Math.floor(Math.random() * 1000)),
+        name: String(options.name || '帳戶 1').trim() || '帳戶 1',
+        strategy: String(options.strategy || '').trim(),
+        startDate: rawStart,
+        currentSimDate: rawStart,
+        lastRealSyncDate: realToday,
+        skipNonTradingDays: options.skipNonTradingDays !== undefined ? Boolean(options.skipNonTradingDays) : true,
+        settings: { ...createDefaultAccountSettings(), ...(options.settings || {}) },
+        chartState: { ...createDefaultChartState(), ...(options.chartState || {}) },
+        initialCapital: cap,
+        totalDeposited: 0,
+        cash: cap,
+        holdings: {},
+        realizedPnl: 0,
+        segments: [],
+        currentSegmentStartNav: cap,
+        trades: []
+      };
+    }
+
+    function createDefaultState() {
+      const firstAcc = createDefaultAccount({ name: '帳戶 1', initialCapital: 1000000 });
+      return {
+        version: 2,
+        activeTab: 'sim',
+        activeAccountId: firstAcc.id,
         guideExpanded: true,
-        settings: {
-          colorMode: 'TW',
-          feeRate: 0.001425,
-          discount: 0.28,
-          minFee: 1,
-          stockTaxRate: 0.003,
-          etfTaxRate: 0.001,
-          maPeriods: [5, 20, 60],
-          cacheTtlMs: 300000,
-          usdTwdRate: DEFAULT_USD_TWD_RATE,
-          usdTwdUpdatedAt: 0,
-          useManualFx: false,
-          workerBaseUrl: DEFAULT_WORKER_URL,
-          watchlist: ['2330.TW', '0050.TW', 'NVDA', 'AAPL', '00830.TW']
-        },
-        accounts: [
-          {
-            id: defaultAccId,
-            name: '帳戶 1',
-            strategy: '',
-            initialCapital: 1000000,
-            totalDeposited: 0,
-            cash: 1000000,
-            holdings: {},
-            realizedPnl: 0,
-            segments: [],
-            currentSegmentStartNav: 1000000,
-            trades: []
-          }
-        ],
+        accounts: [firstAcc],
         marketCache: {}
       };
     }
@@ -1131,11 +1246,42 @@
     };
 
     /* ========================================================================
-       2. 狀態持久化 (localStorage) 與 Toast/Modal 工具
+       2. 日期運算、現實時間自然推進與帳戶獨立資料模型工具
        ======================================================================== */
+    function isValidIsoDate(str) {
+      if (typeof str !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+      const [y, m, d] = str.split('-').map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return dt.getUTCFullYear() === y && (dt.getUTCMonth() + 1) === m && dt.getUTCDate() === d;
+    }
+
     function getTodayDateString() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function parseIsoDateUtcMs(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return Date.UTC(y, m - 1, d);
+    }
+
+    function formatUtcMsToIsoDate(ms) {
+      const d = new Date(ms);
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    }
+
+    function diffCalendarDays(fromDateStr, toDateStr) {
+      if (!isValidIsoDate(fromDateStr) || !isValidIsoDate(toDateStr)) return 0;
+      const ms = parseIsoDateUtcMs(toDateStr) - parseIsoDateUtcMs(fromDateStr);
+      return Math.round(ms / 86400000);
+    }
+
+    function addCalendarDaysCapped(dateStr, daysToAdd, maxCapDateStr) {
+      if (!isValidIsoDate(dateStr)) return maxCapDateStr;
+      const baseMs = parseIsoDateUtcMs(dateStr);
+      const nextStr = formatUtcMsToIsoDate(baseMs + daysToAdd * 86400000);
+      if (maxCapDateStr && nextStr > maxCapDateStr) return maxCapDateStr;
+      return nextStr;
     }
 
     function getCachedBarsDateKey(entry) {
@@ -1150,6 +1296,218 @@
       return '';
     }
 
+    function getActiveAccount() {
+      let acc = appState.accounts.find(a => a.id === appState.activeAccountId);
+      if (!acc) {
+        acc = appState.accounts[0];
+        appState.activeAccountId = acc.id;
+      }
+      return acc;
+    }
+
+    function getActiveSettings() {
+      const acc = getActiveAccount();
+      if (!acc.settings) acc.settings = createDefaultAccountSettings();
+      return acc.settings;
+    }
+
+    function getActiveChartState() {
+      const acc = getActiveAccount();
+      if (!acc.chartState) acc.chartState = createDefaultChartState();
+      return acc.chartState;
+    }
+
+    function isAccountSyncedToToday(acc = getActiveAccount()) {
+      const realToday = getTodayDateString();
+      return (acc.currentSimDate || realToday) >= realToday;
+    }
+
+    function syncAllAccountsWithReality(shouldRender = false) {
+      const realToday = getTodayDateString();
+      let changed = false;
+
+      for (const acc of appState.accounts) {
+        if (!isValidIsoDate(acc.startDate) || acc.startDate > realToday) {
+          acc.startDate = realToday;
+          changed = true;
+        }
+        if (!isValidIsoDate(acc.currentSimDate)) {
+          acc.currentSimDate = acc.startDate;
+          changed = true;
+        }
+        if (acc.currentSimDate < acc.startDate) {
+          acc.currentSimDate = acc.startDate;
+          changed = true;
+        }
+        if (acc.currentSimDate > realToday) {
+          acc.currentSimDate = realToday;
+          changed = true;
+        }
+
+        if (!isValidIsoDate(acc.lastRealSyncDate)) {
+          acc.lastRealSyncDate = realToday;
+          changed = true;
+        } else if (acc.lastRealSyncDate < realToday) {
+          const elapsedRealDays = diffCalendarDays(acc.lastRealSyncDate, realToday);
+          if (elapsedRealDays > 0 && acc.currentSimDate < realToday) {
+            acc.currentSimDate = addCalendarDaysCapped(acc.currentSimDate, elapsedRealDays, realToday);
+          }
+          acc.lastRealSyncDate = realToday;
+          changed = true;
+        } else if (acc.lastRealSyncDate > realToday) {
+          acc.lastRealSyncDate = realToday;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        saveState();
+        if (shouldRender) {
+          if (appState.activeTab === 'sim') {
+            renderSimTab();
+          } else {
+            renderSimTimelineUI();
+            if (currentChartData) {
+              updateChartHeader();
+              renderActiveChart();
+            }
+          }
+        }
+      }
+      return changed;
+    }
+
+    function normalizeAccountRecord(rawAcc, fallbackSettings, fallbackChartState) {
+      const realToday = getTodayDateString();
+      const defSet = createDefaultAccountSettings();
+      const rawSet = { ...defSet, ...(fallbackSettings || {}), ...(rawAcc.settings || {}) };
+      const validFx = Number(rawSet.usdTwdRate);
+      const rawWorker = String(rawSet.workerBaseUrl || '').trim().replace(/\/+$/, '');
+      const cleanWorkerUrl = /^https?:\/\/.+/i.test(rawWorker) ? rawWorker : DEFAULT_WORKER_URL;
+
+      const cleanSettings = {
+        ...rawSet,
+        usdTwdRate: Number.isFinite(validFx) && validFx > 0 ? validFx : DEFAULT_USD_TWD_RATE,
+        usdTwdUpdatedAt: Number(rawSet.usdTwdUpdatedAt) || 0,
+        useManualFx: Boolean(rawSet.useManualFx),
+        workerBaseUrl: cleanWorkerUrl,
+        watchlist: Array.isArray(rawSet.watchlist) && rawSet.watchlist.length > 0
+          ? rawSet.watchlist
+          : [...defSet.watchlist]
+      };
+
+      const defChart = createDefaultChartState();
+      const rawChart = { ...defChart, ...(fallbackChartState || {}), ...(rawAcc.chartState || {}) };
+      const cleanChartState = {
+        activeChartSymbol: normalizeSymbol(rawChart.activeChartSymbol) || '2330.TW',
+        activeTimeframe: ['1D', '1W', '1M'].includes(rawChart.activeTimeframe) ? rawChart.activeTimeframe : '1D',
+        activeChartMode: ['CANDLE_MA', 'VOL', 'KD', 'RSI', 'MACD'].includes(rawChart.activeChartMode) ? rawChart.activeChartMode : 'CANDLE_MA'
+      };
+
+      let startDate = isValidIsoDate(rawAcc.startDate) ? rawAcc.startDate : realToday;
+      if (startDate > realToday) startDate = realToday;
+
+      let currentSimDate = isValidIsoDate(rawAcc.currentSimDate) ? rawAcc.currentSimDate : startDate;
+      if (currentSimDate < startDate) currentSimDate = startDate;
+      if (currentSimDate > realToday) currentSimDate = realToday;
+
+      let lastRealSyncDate = isValidIsoDate(rawAcc.lastRealSyncDate) ? rawAcc.lastRealSyncDate : realToday;
+      if (lastRealSyncDate > realToday) lastRealSyncDate = realToday;
+
+      const cleanHoldings = {};
+      if (rawAcc.holdings && typeof rawAcc.holdings === 'object') {
+        for (const [sym, h] of Object.entries(rawAcc.holdings)) {
+          if (!h || !Number.isFinite(h.shares) || h.shares <= 0) continue;
+          const cur = h.currency || getSymbolCurrency(sym);
+          const fxAtBuy = Number(h.fxRateAtBuy) > 0 ? Number(h.fxRateAtBuy) : (cur === 'USD' ? cleanSettings.usdTwdRate : 1);
+          const totalCostTwd = Number.isFinite(h.totalCostTwd) && h.totalCostTwd > 0
+            ? h.totalCostTwd
+            : (cur === 'USD' ? h.totalCost * fxAtBuy : h.totalCost);
+
+          let batches = [];
+          if (Array.isArray(h.batches) && h.batches.length > 0) {
+            batches = h.batches
+              .filter(b => b && Number.isFinite(Number(b.remainingShares)) && Number(b.remainingShares) > 0)
+              .map((b, idx) => ({
+                id: b.id || `lot_${sym}_${idx}_${Date.now()}`,
+                simDate: isValidIsoDate(b.simDate) ? b.simDate : currentSimDate,
+                time: b.time || new Date().toISOString(),
+                price: Number(b.price) || h.avgCost,
+                remainingShares: Number(b.remainingShares),
+                origShares: Number(b.origShares) || Number(b.remainingShares),
+                costNative: Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost)),
+                costTwd: Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost) * fxAtBuy),
+                currency: b.currency || cur,
+                fxRate: Number(b.fxRate) > 0 ? Number(b.fxRate) : fxAtBuy
+              }));
+          }
+          if (batches.length === 0) {
+            batches = [{
+              id: `lot_legacy_${sym}_${Date.now()}`,
+              simDate: currentSimDate,
+              time: new Date().toISOString(),
+              price: h.avgCost,
+              remainingShares: h.shares,
+              origShares: h.shares,
+              costNative: h.totalCost,
+              costTwd: totalCostTwd,
+              currency: cur,
+              fxRate: fxAtBuy
+            }];
+          }
+
+          cleanHoldings[sym] = {
+            ...h,
+            currency: cur,
+            fxRateAtBuy: fxAtBuy,
+            totalCostTwd,
+            batches
+          };
+        }
+      }
+
+      const initCap = Number(rawAcc.initialCapital) || 1000000;
+      const totalDep = typeof rawAcc.totalDeposited === 'number' ? rawAcc.totalDeposited : 0;
+      const segments = Array.isArray(rawAcc.segments) ? rawAcc.segments : [];
+      const curSegStart = Number.isFinite(Number(rawAcc.currentSegmentStartNav)) && Number(rawAcc.currentSegmentStartNav) > 0
+        ? Number(rawAcc.currentSegmentStartNav)
+        : initCap;
+
+      const cleanTrades = Array.isArray(rawAcc.trades)
+        ? rawAcc.trades.map(t => {
+            const derivedSimDate = isValidIsoDate(t.simDate)
+              ? t.simDate
+              : (typeof t.time === 'string' && isValidIsoDate(t.time.slice(0, 10)) ? t.time.slice(0, 10) : currentSimDate);
+            return {
+              ...t,
+              simDate: derivedSimDate,
+              realTime: t.realTime || t.time || new Date().toISOString()
+            };
+          })
+        : [];
+
+      return {
+        ...rawAcc,
+        id: rawAcc.id || ('acc_' + Date.now() + '_' + Math.floor(Math.random() * 1000)),
+        name: String(rawAcc.name || '帳戶 1').trim() || '帳戶 1',
+        strategy: String(rawAcc.strategy || '').trim(),
+        startDate,
+        currentSimDate,
+        lastRealSyncDate,
+        skipNonTradingDays: rawAcc.skipNonTradingDays !== undefined ? Boolean(rawAcc.skipNonTradingDays) : true,
+        settings: cleanSettings,
+        chartState: cleanChartState,
+        initialCapital: initCap,
+        totalDeposited: totalDep,
+        cash: Number.isFinite(Number(rawAcc.cash)) ? Number(rawAcc.cash) : initCap,
+        holdings: cleanHoldings,
+        realizedPnl: Number.isFinite(Number(rawAcc.realizedPnl)) ? Number(rawAcc.realizedPnl) : 0,
+        segments,
+        currentSegmentStartNav: curSegStart,
+        trades: cleanTrades
+      };
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -1159,86 +1517,16 @@
           return createDefaultState();
         }
         const def = createDefaultState();
-        const rawSettings = parsed.settings || {};
-        const validFx = Number(rawSettings.usdTwdRate);
-        const rawWorker = String(rawSettings.workerBaseUrl || '').trim().replace(/\/+$/, '');
-        const cleanWorkerUrl = /^https?:\/\/.+/i.test(rawWorker) ? rawWorker : DEFAULT_WORKER_URL;
-
-        const mergedSettings = {
-          ...def.settings,
-          ...rawSettings,
-          usdTwdRate: Number.isFinite(validFx) && validFx > 0 ? validFx : DEFAULT_USD_TWD_RATE,
-          usdTwdUpdatedAt: Number(rawSettings.usdTwdUpdatedAt) || 0,
-          useManualFx: Boolean(rawSettings.useManualFx),
-          workerBaseUrl: cleanWorkerUrl
+        const legacyRootSettings = parsed.settings || {};
+        const legacyRootChart = {
+          activeChartSymbol: parsed.activeChartSymbol,
+          activeTimeframe: parsed.activeTimeframe,
+          activeChartMode: parsed.activeChartMode
         };
 
-        const accounts = parsed.accounts.map(a => {
-          const cleanHoldings = {};
-          if (a.holdings && typeof a.holdings === 'object') {
-            for (const [sym, h] of Object.entries(a.holdings)) {
-              if (!h || !Number.isFinite(h.shares) || h.shares <= 0) continue;
-              const cur = h.currency || getSymbolCurrency(sym);
-              const fxAtBuy = Number(h.fxRateAtBuy) > 0 ? Number(h.fxRateAtBuy) : (cur === 'USD' ? mergedSettings.usdTwdRate : 1);
-              const totalCostTwd = Number.isFinite(h.totalCostTwd) && h.totalCostTwd > 0
-                ? h.totalCostTwd
-                : (cur === 'USD' ? h.totalCost * fxAtBuy : h.totalCost);
-
-              let batches = [];
-              if (Array.isArray(h.batches) && h.batches.length > 0) {
-                batches = h.batches
-                  .filter(b => b && Number.isFinite(Number(b.remainingShares)) && Number(b.remainingShares) > 0)
-                  .map((b, idx) => ({
-                    id: b.id || `lot_${sym}_${idx}_${Date.now()}`,
-                    time: b.time || new Date().toISOString(),
-                    price: Number(b.price) || h.avgCost,
-                    remainingShares: Number(b.remainingShares),
-                    origShares: Number(b.origShares) || Number(b.remainingShares),
-                    costNative: Number.isFinite(Number(b.costNative)) ? Number(b.costNative) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost)),
-                    costTwd: Number.isFinite(Number(b.costTwd)) ? Number(b.costTwd) : (Number(b.remainingShares) * (Number(b.price) || h.avgCost) * fxAtBuy),
-                    currency: b.currency || cur,
-                    fxRate: Number(b.fxRate) > 0 ? Number(b.fxRate) : fxAtBuy
-                  }));
-              }
-              if (batches.length === 0) {
-                batches = [{
-                  id: `lot_legacy_${sym}_${Date.now()}`,
-                  time: new Date().toISOString(),
-                  price: h.avgCost,
-                  remainingShares: h.shares,
-                  origShares: h.shares,
-                  costNative: h.totalCost,
-                  costTwd: totalCostTwd,
-                  currency: cur,
-                  fxRate: fxAtBuy
-                }];
-              }
-
-              cleanHoldings[sym] = {
-                ...h,
-                currency: cur,
-                fxRateAtBuy: fxAtBuy,
-                totalCostTwd,
-                batches
-              };
-            }
-          }
-          const initCap = Number(a.initialCapital) || 1000000;
-          const totalDep = typeof a.totalDeposited === 'number' ? a.totalDeposited : 0;
-          const segments = Array.isArray(a.segments) ? a.segments : [];
-          const curSegStart = Number.isFinite(Number(a.currentSegmentStartNav)) && Number(a.currentSegmentStartNav) > 0
-            ? Number(a.currentSegmentStartNav)
-            : initCap;
-
-          return {
-            ...a,
-            initialCapital: initCap,
-            totalDeposited: totalDep,
-            holdings: cleanHoldings,
-            segments,
-            currentSegmentStartNav: curSegStart
-          };
-        });
+        const accounts = parsed.accounts.map(a =>
+          normalizeAccountRecord(a, legacyRootSettings, legacyRootChart)
+        );
 
         const cleanCache = {};
         if (parsed.marketCache && typeof parsed.marketCache === 'object') {
@@ -1257,13 +1545,27 @@
           }
         }
 
-        return {
-          ...def,
-          ...parsed,
+        const state = {
+          version: 2,
+          activeTab: parsed.activeTab || def.activeTab,
+          activeAccountId: parsed.activeAccountId || accounts[0].id,
+          guideExpanded: parsed.guideExpanded !== undefined ? Boolean(parsed.guideExpanded) : true,
           accounts,
-          settings: mergedSettings,
           marketCache: cleanCache
         };
+
+        const realToday = getTodayDateString();
+        for (const acc of state.accounts) {
+          if (acc.lastRealSyncDate < realToday) {
+            const elapsed = diffCalendarDays(acc.lastRealSyncDate, realToday);
+            if (elapsed > 0 && acc.currentSimDate < realToday) {
+              acc.currentSimDate = addCalendarDaysCapped(acc.currentSimDate, elapsed, realToday);
+            }
+            acc.lastRealSyncDate = realToday;
+          }
+        }
+
+        return state;
       } catch (e) {
         return createDefaultState();
       }
@@ -1432,7 +1734,8 @@
     }
 
     function getWorkerBaseUrl() {
-      const raw = String(appState.settings && appState.settings.workerBaseUrl ? appState.settings.workerBaseUrl : DEFAULT_WORKER_URL).trim();
+      const s = getActiveSettings();
+      const raw = String(s && s.workerBaseUrl ? s.workerBaseUrl : DEFAULT_WORKER_URL).trim();
       const cleaned = raw.replace(/\/+$/, '');
       return /^https?:\/\/.+/i.test(cleaned) ? cleaned : DEFAULT_WORKER_URL;
     }
@@ -1466,7 +1769,7 @@
     }
 
     function getThemeColors() {
-      const isUS = appState.settings.colorMode === 'US';
+      const isUS = getActiveSettings().colorMode === 'US';
       return {
         up: isUS ? '#00C853' : '#FF3B30',
         down: isUS ? '#FF3B30' : '#00C853',
@@ -1478,7 +1781,7 @@
     }
 
     function applyColorTheme() {
-      if (appState.settings.colorMode === 'US') {
+      if (getActiveSettings().colorMode === 'US') {
         document.body.classList.add('theme-us');
       } else {
         document.body.classList.remove('theme-us');
@@ -1519,7 +1822,238 @@
     }
 
     /* ========================================================================
-       4. 多幣別識別 (TWD / USD)、即時匯率與雙軌全歷史行情管線
+       4. 時間遮罩引擎 (嚴格防偷看未來) ＋ 順向快轉邏輯
+       ======================================================================== */
+    function applyTimeMaskToMarketData(rawData, acc = getActiveAccount()) {
+      if (!rawData || !Array.isArray(rawData.bars) || rawData.bars.length === 0) return rawData;
+
+      const realToday = getTodayDateString();
+      const simDate = acc && isValidIsoDate(acc.currentSimDate) ? acc.currentSimDate : realToday;
+
+      if (simDate >= realToday) {
+        return rawData;
+      }
+
+      const maskedBars = rawData.bars.filter(b => b.time <= simDate);
+      if (maskedBars.length === 0) {
+        const earliest = rawData.bars[0];
+        return {
+          ...rawData,
+          bars: [earliest],
+          price: earliest.close,
+          prevClose: earliest.open,
+          maskedAtDate: simDate,
+          beforeListing: true
+        };
+      }
+
+      const lastBar = maskedBars[maskedBars.length - 1];
+      const prevBar = maskedBars.length >= 2 ? maskedBars[maskedBars.length - 2] : lastBar;
+
+      return {
+        ...rawData,
+        bars: maskedBars,
+        price: lastBar.close,
+        prevClose: prevBar.close,
+        maskedAtDate: simDate,
+        beforeListing: false
+      };
+    }
+
+    async function getAccountMarketData(rawInput, forceRefresh = false, options = {}, acc = getActiveAccount()) {
+      const rawData = await getMarketData(rawInput, forceRefresh, options);
+      return applyTimeMaskToMarketData(rawData, acc);
+    }
+
+    function findNextTradingDayAfter(currentDateStr, maxCapDateStr, acc = getActiveAccount()) {
+      const candidateDates = new Set();
+      const cs = acc.chartState || getActiveChartState();
+      const checkSyms = new Set([
+        cs.activeChartSymbol,
+        normalizeSymbol(document.getElementById('orderSymbol')?.value || ''),
+        ...Object.keys(acc.holdings || {}),
+        ...(acc.settings?.watchlist || [])
+      ]);
+
+      for (const sym of checkSyms) {
+        if (!sym) continue;
+        const entry = appState.marketCache[sym] || connState.offlineMemoryMap.get(sym);
+        if (entry && Array.isArray(entry.bars)) {
+          for (const b of entry.bars) {
+            if (b.time > currentDateStr && b.time <= maxCapDateStr) {
+              candidateDates.add(b.time);
+              break;
+            }
+          }
+        }
+      }
+
+      if (candidateDates.size > 0) {
+        return Array.from(candidateDates).sort()[0];
+      }
+
+      let cursor = addCalendarDaysCapped(currentDateStr, 1, maxCapDateStr);
+      while (cursor < maxCapDateStr) {
+        const [y, m, d] = cursor.split('-').map(Number);
+        const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+        if (dow !== 0 && dow !== 6) break;
+        cursor = addCalendarDaysCapped(cursor, 1, maxCapDateStr);
+      }
+      return cursor;
+    }
+
+    function renderSimTimelineUI() {
+      const acc = getActiveAccount();
+      const realToday = getTodayDateString();
+      const simDate = acc.currentSimDate || realToday;
+      const synced = simDate >= realToday;
+
+      const badge = document.getElementById('simTimelineBadge');
+      if (badge) {
+        if (synced) {
+          badge.textContent = '已同步今日';
+          badge.className = 'inline-flex items-center px-2.5 py-0.5 text-[11px] num font-medium rounded-full bg-[#141923] text-[#8A94A6] whitespace-nowrap shrink-0';
+        } else {
+          badge.textContent = `📅 模擬日期 ${simDate}`;
+          badge.className = 'inline-flex items-center px-2.5 py-0.5 text-[11px] num font-semibold rounded-full bg-[rgba(255,153,0,0.16)] text-[#FF9900] whitespace-nowrap shrink-0';
+        }
+      }
+
+      const simBar = document.getElementById('simTimeWarpBar');
+      const chartBar = document.getElementById('chartTimeWarpBar');
+
+      if (synced) {
+        if (simBar) simBar.classList.add('hidden');
+        if (chartBar) chartBar.classList.add('hidden');
+      } else {
+        const displaySlashDate = simDate.replace(/-/g, '/');
+        const nextMinDate = addCalendarDaysCapped(simDate, 1, realToday);
+
+        if (simBar) {
+          simBar.classList.remove('hidden');
+          document.getElementById('simWarpDateLabel').textContent = displaySlashDate;
+          const simIn = document.getElementById('simWarpDateInput');
+          if (simIn) {
+            simIn.min = nextMinDate;
+            simIn.max = realToday;
+            simIn.value = nextMinDate;
+          }
+        }
+        if (chartBar) {
+          chartBar.classList.remove('hidden');
+          document.getElementById('chartWarpDateLabel').textContent = displaySlashDate;
+          const chartIn = document.getElementById('chartWarpDateInput');
+          if (chartIn) {
+            chartIn.min = nextMinDate;
+            chartIn.max = realToday;
+            chartIn.value = nextMinDate;
+          }
+        }
+      }
+    }
+
+    async function fastForwardAccountDays(days) {
+      const acc = getActiveAccount();
+      const realToday = getTodayDateString();
+      if (acc.currentSimDate >= realToday) {
+        renderSimTimelineUI();
+        return;
+      }
+
+      let targetDate;
+      if (days === 1 && acc.skipNonTradingDays) {
+        targetDate = findNextTradingDayAfter(acc.currentSimDate, realToday, acc);
+      } else {
+        targetDate = addCalendarDaysCapped(acc.currentSimDate, days, realToday);
+      }
+
+      await jumpAccountToDate(targetDate);
+    }
+
+    async function jumpAccountToDate(targetDateStr) {
+      const acc = getActiveAccount();
+      const realToday = getTodayDateString();
+
+      if (!isValidIsoDate(targetDateStr)) return;
+      if (targetDateStr <= acc.currentSimDate) {
+        showToast('時間軸僅支援單向順向快轉，不可倒轉至過去日期', 'warn');
+        return;
+      }
+
+      const clampedTarget = targetDateStr > realToday ? realToday : targetDateStr;
+      acc.currentSimDate = clampedTarget;
+      acc.lastRealSyncDate = realToday;
+      saveState();
+
+      await applyTimelineChangeRefresh(acc);
+
+      if (clampedTarget >= realToday) {
+        showToast(`已推進至今日 (${realToday})，此帳戶已與現實時間完全同步`, 'success');
+      } else {
+        showToast(`時間軸已順向推進至 ${clampedTarget}`, 'info');
+      }
+    }
+
+    async function applyTimelineChangeRefresh(acc = getActiveAccount()) {
+      renderSimTimelineUI();
+
+      const holdingSyms = Object.keys(acc.holdings || {});
+      if (holdingSyms.length > 0) {
+        await Promise.allSettled(
+          holdingSyms.map(s => getMarketData(s, false, { silentError: true }))
+        );
+      }
+
+      const orderSymRaw = document.getElementById('orderSymbol').value.trim();
+      if (orderSymRaw) {
+        const maskedOrderData = await getAccountMarketData(orderSymRaw, false, { silentError: true }, acc);
+        if (maskedOrderData && Number.isFinite(maskedOrderData.price)) {
+          const dispSym = formatDisplaySymbol(maskedOrderData.symbol);
+          const cur = getSymbolCurrency(maskedOrderData.symbol);
+          document.getElementById('orderPrice').value = maskedOrderData.price;
+          document.getElementById('orderPriceLabel').textContent = `委託單價（${cur}）`;
+          document.getElementById('orderQuoteName').textContent =
+            `${dispSym} ${maskedOrderData.name} · ${fmtPrice(maskedOrderData.price)} ${cur}`;
+          updateOrderPreview();
+        }
+      }
+
+      renderSimTab();
+
+      const chartSym = getActiveChartState().activeChartSymbol;
+      if (chartSym) {
+        currentChartData = await getAccountMarketData(chartSym, false, { silentError: true }, acc);
+        if (appState.activeTab === 'chart') {
+          updateChartHeader();
+          renderActiveChart();
+        }
+      }
+    }
+
+    function openSimJumpDatePicker() {
+      const input = document.getElementById('simWarpDateInput');
+      if (!input) return;
+      try {
+        if (typeof input.showPicker === 'function') input.showPicker();
+        else { input.focus(); input.click(); }
+      } catch (_) {
+        input.focus(); input.click();
+      }
+    }
+
+    function openChartJumpDatePicker() {
+      const input = document.getElementById('chartWarpDateInput');
+      if (!input) return;
+      try {
+        if (typeof input.showPicker === 'function') input.showPicker();
+        else { input.focus(); input.click(); }
+      } catch (_) {
+        input.focus(); input.click();
+      }
+    }
+
+    /* ========================================================================
+       5. 多幣別識別 (TWD / USD)、即時匯率與雙軌全歷史行情管線
        ======================================================================== */
     function normalizeSymbol(rawInput) {
       const clean = String(rawInput || '').trim().toUpperCase();
@@ -1540,7 +2074,7 @@
     }
 
     function getActiveUsdTwdRate() {
-      const r = Number(appState.settings && appState.settings.usdTwdRate);
+      const r = Number(getActiveSettings().usdTwdRate);
       return Number.isFinite(r) && r > 0 ? r : DEFAULT_USD_TWD_RATE;
     }
 
@@ -1825,8 +2359,8 @@
 
       const rand = mulberry32(meta.seed);
       const bars = [];
-      let price = meta.base * 0.65;
-      const totalDays = 360;
+      let price = meta.base * 0.45;
+      const totalDays = 1200;
 
       const dates = [];
       const cur = new Date();
@@ -1881,11 +2415,12 @@
     }
 
     async function fetchLiveUsdTwdRate(forceRefresh = false) {
-      if (!forceRefresh && appState.settings.useManualFx) {
+      const s = getActiveSettings();
+      if (!forceRefresh && s.useManualFx) {
         return getActiveUsdTwdRate();
       }
       const now = Date.now();
-      if (!forceRefresh && appState.settings.usdTwdUpdatedAt > 0 && (now - appState.settings.usdTwdUpdatedAt) < 1800000) {
+      if (!forceRefresh && s.usdTwdUpdatedAt > 0 && (now - s.usdTwdUpdatedAt) < 1800000) {
         return getActiveUsdTwdRate();
       }
 
@@ -1916,8 +2451,9 @@
 
       try {
         const fetchedRate = await raceSuccess(tasks);
-        appState.settings.usdTwdRate = fetchedRate;
-        appState.settings.usdTwdUpdatedAt = Date.now();
+        const curSettings = getActiveSettings();
+        curSettings.usdTwdRate = fetchedRate;
+        curSettings.usdTwdUpdatedAt = Date.now();
         saveState();
         updateSettingsFxDisplay();
         return fetchedRate;
@@ -2226,7 +2762,7 @@
       const dispSym = formatDisplaySymbol(sym);
       if (!sym) throw new Error('請輸入有效的股票代號');
 
-      const ttl = Number(appState.settings.cacheTtlMs);
+      const ttl = Number(getActiveSettings().cacheTtlMs);
       const cached = appState.marketCache[sym];
       const todayStr = getTodayDateString();
       const hasFullHistoryCache = Boolean(
@@ -2322,16 +2858,17 @@
         updateOrderPreview();
       }).catch(() => {});
 
+      const acc = getActiveAccount();
+
       if (appState.activeTab === 'chart') {
-        await loadChartSymbol(appState.activeChartSymbol, true);
+        await loadChartSymbol(getActiveChartState().activeChartSymbol, true);
         if (!silent && connState.status === 'LIVE') {
-          showToast(`重連成功！已取得 ${formatDisplaySymbol(appState.activeChartSymbol)} 全歷史報價`, 'success');
+          showToast(`重連成功！已取得 ${formatDisplaySymbol(getActiveChartState().activeChartSymbol)} 全歷史報價`, 'success');
         }
         return;
       }
 
       const orderSymRaw = document.getElementById('orderSymbol').value.trim();
-      const acc = getActiveAccount();
       const holdingSyms = Object.keys(acc.holdings || {});
       const targetSyms = new Set();
 
@@ -2344,13 +2881,12 @@
       );
 
       if (orderSymRaw) {
-        const normOrder = normalizeSymbol(orderSymRaw);
-        const orderData = appState.marketCache[normOrder] || connState.offlineMemoryMap.get(normOrder);
-        if (orderData && Number.isFinite(orderData.price)) {
-          const dispSym = formatDisplaySymbol(orderData.symbol);
-          const cur = getSymbolCurrency(orderData.symbol);
-          document.getElementById('orderPrice').value = orderData.price;
-          document.getElementById('orderQuoteName').textContent = `${dispSym} ${orderData.name} · ${fmtPrice(orderData.price)} ${cur}`;
+        const maskedOrder = await getAccountMarketData(orderSymRaw, false, { silentError: true }, acc);
+        if (maskedOrder && Number.isFinite(maskedOrder.price)) {
+          const dispSym = formatDisplaySymbol(maskedOrder.symbol);
+          const cur = getSymbolCurrency(maskedOrder.symbol);
+          document.getElementById('orderPrice').value = maskedOrder.price;
+          document.getElementById('orderQuoteName').textContent = `${dispSym} ${maskedOrder.name} · ${fmtPrice(maskedOrder.price)} ${cur}`;
           updateOrderPreview();
         }
       }
@@ -2380,43 +2916,68 @@
     }
 
     /* ========================================================================
-       5. 分頁一：多帳戶模擬股票引擎 (統一 TWD 計價基準 + 美金自動換算)
+       6. 分頁一：多帳戶模擬股票引擎 (獨立環境切換 + 時間遮罩估值 + 批次管理)
        ======================================================================== */
-    function getActiveAccount() {
-      let acc = appState.accounts.find(a => a.id === appState.activeAccountId);
-      if (!acc) {
-        acc = appState.accounts[0];
-        appState.activeAccountId = acc.id;
-      }
-      return acc;
-    }
-
     function getAccountDisplayName(acc) {
       const n = String((acc && acc.name) || '').trim();
       return n || '未命名帳戶';
     }
 
-    function switchAccount(accId) {
+    async function switchAccount(accId) {
       appState.activeAccountId = accId;
+      syncAllAccountsWithReality(false);
       saveState();
+
+      applyColorTheme();
+      const acc = getActiveAccount();
+      const cs = getActiveChartState();
+      expandedHoldingSym = null;
+
+      const orderSymRaw = document.getElementById('orderSymbol').value.trim();
+      if (orderSymRaw) {
+        const masked = await getAccountMarketData(orderSymRaw, false, { silentError: true }, acc);
+        if (masked && Number.isFinite(masked.price)) {
+          const cur = getSymbolCurrency(masked.symbol);
+          document.getElementById('orderPrice').value = masked.price;
+          document.getElementById('orderPriceLabel').textContent = `委託單價（${cur}）`;
+          document.getElementById('orderQuoteName').textContent =
+            `${formatDisplaySymbol(masked.symbol)} ${masked.name} · ${fmtPrice(masked.price)} ${cur}`;
+        }
+      }
+
+      setOrderSide(orderSide);
       renderSimTab();
+      updateChartControlsUI();
+      renderWatchlistChips();
+
+      if (appState.activeTab === 'chart') {
+        await loadChartSymbol(cs.activeChartSymbol, false);
+      } else {
+        refreshAccountHoldingsPrices(false);
+      }
     }
 
     function openAccountSwitchModal() {
+      const realToday = getTodayDateString();
       const listEl = document.getElementById('accountSwitchList');
       listEl.innerHTML = appState.accounts.map(a => {
         const active = a.id === appState.activeAccountId;
         const st = computeAccountStats(a);
         const name = escapeHtml(getAccountDisplayName(a));
+        const isSimPast = (a.currentSimDate || realToday) < realToday;
+        const timeTag = isSimPast
+          ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 bg-[rgba(255,153,0,0.14)] text-[#FF9900] rounded-full num shrink-0">📅 ${a.currentSimDate}</span>`
+          : `<span class="text-[10px] px-1.5 py-0.5 bg-[#12161F] text-[#8A94A6] rounded-full shrink-0">已同步今日</span>`;
         return `
           <button onclick="selectAccountFromModal('${a.id}')"
             class="tap-btn w-full text-left px-4 py-3.5 flex items-center justify-between gap-2 ${
               active ? 'bg-[#171C26]' : 'hover:bg-[#12161F]'
             }">
             <div class="min-w-0">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-[14px] font-bold ${active ? 'text-[#FF9900]' : 'text-[#F4F6F9]'} truncate">${name}</span>
                 ${active ? '<span class="text-[10px] font-semibold px-1.5 py-0.5 bg-[rgba(255,153,0,0.16)] text-[#FF9900] rounded-full shrink-0">使用中</span>' : ''}
+                ${timeTag}
               </div>
               <div class="text-[12px] num text-[#8A94A6] mt-0.5">可用現金 ${fmtMoney(a.cash, 0)} TWD</div>
             </div>
@@ -2430,40 +2991,51 @@
       openModal('accountSwitchModal');
     }
 
-    function selectAccountFromModal(accId) {
-      switchAccount(accId);
+    async function selectAccountFromModal(accId) {
       closeModal('accountSwitchModal');
+      await switchAccount(accId);
       showToast(`已切換至「${getAccountDisplayName(getActiveAccount())}」`, 'info');
     }
 
     function openAccountModal(mode) {
       accountModalMode = mode;
+      const realToday = getTodayDateString();
       const titleEl = document.getElementById('accountModalTitle');
       const capGroup = document.getElementById('accCapitalGroup');
+      const startGroup = document.getElementById('accStartDateGroup');
       const nameIn = document.getElementById('accNameInput');
       const capIn = document.getElementById('accCapitalInput');
+      const startIn = document.getElementById('accStartDateInput');
+      const skipIn = document.getElementById('accSkipNonTradingInput');
       const stratIn = document.getElementById('accStrategyInput');
 
       if (mode === 'create') {
         titleEl.textContent = '建立新帳戶';
         capGroup.classList.remove('hidden');
+        startGroup.classList.remove('hidden');
         nameIn.value = '';
         capIn.value = '1000000';
+        startIn.max = realToday;
+        startIn.value = realToday;
+        skipIn.checked = true;
         stratIn.value = '';
       } else {
         const acc = getActiveAccount();
         titleEl.textContent = '編輯目前帳戶';
         capGroup.classList.add('hidden');
+        startGroup.classList.add('hidden');
         nameIn.value = acc.name || '';
+        skipIn.checked = acc.skipNonTradingDays !== undefined ? Boolean(acc.skipNonTradingDays) : true;
         stratIn.value = acc.strategy || '';
       }
       openModal('accountModal');
     }
 
-    function saveAccountModal() {
+    async function saveAccountModal() {
       const rawName = document.getElementById('accNameInput').value.trim();
       const name = rawName || '未命名帳戶';
       const strategy = document.getElementById('accStrategyInput').value.trim();
+      const skipNonTradingDays = document.getElementById('accSkipNonTradingInput').checked;
 
       if (accountModalMode === 'create') {
         const cap = Number(document.getElementById('accCapitalInput').value);
@@ -2471,31 +3043,43 @@
           showToast('初始本金必須大於或等於 1,000 TWD', 'error');
           return;
         }
-        const newAcc = {
-          id: 'acc_' + Date.now(),
+        const realToday = getTodayDateString();
+        const chosenStart = document.getElementById('accStartDateInput').value || realToday;
+        if (!isValidIsoDate(chosenStart)) {
+          showToast('請選擇有效的帳戶起始日期', 'error');
+          return;
+        }
+        if (chosenStart > realToday) {
+          showToast('帳戶起始日期不可超過現實今日', 'error');
+          return;
+        }
+
+        const newAcc = createDefaultAccount({
           name,
           strategy,
           initialCapital: Math.round(cap),
-          totalDeposited: 0,
-          cash: Math.round(cap),
-          holdings: {},
-          realizedPnl: 0,
-          segments: [],
-          currentSegmentStartNav: Math.round(cap),
-          trades: []
-        };
+          startDate: chosenStart,
+          skipNonTradingDays
+        });
         appState.accounts.push(newAcc);
-        appState.activeAccountId = newAcc.id;
-        showToast(`已建立新帳戶「${name}」`, 'success');
+        closeModal('accountModal');
+        await switchAccount(newAcc.id);
+        showToast(
+          chosenStart < realToday
+            ? `已建立「${name}」，起始日期設為 ${chosenStart}`
+            : `已建立新帳戶「${name}」`,
+          'success'
+        );
       } else {
         const acc = getActiveAccount();
         acc.name = name;
         acc.strategy = strategy;
+        acc.skipNonTradingDays = skipNonTradingDays;
+        saveState();
+        closeModal('accountModal');
+        renderSimTab();
         showToast('帳戶資訊已更新', 'success');
       }
-      saveState();
-      closeModal('accountModal');
-      renderSimTab();
     }
 
     function openDepositModal() {
@@ -2520,7 +3104,6 @@
       const depositAmount = Math.round(rawVal);
       const acc = getActiveAccount();
 
-      // 結算充值前一刻的資金分段報酬率（Time-Weighted Return 鏈乘基準）
       const preStats = computeAccountStats(acc);
       const preNav = preStats.totalAssets;
       const segStartNav = Number.isFinite(acc.currentSegmentStartNav) && acc.currentSegmentStartNav > 0
@@ -2531,6 +3114,7 @@
       if (!Array.isArray(acc.segments)) acc.segments = [];
       acc.segments.push({
         id: 'seg_' + Date.now(),
+        simDate: acc.currentSimDate,
         closedAt: new Date().toISOString(),
         startNav: segStartNav,
         endNav: preNav,
@@ -2543,9 +3127,12 @@
       acc.totalDeposited = Number(((acc.totalDeposited || 0) + depositAmount).toFixed(2));
       acc.currentSegmentStartNav = Number((preNav + depositAmount).toFixed(2));
 
+      const nowIso = new Date().toISOString();
       acc.trades.unshift({
         id: 'dep_' + Date.now(),
-        time: new Date().toISOString(),
+        simDate: acc.currentSimDate,
+        realTime: nowIso,
+        time: nowIso,
         side: 'DEPOSIT',
         symbol: 'CASH',
         name: '帳戶充值',
@@ -2574,17 +3161,19 @@
       const acc = getActiveAccount();
       const dispName = getAccountDisplayName(acc);
       showConfirmDialog(
-        '重置帳戶資金',
-        `確定要重置「${dispName}」嗎？這將清空該帳戶所有持股與交易紀錄，並將現金恢復為目前本金 ${fmtMoney(acc.initialCapital)} TWD。`,
-        () => {
+        '重置帳戶資金與時間軸',
+        `確定要重置「${dispName}」嗎？這將清空該帳戶所有持股與交易紀錄，將現金恢復為本金 ${fmtMoney(acc.initialCapital)} TWD，並將模擬日期重設為起始日 ${acc.startDate}。`,
+        async () => {
           acc.cash = acc.initialCapital;
           acc.holdings = {};
           acc.realizedPnl = 0;
           acc.segments = [];
           acc.currentSegmentStartNav = acc.initialCapital;
           acc.trades = [];
+          acc.currentSimDate = acc.startDate;
+          acc.lastRealSyncDate = getTodayDateString();
           saveState();
-          renderSimTab();
+          await applyTimelineChangeRefresh(acc);
           showToast(`帳戶「${dispName}」已重置完成`, 'success');
         }
       );
@@ -2600,18 +3189,16 @@
       showConfirmDialog(
         '刪除帳戶',
         `確定要永久刪除「${dispName}」及其所有紀錄嗎？此動作無法復原。`,
-        () => {
+        async () => {
           appState.accounts = appState.accounts.filter(a => a.id !== acc.id);
-          appState.activeAccountId = appState.accounts[0].id;
-          saveState();
-          renderSimTab();
+          await switchAccount(appState.accounts[0].id);
           showToast(`已刪除帳戶「${dispName}」`, 'warn');
         }
       );
     }
 
     function calculateOrderMetrics(side, price, shares, isEtf, symbol = '2330.TW') {
-      const s = appState.settings;
+      const s = getActiveSettings();
       const currency = getSymbolCurrency(symbol);
       const fxRate = currency === 'USD' ? getActiveUsdTwdRate() : 1;
       const grossAmount = price * shares;
@@ -2649,7 +3236,7 @@
 
     function calculateBreakEvenPrice(avgCost, shares, isEtf, currency = 'TWD') {
       if (!Number.isFinite(avgCost) || avgCost <= 0 || !Number.isFinite(shares) || shares <= 0) return 0;
-      const s = appState.settings;
+      const s = getActiveSettings();
       const effFeeRate = s.feeRate * s.discount;
       const taxRate = isEtf ? s.etfTaxRate : s.stockTaxRate;
       const denom = Math.max(0.01, 1 - effFeeRate - taxRate);
@@ -2738,7 +3325,7 @@
             showToast('請先輸入或查詢委託單價', 'warn');
             return;
           }
-          const s = appState.settings;
+          const s = getActiveSettings();
           const effFee = s.feeRate * s.discount;
           const budgetTwd = acc.cash * ratio;
           const perShareCostTwd = price * (1 + effFee) * fxRate;
@@ -2785,7 +3372,8 @@
       btn.disabled = true;
       btn.textContent = '...';
       try {
-        const data = await getMarketData(raw, true);
+        const acc = getActiveAccount();
+        const data = await getAccountMarketData(raw, false, {}, acc);
         const dispSym = formatDisplaySymbol(data.symbol);
         const cur = getSymbolCurrency(data.symbol);
         if (cur === 'USD') {
@@ -2805,7 +3393,8 @@
         updateOrderPreview();
         renderSimTab();
         if (data.source === 'LIVE') {
-          showToast(`已取得 ${dispSym} ${data.name} 最新報價 ${fmtPrice(data.price)} ${cur}`, 'success');
+          const dateTag = isAccountSyncedToToday(acc) ? '最新報價' : `${acc.currentSimDate} 收盤價`;
+          showToast(`已取得 ${dispSym} ${data.name} ${dateTag} ${fmtPrice(data.price)} ${cur}`, 'success');
         }
       } catch (e) {
         showToast('報價查詢失敗：' + e.message, 'error');
@@ -2825,6 +3414,7 @@
     }
 
     function updateOrderPreview() {
+      const s = getActiveSettings();
       const { sym, price, rawQty, shares, isEtf } = getParsedOrderInput();
       const dispSym = formatDisplaySymbol(sym);
       const currency = getSymbolCurrency(sym || '2330.TW');
@@ -2844,7 +3434,7 @@
       if (orderSide === 'BUY') {
         document.getElementById('prevFeeTax').textContent = `手續費 $${fmtMoney(m.fee, dec)} · 買進免證交稅`;
       } else {
-        const taxRatePct = ((isEtf ? appState.settings.etfTaxRate : appState.settings.stockTaxRate) * 100)
+        const taxRatePct = ((isEtf ? s.etfTaxRate : s.stockTaxRate) * 100)
           .toFixed(2)
           .replace(/\.?0+$/, '');
         document.getElementById('prevFeeTax').textContent = `手續費 $${fmtMoney(m.fee, dec)} · 證交稅(${taxRatePct}%) $${fmtMoney(m.tax, dec)}`;
@@ -2898,6 +3488,7 @@
         }
 
         const acc = getActiveAccount();
+        const s = getActiveSettings();
         const { sym, price, shares, isEtf, metrics } = check;
         const dispSym = formatDisplaySymbol(sym);
         const rawReason = document.getElementById('orderReason').value;
@@ -2926,6 +3517,7 @@
         badge.textContent = isBuy ? '買進委託' : '賣出委託';
         badge.className = `px-2 py-0.5 text-[11px] font-bold rounded ${isBuy ? 'pill-up' : 'pill-down'}`;
 
+        document.getElementById('ocSimDate').textContent = acc.currentSimDate;
         document.getElementById('ocSymbolName').textContent =
           `${stockName && stockName !== dispSym ? `${dispSym} ${stockName}` : dispSym} (${metrics.currency})`;
         const lotNote = shares >= 1000 && shares % 1000 === 0 ? ` (${shares / 1000}張)` : '';
@@ -2949,7 +3541,7 @@
           document.getElementById('ocNetAmount').textContent = `$${fmtMoney(metrics.netTwd, 0)}`;
           document.getElementById('ocAfterCash').textContent = `$${fmtMoney(Math.max(0, acc.cash - metrics.netTwd), 0)}`;
         } else {
-          const taxPct = ((isEtf ? appState.settings.etfTaxRate : appState.settings.stockTaxRate) * 100)
+          const taxPct = ((isEtf ? s.etfTaxRate : s.stockTaxRate) * 100)
             .toFixed(2)
             .replace(/\.?0+$/, '');
           document.getElementById('ocTaxLabel').textContent = `證券交易稅（${isEtf ? 'ETF ' : ''}${taxPct}%）`;
@@ -2996,14 +3588,16 @@
         }
 
         let realizedPnlTwdThisTrade = null;
-        const tradeIsoTime = new Date().toISOString();
+        const realIsoTime = new Date().toISOString();
+        const simDate = acc.currentSimDate;
 
         if (side === 'BUY') {
           acc.cash = Number((acc.cash - metrics.netTwd).toFixed(2));
           const totalCostNative = metrics.grossAmount + metrics.fee;
           const newBatch = {
             id: 'lot_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-            time: tradeIsoTime,
+            simDate,
+            time: realIsoTime,
             price,
             remainingShares: shares,
             origShares: shares,
@@ -3025,7 +3619,8 @@
             if (!Array.isArray(existing.batches)) {
               existing.batches = [{
                 id: 'lot_init_' + Date.now(),
-                time: tradeIsoTime,
+                simDate,
+                time: realIsoTime,
                 price: existing.avgCost,
                 remainingShares: existing.shares,
                 origShares: existing.shares,
@@ -3071,7 +3666,6 @@
           acc.cash = Number((acc.cash + metrics.netTwd).toFixed(2));
           acc.realizedPnl = Number((acc.realizedPnl + realizedPnlTwdThisTrade).toFixed(2));
 
-          // 依先進先出 (FIFO) 扣減各批次剩餘股數與批次成本
           if (Array.isArray(existing.batches)) {
             let sharesToDeduct = shares;
             const updatedBatches = [];
@@ -3107,7 +3701,9 @@
 
         acc.trades.unshift({
           id: 'tr_' + Date.now(),
-          time: tradeIsoTime,
+          simDate,
+          realTime: realIsoTime,
+          time: realIsoTime,
           side,
           symbol: sym,
           name: stockName,
@@ -3132,7 +3728,7 @@
         renderSimTab();
         updateOrderPreview();
         showToast(
-          `${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 · 單價 ${fmtPrice(price)} ${metrics.currency}`,
+          `[${simDate}] ${side === 'BUY' ? '買進' : '賣出'}已成交：${dispSym} ${fmtMoney(shares)} 股 · 單價 ${fmtPrice(price)} ${metrics.currency}`,
           'success'
         );
       } catch (err) {
@@ -3152,8 +3748,9 @@
       if (!h) return;
       const dispSym = formatDisplaySymbol(symbol);
       const cur = getSymbolCurrency(symbol);
-      const cached = appState.marketCache[symbol] || connState.offlineMemoryMap.get(symbol);
-      const curPrice = (cached && Number.isFinite(cached.price)) ? cached.price : h.avgCost;
+      const rawEntry = appState.marketCache[symbol] || connState.offlineMemoryMap.get(symbol);
+      const maskedEntry = rawEntry ? applyTimeMaskToMarketData(rawEntry, acc) : null;
+      const curPrice = (maskedEntry && Number.isFinite(maskedEntry.price)) ? maskedEntry.price : h.avgCost;
 
       document.getElementById('orderSymbol').value = dispSym;
       document.getElementById('orderPrice').value = curPrice;
@@ -3192,13 +3789,15 @@
       let holdingsMarketValueTwd = 0;
       let holdingsCostTotalTwd = 0;
       const rows = [];
-      const currentUsdTwd = getActiveUsdTwdRate();
+      const accSettings = acc.settings || createDefaultAccountSettings();
+      const currentUsdTwd = Number(accSettings.usdTwdRate) > 0 ? Number(accSettings.usdTwdRate) : DEFAULT_USD_TWD_RATE;
 
       Object.values(acc.holdings).forEach(h => {
         const currency = h.currency || getSymbolCurrency(h.symbol);
         const fxRate = currency === 'USD' ? currentUsdTwd : 1;
-        const cached = appState.marketCache[h.symbol] || connState.offlineMemoryMap.get(h.symbol);
-        const curPrice = (cached && Number.isFinite(cached.price)) ? cached.price : h.avgCost;
+        const rawEntry = appState.marketCache[h.symbol] || connState.offlineMemoryMap.get(h.symbol);
+        const maskedEntry = rawEntry ? applyTimeMaskToMarketData(rawEntry, acc) : null;
+        const curPrice = (maskedEntry && Number.isFinite(maskedEntry.price)) ? maskedEntry.price : h.avgCost;
 
         const marketValNative = curPrice * h.shares;
         const marketValTwd = marketValNative * fxRate;
@@ -3214,6 +3813,7 @@
           ? h.batches
           : [{
               id: 'lot_single_' + h.symbol,
+              simDate: acc.currentSimDate,
               time: new Date().toISOString(),
               price: h.avgCost,
               remainingShares: h.shares,
@@ -3237,6 +3837,7 @@
           const bPct = bCostTwd > 0 ? (bPnlTwd / bCostTwd) * 100 : 0;
           return {
             index: idx + 1,
+            simDate: b.simDate || (typeof b.time === 'string' ? b.time.slice(0, 10) : acc.currentSimDate),
             time: b.time,
             price: bPrice,
             shares: bShares,
@@ -3271,7 +3872,6 @@
       const totalAssets = acc.cash + holdingsMarketValueTwd;
       const totalPnl = totalAssets - acc.initialCapital;
 
-      // 分段資金加權真實報酬率 (TWR / 分段鏈乘)
       let compoundedFactor = 1;
       const pastSegments = Array.isArray(acc.segments) ? acc.segments : [];
       for (const seg of pastSegments) {
@@ -3310,10 +3910,7 @@
       const batchCount = r.batchRows.length;
 
       const batchesHtml = r.batchRows.map(b => {
-        const dt = new Date(b.time);
-        const dateLabel = !isNaN(dt.getTime())
-          ? `${dt.getMonth() + 1}/${dt.getDate()}`
-          : '--/--';
+        const dateLabel = isValidIsoDate(b.simDate) ? b.simDate.slice(5).replace('-', '/') : '--/--';
         const diffSign = b.perShareDiff > 0 ? '+' : '';
         const pnlStr = isUsd
           ? `${fmtSignedMoney(b.pnlTwd, 0)} TWD (${fmtSignedMoney(b.pnlNative, 2)} USD)`
@@ -3394,6 +3991,9 @@
 
     function renderSimTab() {
       const acc = getActiveAccount();
+      const s = getActiveSettings();
+      renderSimTimelineUI();
+
       document.getElementById('accountDisplayName').textContent = getAccountDisplayName(acc);
       document.getElementById('ovFxHint').textContent = `USD/TWD ${getActiveUsdTwdRate().toFixed(2)}`;
 
@@ -3406,7 +4006,7 @@
         stratEl.classList.add('hidden');
       }
 
-      document.getElementById('etfTaxLabel').textContent = (appState.settings.etfTaxRate * 100).toFixed(2).replace(/\.?0+$/, '') + '%';
+      document.getElementById('etfTaxLabel').textContent = (s.etfTaxRate * 100).toFixed(2).replace(/\.?0+$/, '') + '%';
 
       const st = computeAccountStats(acc);
       document.getElementById('ovTotalAssets').textContent = fmtMoney(st.totalAssets, 0);
@@ -3438,7 +4038,6 @@
       reEl.className = `text-[15px] font-bold num mt-1 truncate ${getPnlClass(acc.realizedPnl)}`;
       document.getElementById('ovHoldingsVal').textContent = `現值 ${fmtMoney(st.holdingsMarketValueTwd, 0)}`;
 
-      // 持股分區：台股部位 (TWD) 與 美股部位 (USD / TWD)
       const twRows = st.rows.filter(r => r.currency !== 'USD');
       const usRows = st.rows.filter(r => r.currency === 'USD');
 
@@ -3450,7 +4049,7 @@
         let sectionsHtml = '';
 
         if (twRows.length > 0) {
-          const twSubVal = twRows.reduce((s, r) => s + r.marketValTwd, 0);
+          const twSubVal = twRows.reduce((sum, r) => sum + r.marketValTwd, 0);
           sectionsHtml += `
             <div>
               <div class="px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px]">
@@ -3465,8 +4064,8 @@
         }
 
         if (usRows.length > 0) {
-          const usSubValTwd = usRows.reduce((s, r) => s + r.marketValTwd, 0);
-          const usSubValUsd = usRows.reduce((s, r) => s + r.marketValNative, 0);
+          const usSubValTwd = usRows.reduce((sum, r) => sum + r.marketValTwd, 0);
+          const usSubValUsd = usRows.reduce((sum, r) => sum + r.marketValNative, 0);
           sectionsHtml += `
             <div>
               <div class="px-4 py-2 bg-[#0D1016] hairline-t hairline-b flex items-center justify-between text-[11px] gap-2">
@@ -3483,25 +4082,30 @@
         hList.innerHTML = sectionsHtml;
       }
 
-      // 交易紀錄（移除 @ 符號、雙行完整呈現每股單價不截斷）
       document.getElementById('tradesCount').textContent = `${acc.trades.length} 筆`;
       const tList = document.getElementById('tradesList');
       if (acc.trades.length === 0) {
         tList.innerHTML = `<div class="px-4 py-7 text-center text-[12px] text-[#586274]">尚無成交紀錄</div>`;
       } else {
         tList.innerHTML = acc.trades.slice(0, 40).map(t => {
-          const dt = new Date(t.time);
-          const ts = `${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+          const simDateStr = isValidIsoDate(t.simDate)
+            ? t.simDate
+            : (typeof t.time === 'string' ? t.time.slice(0, 10) : acc.currentSimDate);
+          const dt = new Date(t.realTime || t.time);
+          const realHm = !isNaN(dt.getTime())
+            ? `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+            : '';
+          const timeStampLabel = realHm ? `${simDateStr} (${realHm})` : simDateStr;
 
           if (t.side === 'DEPOSIT') {
             return `
               <div class="px-4 py-3 flex items-center justify-between gap-2 text-[12px]">
-                <div class="flex items-center gap-2">
-                  <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[rgba(255,153,0,0.14)] text-[#FF9900]">充值</span>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[rgba(255,153,0,0.14)] text-[#FF9900] shrink-0">充值</span>
                   <span class="font-bold num text-[#F4F6F9]">+${fmtMoney(t.netAmount, 0)} TWD</span>
-                  <span class="text-[#586274]">真實報酬分段已鎖定</span>
+                  <span class="text-[#586274] truncate">分段已鎖定</span>
                 </div>
-                <span class="num text-[11px] text-[#586274]">${ts}</span>
+                <span class="num text-[11px] text-[#586274] shrink-0">${timeStampLabel}</span>
               </div>
             `;
           }
@@ -3518,7 +4122,7 @@
             : `<span class="num font-semibold text-[#F4F6F9]">$${fmtMoney(twdTotal, 0)} TWD</span>`;
           const reasonLabel = (t.reason && t.reason !== '未填寫') ? t.reason : '';
           const fxNote = isUsd && Number.isFinite(t.fxRate) ? `匯率 ${Number(t.fxRate).toFixed(2)}` : '';
-          const metaParts = [fxNote, reasonLabel, t.note, ts].filter(Boolean).join(' · ');
+          const metaParts = [fxNote, reasonLabel, t.note, timeStampLabel].filter(Boolean).join(' · ');
 
           return `
             <div class="px-4 py-3 text-[12px] space-y-1">
@@ -3544,14 +4148,21 @@
 
     function buildAccountReportText(acc) {
       const st = computeAccountStats(acc);
+      const realToday = getTodayDateString();
+      const advancedDays = Math.max(0, diffCalendarDays(acc.startDate || realToday, acc.currentSimDate || realToday));
+      const syncStatusText = (acc.currentSimDate || realToday) >= realToday
+        ? `已同步至今日 (${realToday})`
+        : `練習進行中 (${acc.currentSimDate}，距離現實今日尚餘 ${diffCalendarDays(acc.currentSimDate, realToday)} 日)`;
+
       const lines = [
         `========================================`,
-        `【帳戶名稱】${getAccountDisplayName(acc)} (計價基準: TWD 新台幣 | 當前 USD/TWD: ${getActiveUsdTwdRate().toFixed(2)})`,
+        `【帳戶名稱】${getAccountDisplayName(acc)} (計價基準: TWD 新台幣 | USD/TWD: ${Number(acc.settings?.usdTwdRate || DEFAULT_USD_TWD_RATE).toFixed(2)})`,
+        `【時間軸狀態】起始日期: ${acc.startDate || realToday} | 目前模擬日期: ${acc.currentSimDate || realToday} (${syncStatusText}) | 總推進天數: ${advancedDays} 天`,
         `【策略說明】${acc.strategy ? acc.strategy : '未填寫'}`,
         `【資金總覽】淨投入本金: ${fmtMoney(acc.initialCapital)} TWD (含累計充值: ${fmtMoney(acc.totalDeposited || 0)}) | 總資產: ${fmtMoney(st.totalAssets, 0)} TWD`,
         `【真實績效】累積總損益: ${fmtSignedMoney(st.totalPnl, 0)} TWD | 分段資金加權真實報酬率(TWR): ${fmtSignedPct(st.twrRoiPct)}`,
         `【現金損益】可用現金: ${fmtMoney(acc.cash, 0)} TWD | 未實現損益: ${fmtSignedMoney(st.unrealizedTotal, 0)} TWD (${fmtSignedPct(st.unrealizedPctTotal)}) | 累計已實現: ${fmtSignedMoney(acc.realizedPnl, 0)} TWD`,
-        `--- 目前持股 (${st.rows.length} 檔) ---`
+        `--- 目前持股 (${st.rows.length} 檔 · 依 ${acc.currentSimDate || realToday} 盤面估值) ---`
       ];
       if (st.rows.length === 0) {
         lines.push('  (空手 / 無持股)');
@@ -3559,25 +4170,26 @@
         st.rows.forEach(r => {
           const dispSym = formatDisplaySymbol(r.symbol);
           const fxPart = r.currency === 'USD' ? ` | 折合台幣市值 ${fmtMoney(r.marketValTwd, 0)} TWD ($${fmtMoney(r.marketValNative, 2)} USD)` : '';
-          lines.push(`  • ${dispSym} (${r.name}) [${r.currency}]: ${fmtMoney(r.shares)}股 | 均價 ${fmtPrice(r.avgCost)} ${r.currency} | 現價 ${fmtPrice(r.curPrice)} ${r.currency} | 損平 ${fmtPrice(r.breakEven)}${fxPart} | 未實現 ${fmtSignedMoney(r.unrealizedTwd, 0)} TWD (${fmtSignedPct(r.unrealizedPct)})`);
+          lines.push(`  • ${dispSym} (${r.name}) [${r.currency}]: ${fmtMoney(r.shares)}股 | 均價 ${fmtPrice(r.avgCost)} ${r.currency} | 當下價 ${fmtPrice(r.curPrice)} ${r.currency} | 損平 ${fmtPrice(r.breakEven)}${fxPart} | 未實現 ${fmtSignedMoney(r.unrealizedTwd, 0)} TWD (${fmtSignedPct(r.unrealizedPct)})`);
         });
       }
-      lines.push(`--- 近期交易與充值紀錄 (最多近 15 筆) ---`);
+      lines.push(`--- 近期交易與充值紀錄 (最多近 20 筆) ---`);
       if (acc.trades.length === 0) {
         lines.push('  (尚無紀錄)');
       } else {
-        acc.trades.slice(0, 15).forEach(t => {
-          const d = t.time.slice(0, 16).replace('T', ' ');
+        acc.trades.slice(0, 20).forEach(t => {
+          const sDate = isValidIsoDate(t.simDate) ? t.simDate : (t.time || '').slice(0, 10);
+          const rStamp = (t.realTime || t.time || '').slice(0, 16).replace('T', ' ');
           if (t.side === 'DEPOSIT') {
-            lines.push(`  • [${d}] 帳戶充值 +${fmtMoney(t.netAmount, 0)} TWD (已鎖定前置分段報酬率)`);
+            lines.push(`  • [模擬日 ${sDate} | 實際 ${rStamp}] 帳戶充值 +${fmtMoney(t.netAmount, 0)} TWD (已鎖定前置分段報酬率)`);
           } else {
             const dispSym = formatDisplaySymbol(t.symbol);
             const trCur = t.currency || getSymbolCurrency(t.symbol);
             const sideTxt = t.side === 'BUY' ? '買進' : '賣出';
             const twdVal = Number.isFinite(t.netAmountTwd) ? t.netAmountTwd : t.netAmount;
-            const fxDetail = trCur === 'USD' ? ` [匯率 ${Number(t.fxRate || getActiveUsdTwdRate()).toFixed(2)} -> ${fmtMoney(twdVal, 0)} TWD]` : '';
+            const fxDetail = trCur === 'USD' ? ` [匯率 ${Number(t.fxRate || DEFAULT_USD_TWD_RATE).toFixed(2)} -> ${fmtMoney(twdVal, 0)} TWD]` : '';
             const pnlPart = t.realizedPnl != null ? ` | 已實現 ${fmtSignedMoney(t.realizedPnl, 0)} TWD` : '';
-            lines.push(`  • [${d}] ${sideTxt} ${dispSym} ${fmtMoney(t.shares)}股 · 單價 ${fmtPrice(t.price)} ${trCur} (費${t.fee}/稅${t.tax})${fxDetail}${pnlPart} | 理由:${t.reason || '未填寫'}${t.note ? ' - ' + t.note : ''}`);
+            lines.push(`  • [模擬日 ${sDate} | 實際 ${rStamp}] ${sideTxt} ${dispSym} ${fmtMoney(t.shares)}股 · 單價 ${fmtPrice(t.price)} ${trCur} (費${t.fee}/稅${t.tax})${fxDetail}${pnlPart} | 理由:${t.reason || '未填寫'}${t.note ? ' - ' + t.note : ''}`);
           }
         });
       }
@@ -3585,7 +4197,7 @@
     }
 
     function exportReport(scope) {
-      const header = `股市策略實驗室｜交易績效檢討報告（統一 TWD 計價）\n匯出時間：${new Date().toLocaleString('zh-TW')}\n`;
+      const header = `股市策略實驗室｜多時間軸交易績效檢討報告（統一 TWD 計價）\n匯出時間：${new Date().toLocaleString('zh-TW')}\n`;
       let body = '';
       if (scope === 'current') {
         body = buildAccountReportText(getActiveAccount());
@@ -3615,7 +4227,7 @@
     }
 
     /* ========================================================================
-       6. 分頁二：盤面分析 (週/月K 彙整、全歷史指標數學引擎、日期跳轉與圖表渲染)
+       7. 分頁二：盤面分析 (時間遮罩保護 + 指標數學引擎 + 雙向日期跳轉)
        ======================================================================== */
     function getIsoWeekKey(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
@@ -3786,15 +4398,18 @@
     async function loadChartSymbol(symbol, forceRefresh = false) {
       const sym = normalizeSymbol(symbol);
       if (!sym) return;
-      appState.activeChartSymbol = sym;
+      const acc = getActiveAccount();
+      const cs = getActiveChartState();
+      cs.activeChartSymbol = sym;
       document.getElementById('chartSymbolInput').value = formatDisplaySymbol(sym);
       saveState();
       renderWatchlistChips();
+      renderSimTimelineUI();
 
       try {
-        currentChartData = await getMarketData(sym, forceRefresh);
+        currentChartData = await getAccountMarketData(sym, forceRefresh, {}, acc);
         if (currentChartData.symbol && currentChartData.symbol !== sym) {
-          appState.activeChartSymbol = currentChartData.symbol;
+          cs.activeChartSymbol = currentChartData.symbol;
           document.getElementById('chartSymbolInput').value = formatDisplaySymbol(currentChartData.symbol);
           saveState();
           renderWatchlistChips();
@@ -3812,27 +4427,30 @@
         showToast('請輸入股票代號', 'error');
         return;
       }
-      loadChartSymbol(val, true);
+      loadChartSymbol(val, false);
     }
 
     function jumpToChart(symbol) {
       const normSym = normalizeSymbol(symbol);
       if (!normSym) return;
-      appState.activeChartSymbol = normSym;
+      const cs = getActiveChartState();
+      cs.activeChartSymbol = normSym;
       saveState();
       switchMainTab('chart');
       loadChartSymbol(normSym, false);
     }
 
     function setChartTimeframe(tf) {
-      appState.activeTimeframe = tf;
+      const cs = getActiveChartState();
+      cs.activeTimeframe = tf;
       saveState();
       updateChartControlsUI();
       renderActiveChart();
     }
 
     function setChartMode(mode) {
-      appState.activeChartMode = mode;
+      const cs = getActiveChartState();
+      cs.activeChartMode = mode;
       saveState();
       updateChartControlsUI();
       renderActiveChart();
@@ -3863,15 +4481,20 @@
       const maxDate = bars[bars.length - 1].time;
       input.min = minDate;
       input.max = maxDate;
-      if (!input.value || input.value < minDate || input.value > maxDate) {
-        input.value = maxDate;
-      }
-      btnText.textContent = input.value;
+      input.value = maxDate;
+      btnText.textContent = maxDate;
     }
 
     function jumpChartToSelectedDate(targetDate, options = {}) {
       const { showNotice = true } = options;
       if (!targetDate || !Array.isArray(currentRenderedBars) || currentRenderedBars.length === 0) return;
+
+      const acc = getActiveAccount();
+      const maxAllowedDate = currentRenderedBars[currentRenderedBars.length - 1].time;
+      if (targetDate > acc.currentSimDate || targetDate > maxAllowedDate) {
+        showToast(`不可查看 ${acc.currentSimDate} 之後的未來盤面`, 'warn');
+        return;
+      }
 
       let bestIdx = 0;
       let exactMatch = false;
@@ -3906,13 +4529,13 @@
         } catch (_) {}
       }
 
-      updateCrosshairReadoutAtIndex(currentRenderedBars, bestIdx, appState.activeChartMode);
+      updateCrosshairReadoutAtIndex(currentRenderedBars, bestIdx, getActiveChartState().activeChartMode);
 
       if (showNotice) {
         if (!exactMatch && matchedBar.time !== targetDate) {
           showToast(`${targetDate} 非交易日，已跳轉至最近交易日 ${matchedBar.time}`, 'info');
         } else {
-          showToast(`已跳轉至 ${matchedBar.time} 盤面`, 'success');
+          showToast(`已定位至 ${matchedBar.time} 盤面`, 'success');
         }
       }
     }
@@ -3933,7 +4556,7 @@
       if (lwcChart) {
         try {
           lwcChart.timeScale().fitContent();
-          showToast('已縮放檢視完整歷史區間', 'info');
+          showToast('已縮放檢視截止日以前之完整歷史區間', 'info');
         } catch (_) {}
       }
     }
@@ -3941,6 +4564,7 @@
     function updateChartHeader() {
       if (!currentChartData) return;
       const d = currentChartData;
+      const acc = getActiveAccount();
       const diff = d.price - d.prevClose;
       const pct = d.prevClose > 0 ? (diff / d.prevClose) * 100 : 0;
       const currency = getSymbolCurrency(d.symbol);
@@ -3951,9 +4575,10 @@
 
       const totalBars = Array.isArray(d.bars) ? d.bars.length : 0;
       const startYear = totalBars > 0 ? d.bars[0].time.slice(0, 4) : '';
+      const endLabel = isAccountSyncedToToday(acc) ? '今' : acc.currentSimDate;
       const srcBase = d.source === 'LIVE' ? (d.sourceLabel || 'LIVE') : 'OFFLINE';
       document.getElementById('chartSourceTag').textContent =
-        startYear ? `${srcBase} · ${startYear}~今` : srcBase;
+        startYear ? `${srcBase} · ${startYear}~${endLabel}` : srcBase;
 
       const pEl = document.getElementById('chartHeaderPrice');
       pEl.textContent = fmtPrice(d.price);
@@ -3965,33 +4590,36 @@
     }
 
     function updateChartControlsUI() {
+      const cs = getActiveChartState();
+      const s = getActiveSettings();
+
       document.querySelectorAll('.tf-btn').forEach(btn => {
-        const active = btn.dataset.tf === appState.activeTimeframe;
+        const active = btn.dataset.tf === cs.activeTimeframe;
         btn.className = active
           ? 'tf-btn tap-btn px-2.5 py-1 text-[12px] font-bold rounded-[6px] bg-[#1C222D] text-[#FF9900] whitespace-nowrap shrink-0'
           : 'tf-btn tap-btn px-2.5 py-1 text-[12px] font-medium rounded-[6px] text-[#8A94A6] whitespace-nowrap shrink-0';
       });
 
       document.querySelectorAll('.mode-btn').forEach(btn => {
-        const active = btn.dataset.mode === appState.activeChartMode;
+        const active = btn.dataset.mode === cs.activeChartMode;
         btn.className = active
           ? 'mode-btn tap-btn py-1 text-[11px] font-bold rounded-[6px] bg-[#1F2633] text-[#F4F6F9] text-center'
           : 'mode-btn tap-btn py-1 text-[11px] font-medium rounded-[6px] text-[#8A94A6] text-center';
       });
 
       const maRow = document.getElementById('maToggleRow');
-      if (appState.activeChartMode === 'CANDLE_MA') {
+      if (cs.activeChartMode === 'CANDLE_MA') {
         maRow.classList.remove('hidden');
       } else {
         maRow.classList.add('hidden');
       }
 
-      const periods = appState.settings.maPeriods;
+      const periods = s.maPeriods;
       document.getElementById('labelMa0').textContent = `MA${periods[0]}`;
       document.getElementById('labelMa1').textContent = `MA${periods[1]}`;
       document.getElementById('labelMa2').textContent = `MA${periods[2]}`;
 
-      const guide = INDICATOR_GUIDES[appState.activeChartMode];
+      const guide = INDICATOR_GUIDES[cs.activeChartMode];
       document.getElementById('guideTitle').textContent = guide.title;
       document.getElementById('guideContent').textContent = guide.text;
       document.getElementById('guideContent').classList.toggle('hidden', !appState.guideExpanded);
@@ -4006,10 +4634,12 @@
 
     function renderWatchlistChips() {
       const container = document.getElementById('watchlistChips');
-      const activeClean = formatDisplaySymbol(appState.activeChartSymbol);
-      container.innerHTML = appState.settings.watchlist.map(sym => {
+      const cs = getActiveChartState();
+      const s = getActiveSettings();
+      const activeClean = formatDisplaySymbol(cs.activeChartSymbol);
+      container.innerHTML = s.watchlist.map(sym => {
         const dispSym = formatDisplaySymbol(sym);
-        const active = sym === appState.activeChartSymbol || dispSym === activeClean;
+        const active = sym === cs.activeChartSymbol || dispSym === activeClean;
         return `<button onclick="loadChartSymbol('${escapeHtml(sym)}')" class="tap-btn px-3 py-1 text-[12px] num font-semibold shrink-0 rounded-full ${
           active ? 'bg-[rgba(255,153,0,0.16)] text-[#FF9900]' : 'bg-[#141923] text-[#8A94A6]'
         }">${escapeHtml(dispSym)}</button>`;
@@ -4020,12 +4650,14 @@
       if (!currentChartData || !currentChartData.bars || currentChartData.bars.length === 0) return;
       destroyActiveChart();
 
-      const bars = aggregateBars(currentChartData.bars, appState.activeTimeframe);
+      const cs = getActiveChartState();
+      const s = getActiveSettings();
+      const bars = aggregateBars(currentChartData.bars, cs.activeTimeframe);
       currentRenderedBars = bars;
       syncChartDatePickerBounds(bars);
 
       const viewport = document.getElementById('chartViewport');
-      const mode = appState.activeChartMode;
+      const mode = cs.activeChartMode;
       const colors = getThemeColors();
 
       if (typeof window.LightweightCharts === 'undefined' || !window.LightweightCharts.createChart) {
@@ -4073,7 +4705,7 @@
         seriesRefs.candle = candle;
 
         const maColors = ['#F59E0B', '#38BDF8', '#C084FC'];
-        appState.settings.maPeriods.forEach((p, idx) => {
+        s.maPeriods.forEach((p, idx) => {
           const checked = document.getElementById(`toggleMa${idx}`).checked;
           if (checked && bars.length >= p) {
             const line = chart.addLineSeries({
@@ -4204,7 +4836,6 @@
         }
       });
 
-      // 點選 / 輕觸某根 K 棒時，同步更新上方日期選擇器並聚焦跳轉至該日盤面
       viewport.onpointerdown = (ev) => {
         chartPointerDownPos = { x: ev.clientX, y: ev.clientY, time: Date.now() };
       };
@@ -4241,13 +4872,14 @@
 
     function updateCrosshairReadoutAtIndex(bars, idx, mode) {
       const barEl = document.getElementById('chartCrosshairBar');
+      const s = getActiveSettings();
       if (!bars || bars.length === 0 || idx < 0 || idx >= bars.length) return;
       const bar = bars[idx];
 
       if (mode === 'CANDLE_MA') {
         const maColors = ['#F59E0B', '#38BDF8', '#C084FC'];
         let maHtml = '';
-        appState.settings.maPeriods.forEach((p, mIdx) => {
+        s.maPeriods.forEach((p, mIdx) => {
           const toggle = document.getElementById(`toggleMa${mIdx}`);
           if (toggle && toggle.checked && idx >= p - 1 && bars.length >= p) {
             let sum = 0;
@@ -4412,9 +5044,10 @@
     }
 
     /* ========================================================================
-       7. 分頁切換、設定 Modal 與 JSON 備份還原
+       8. 分頁切換、獨立帳戶設定 Modal 與多模式 JSON 備份還原
        ======================================================================== */
     function switchMainTab(tab) {
+      syncAllAccountsWithReality(false);
       const prevTab = appState.activeTab;
       if (prevTab && prevTab !== tab) {
         tabScrollPositions[prevTab] = window.scrollY || window.pageYOffset || 0;
@@ -4429,6 +5062,7 @@
       const btnChart = document.getElementById('navBtnChart');
       const indSim = document.getElementById('navIndSim');
       const indChart = document.getElementById('navIndChart');
+      const cs = getActiveChartState();
 
       if (tab === 'sim') {
         simSec.classList.remove('hidden');
@@ -4445,11 +5079,16 @@
         btnSim.className = 'relative flex flex-col items-center justify-center gap-0.5 text-[#586274]';
         indChart.classList.remove('hidden');
         indSim.classList.add('hidden');
+        renderSimTimelineUI();
         updateChartControlsUI();
         renderWatchlistChips();
-        if (!currentChartData || currentChartData.symbol !== appState.activeChartSymbol || currentChartData.source !== 'LIVE') {
-          loadChartSymbol(appState.activeChartSymbol, true);
+        if (!currentChartData || currentChartData.symbol !== cs.activeChartSymbol || currentChartData.source !== 'LIVE') {
+          loadChartSymbol(cs.activeChartSymbol, false);
         } else {
+          currentChartData = applyTimeMaskToMarketData(
+            appState.marketCache[cs.activeChartSymbol] || connState.offlineMemoryMap.get(cs.activeChartSymbol) || currentChartData,
+            getActiveAccount()
+          );
           updateChartHeader();
           renderActiveChart();
         }
@@ -4461,12 +5100,13 @@
     }
 
     function updateSettingsFxDisplay() {
+      const s = getActiveSettings();
       const rate = getActiveUsdTwdRate();
       const badge = document.getElementById('setFxStatusBadge');
       const updatedEl = document.getElementById('setFxUpdatedAt');
       if (badge) badge.textContent = `1 USD = ${rate.toFixed(2)} TWD`;
       if (updatedEl) {
-        const ts = Number(appState.settings.usdTwdUpdatedAt);
+        const ts = Number(s.usdTwdUpdatedAt);
         if (ts > 0) {
           const d = new Date(ts);
           updatedEl.textContent = `更新於 ${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -4477,8 +5117,9 @@
     }
 
     async function refreshUsdTwdRateFromSettings() {
-      const prevManual = appState.settings.useManualFx;
-      appState.settings.useManualFx = false;
+      const s = getActiveSettings();
+      const prevManual = s.useManualFx;
+      s.useManualFx = false;
       document.getElementById('setUseManualFx').checked = false;
       showToast('正在連網取得最新 USD/TWD 匯率...', 'info');
       const rate = await fetchLiveUsdTwdRate(true);
@@ -4486,10 +5127,10 @@
       updateSettingsFxDisplay();
       renderSimTab();
       updateOrderPreview();
-      if (appState.settings.usdTwdUpdatedAt > 0) {
+      if (getActiveSettings().usdTwdUpdatedAt > 0) {
         showToast(`已更新美元匯率：1 USD = ${rate.toFixed(2)} TWD`, 'success');
       } else {
-        appState.settings.useManualFx = prevManual;
+        s.useManualFx = prevManual;
         showToast('匯率連線暫時無法更新，沿用目前匯率', 'warn');
       }
     }
@@ -4500,7 +5141,9 @@
     }
 
     function openSettingsModal() {
-      const s = appState.settings;
+      const acc = getActiveAccount();
+      const s = getActiveSettings();
+      document.getElementById('settingsAccBadge').textContent = getAccountDisplayName(acc);
       document.getElementById('setFeeRate').value = s.feeRate;
       document.getElementById('setDiscount').value = s.discount;
       document.getElementById('setMinFee').value = s.minFee;
@@ -4520,7 +5163,8 @@
     }
 
     function setColorMode(mode) {
-      appState.settings.colorMode = mode;
+      const s = getActiveSettings();
+      s.colorMode = mode;
       applyColorTheme();
       updateColorModeButtons();
       saveState();
@@ -4533,7 +5177,7 @@
     }
 
     function updateColorModeButtons() {
-      const isTW = appState.settings.colorMode === 'TW';
+      const isTW = getActiveSettings().colorMode === 'TW';
       document.getElementById('setColorTW').className = isTW
         ? 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[rgba(255,153,0,0.16)] text-[#FF9900] font-bold'
         : 'tap-btn py-2.5 rounded-[8px] text-[13px] bg-[#171C26] text-[#8A94A6] font-semibold';
@@ -4544,7 +5188,8 @@
 
     function renderSettingsWatchlist() {
       const el = document.getElementById('settingsWatchlist');
-      el.innerHTML = appState.settings.watchlist.map(sym => {
+      const s = getActiveSettings();
+      el.innerHTML = s.watchlist.map(sym => {
         const dispSym = escapeHtml(formatDisplaySymbol(sym));
         const rawSym = escapeHtml(sym);
         return `
@@ -4559,9 +5204,10 @@
     function addWatchlistSymbol() {
       const input = document.getElementById('newWatchSymbol');
       const sym = normalizeSymbol(input.value);
+      const s = getActiveSettings();
       if (!sym) return;
-      if (!appState.settings.watchlist.includes(sym)) {
-        appState.settings.watchlist.push(sym);
+      if (!s.watchlist.includes(sym)) {
+        s.watchlist.push(sym);
         saveState();
         renderSettingsWatchlist();
         renderWatchlistChips();
@@ -4570,17 +5216,19 @@
     }
 
     function removeWatchlistSymbol(sym) {
-      if (appState.settings.watchlist.length <= 1) {
+      const s = getActiveSettings();
+      if (s.watchlist.length <= 1) {
         showToast('自選股至少需保留 1 檔標的', 'warn');
         return;
       }
-      appState.settings.watchlist = appState.settings.watchlist.filter(s => s !== sym);
+      s.watchlist = s.watchlist.filter(item => item !== sym);
       saveState();
       renderSettingsWatchlist();
       renderWatchlistChips();
     }
 
     function saveSettingsFromModal() {
+      const s = getActiveSettings();
       const feeRate = Number(document.getElementById('setFeeRate').value);
       const discount = Number(document.getElementById('setDiscount').value);
       const minFee = Number(document.getElementById('setMinFee').value);
@@ -4604,16 +5252,16 @@
         return;
       }
 
-      appState.settings.feeRate = feeRate;
-      appState.settings.discount = discount;
-      appState.settings.minFee = minFee;
-      appState.settings.stockTaxRate = stockTax;
-      appState.settings.etfTaxRate = etfTax;
-      appState.settings.maPeriods = [ma0, ma1, ma2];
-      appState.settings.cacheTtlMs = cacheTtlMs;
-      appState.settings.usdTwdRate = Number(fxVal.toFixed(4));
-      appState.settings.useManualFx = useManualFx;
-      appState.settings.workerBaseUrl = workerBaseUrl;
+      s.feeRate = feeRate;
+      s.discount = discount;
+      s.minFee = minFee;
+      s.stockTaxRate = stockTax;
+      s.etfTaxRate = etfTax;
+      s.maPeriods = [ma0, ma1, ma2];
+      s.cacheTtlMs = cacheTtlMs;
+      s.usdTwdRate = Number(fxVal.toFixed(4));
+      s.useManualFx = useManualFx;
+      s.workerBaseUrl = workerBaseUrl;
 
       saveState();
       closeModal('settingsModal');
@@ -4621,15 +5269,35 @@
       updateOrderPreview();
       updateChartControlsUI();
       if (appState.activeTab === 'chart') renderActiveChart();
-      showToast('系統設定已儲存並套用', 'success');
+      showToast(`「${getAccountDisplayName(getActiveAccount())}」設定已儲存並套用`, 'success');
     }
 
-    function exportJsonBackup() {
-      const payload = {
-        ...appState,
-        marketCache: {},
-        exportedAt: new Date().toISOString()
-      };
+    function exportJsonBackup(scope = 'all') {
+      const activeAcc = getActiveAccount();
+      let payload;
+      let fileName;
+      let modalTitle;
+
+      if (scope === 'single') {
+        payload = {
+          version: 2,
+          exportType: 'SINGLE_ACCOUNT',
+          exportedAt: new Date().toISOString(),
+          account: activeAcc
+        };
+        fileName = `stock_lab_account_${getAccountDisplayName(activeAcc)}_${getTodayDateString()}.json`;
+        modalTitle = `單一戶頭備份 JSON（${getAccountDisplayName(activeAcc)}）`;
+      } else {
+        payload = {
+          ...appState,
+          exportType: 'FULL_SYSTEM',
+          marketCache: {},
+          exportedAt: new Date().toISOString()
+        };
+        fileName = `stock_lab_full_backup_${getTodayDateString()}.json`;
+        modalTitle = '全部系統資料備份 (JSON)';
+      }
+
       const jsonStr = JSON.stringify(payload, null, 2);
 
       try {
@@ -4637,7 +5305,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `stock_lab_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -4645,50 +5313,89 @@
       } catch (_) {}
 
       closeModal('settingsModal');
-      document.getElementById('exportModalTitle').textContent = '系統資料備份 (JSON)';
+      document.getElementById('exportModalTitle').textContent = modalTitle;
       document.getElementById('exportTextarea').value = jsonStr;
       openModal('exportModal');
       copyTextFallback(jsonStr);
-      showToast('已產生 JSON 備份檔並複製內容', 'success');
+      showToast('已產生時間軸 JSON 備份並複製內容', 'success');
     }
 
-    function validateAndRestoreJson(rawText) {
+    function getSelectedImportMode() {
+      const checked = document.querySelector('input[name="importModeRadio"]:checked');
+      return checked ? checked.value : 'import_as_new';
+    }
+
+    async function validateAndRestoreJson(rawText) {
       try {
         const parsed = JSON.parse(rawText);
         if (!parsed || typeof parsed !== 'object') throw new Error('JSON 結構無效');
-        if (!Array.isArray(parsed.accounts) || parsed.accounts.length === 0) {
-          throw new Error('缺少有效的 accounts 帳戶陣列');
+
+        const importMode = getSelectedImportMode();
+        const realToday = getTodayDateString();
+        let rawAccountsList = [];
+
+        if (parsed.account && typeof parsed.account === 'object') {
+          rawAccountsList = [parsed.account];
+        } else if (Array.isArray(parsed.accounts) && parsed.accounts.length > 0) {
+          rawAccountsList = parsed.accounts;
+        } else {
+          throw new Error('JSON 中缺少有效的帳戶資料 (account 或 accounts)');
         }
-        for (const a of parsed.accounts) {
-          if (!a.id || typeof a.cash !== 'number' || typeof a.holdings !== 'object') {
-            throw new Error('帳戶資料欄位損毀');
+
+        for (const a of rawAccountsList) {
+          if (typeof a.cash !== 'number' || typeof a.holdings !== 'object') {
+            throw new Error('帳戶資金或持股欄位格式損毀');
+          }
+          if (a.startDate && !isValidIsoDate(a.startDate)) {
+            throw new Error(`無效的起始日期格式 (${a.startDate})`);
+          }
+          if (a.currentSimDate && !isValidIsoDate(a.currentSimDate)) {
+            throw new Error(`無效的模擬日期格式 (${a.currentSimDate})`);
           }
         }
-        const def = createDefaultState();
-        const rawSettings = parsed.settings || {};
-        const rawWorker = String(rawSettings.workerBaseUrl || '').trim().replace(/\/+$/, '');
-        const cleanWorkerUrl = /^https?:\/\/.+/i.test(rawWorker) ? rawWorker : DEFAULT_WORKER_URL;
 
-        const accounts = parsed.accounts.map(a => ({
-          ...a,
-          totalDeposited: typeof a.totalDeposited === 'number' ? a.totalDeposited : 0
-        }));
-        appState = {
-          ...def,
-          ...parsed,
-          accounts,
-          settings: {
-            ...def.settings,
-            ...rawSettings,
-            workerBaseUrl: cleanWorkerUrl
-          },
-          marketCache: appState.marketCache || {}
+        const legacyRootSettings = parsed.settings || {};
+        const legacyRootChart = {
+          activeChartSymbol: parsed.activeChartSymbol,
+          activeTimeframe: parsed.activeTimeframe,
+          activeChartMode: parsed.activeChartMode
         };
-        saveState();
-        applyColorTheme();
+
+        const normalizedAccounts = rawAccountsList.map(a =>
+          normalizeAccountRecord(a, legacyRootSettings, legacyRootChart)
+        );
+
+        for (const acc of normalizedAccounts) {
+          if (acc.startDate > realToday) acc.startDate = realToday;
+          if (acc.currentSimDate > realToday) acc.currentSimDate = realToday;
+          acc.lastRealSyncDate = realToday;
+        }
+
         closeModal('settingsModal');
-        switchMainTab(appState.activeTab || 'sim');
-        showToast('JSON 備份已通過驗證並成功還原', 'success');
+
+        if (importMode === 'import_as_new') {
+          let lastImportedId = appState.activeAccountId;
+          normalizedAccounts.forEach((acc, idx) => {
+            const freshId = `acc_imp_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`;
+            acc.id = freshId;
+            acc.name = `${acc.name} (匯入)`;
+            appState.accounts.push(acc);
+            lastImportedId = freshId;
+          });
+          saveState();
+          await switchAccount(lastImportedId);
+          showToast(`已成功匯入 ${normalizedAccounts.length} 個新戶頭（模擬日 ${getActiveAccount().currentSimDate}）`, 'success');
+        } else {
+          appState.accounts = normalizedAccounts;
+          const targetId = normalizedAccounts.some(a => a.id === parsed.activeAccountId)
+            ? parsed.activeAccountId
+            : normalizedAccounts[0].id;
+          appState.guideExpanded = parsed.guideExpanded !== undefined ? Boolean(parsed.guideExpanded) : true;
+          saveState();
+          await switchAccount(targetId);
+          switchMainTab(parsed.activeTab || 'sim');
+          showToast(`已覆蓋還原整份系統（共 ${normalizedAccounts.length} 個戶頭）`, 'success');
+        }
       } catch (e) {
         showToast('還原失敗（格式驗證未過）：' + e.message, 'error');
       }
@@ -4722,7 +5429,7 @@
     }
 
     /* ========================================================================
-       8. 系統啟動初始化與節流自動喚醒監聽器 (BOOT & AUTO-RECONNECT)
+       9. 系統啟動初始化與節流自動喚醒監聽器 (BOOT & AUTO-RECONNECT)
        ======================================================================== */
     function updateClock() {
       const now = new Date();
@@ -4740,6 +5447,7 @@
     function setupConnectionLifecycleListeners() {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
+          syncAllAccountsWithReality(true);
           const idleMs = Date.now() - (connState.lastSuccessAt || 0);
           if (connState.status === 'OFFLINE' || idleMs > 60000) {
             triggerThrottledAutoReconnect();
@@ -4748,6 +5456,7 @@
       });
 
       window.addEventListener('pageshow', (event) => {
+        syncAllAccountsWithReality(true);
         if (event.persisted || connState.status === 'OFFLINE') {
           triggerThrottledAutoReconnect();
         }
@@ -4766,7 +5475,8 @@
 
       setInterval(() => {
         if (document.visibilityState !== 'visible') return;
-        const ttl = Number(appState.settings.cacheTtlMs);
+        syncAllAccountsWithReality(true);
+        const ttl = Number(getActiveSettings().cacheTtlMs);
         const now = Date.now();
         if (connState.status === 'OFFLINE' && (now - connState.lastAttemptAt) >= AUTO_RECONNECT_MIN_INTERVAL_MS) {
           triggerThrottledAutoReconnect();
@@ -4777,6 +5487,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      syncAllAccountsWithReality(false);
       applyColorTheme();
       updateClock();
       setInterval(updateClock, 1000);
@@ -4793,7 +5504,8 @@
         updateOrderPreview();
       }).catch(() => {});
 
-      getMarketData('2330.TW', false, { silentError: true }).then(data => {
+      const acc = getActiveAccount();
+      getAccountMarketData('2330.TW', false, { silentError: true }, acc).then(data => {
         if (!document.getElementById('orderPrice').value) {
           const cur = getSymbolCurrency(data.symbol);
           document.getElementById('orderPrice').value = data.price;
